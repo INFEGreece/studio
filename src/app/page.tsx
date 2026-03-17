@@ -1,9 +1,10 @@
+
 "use client";
 
 import { useState } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { EntryCard } from '@/components/entries/EntryCard';
-import { MOCK_ENTRIES, DECADES } from '@/lib/data';
+import { DECADES } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { 
   Select, 
@@ -13,13 +14,21 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, History, Filter } from 'lucide-react';
+import { Trophy, History, Filter, Loader2 } from 'lucide-react';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import { Entry } from '@/lib/types';
 
 export default function Home() {
+  const db = useFirestore();
   const [selectedYear, setSelectedYear] = useState<number>(2024);
   const [votedEntries, setVotedEntries] = useState<Set<string>>(new Set());
 
-  const filteredEntries = MOCK_ENTRIES.filter(e => e.year === selectedYear);
+  const entriesRef = useMemoFirebase(() => {
+    return query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
+  }, [db, selectedYear]);
+
+  const { data: filteredEntries, isLoading } = useCollection<Entry>(entriesRef);
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
 
   const handleVote = (entryId: string) => {
@@ -66,7 +75,7 @@ export default function Home() {
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-muted-foreground">Decade:</span>
-                <Tabs defaultValue="2020s" className="w-auto">
+                <Tabs value={currentDecadeLabel} className="w-auto">
                   <TabsList className="bg-secondary/50">
                     {DECADES.map(d => (
                       <TabsTrigger key={d.label} value={d.label} onClick={() => setSelectedYear(d.years[0])}>
@@ -87,7 +96,7 @@ export default function Home() {
                     <SelectValue placeholder="Year" />
                   </SelectTrigger>
                   <SelectContent>
-                    {DECADES.find(d => d.label === currentDecadeLabel)?.years.map(y => (
+                    {(DECADES.find(d => d.label === currentDecadeLabel)?.years || []).map(y => (
                       <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
                     ))}
                   </SelectContent>
@@ -96,7 +105,12 @@ export default function Home() {
             </div>
           </div>
 
-          {filteredEntries.length > 0 ? (
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+              <p className="text-lg font-medium text-muted-foreground">Loading entries for {selectedYear}...</p>
+            </div>
+          ) : filteredEntries && filteredEntries.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredEntries.map((entry) => (
                 <EntryCard 

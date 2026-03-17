@@ -3,20 +3,22 @@ export interface Entry {
   id: string;
   country: string;
   artist: string;
-  title: string;
+  songTitle: string;
   year: number;
   videoUrl: string;
   thumbnailUrl?: string;
+  totalPoints?: number;
+  voteCount?: number;
 }
 
 export interface Vote {
   id: string;
   userId: string;
-  entryId: string;
+  eurovisionEntryId: string;
   year: number;
-  score: number;
+  points: number;
+  votedAt: string;
   feedback?: string;
-  createdAt: string;
 }
 
 export interface ScoreboardItem {

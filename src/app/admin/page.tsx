@@ -3,7 +3,6 @@
 
 import { useState } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
-import { MOCK_ENTRIES } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,27 +22,79 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Search, ExternalLink } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, ExternalLink, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
+import { Entry } from '@/lib/types';
 
 export default function AdminPage() {
-  const [entries, setEntries] = useState(MOCK_ENTRIES);
-  const [searchTerm, setSearchTerm] = useState("");
+  const db = useFirestore();
   const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    country: '',
+    year: new Date().getFullYear(),
+    artist: '',
+    songTitle: '',
+    videoUrl: ''
+  });
 
-  const filtered = entries.filter(e => 
+  const entriesRef = useMemoFirebase(() => collection(db, 'eurovision_entries'), [db]);
+  const { data: entries, isLoading } = useCollection<Entry>(entriesRef);
+
+  const filtered = (entries || []).filter(e => 
     e.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
     e.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    e.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    e.songTitle.toLowerCase().includes(searchTerm.toLowerCase())
+  ).sort((a, b) => b.year - a.year);
 
   const handleDelete = (id: string) => {
-    setEntries(prev => prev.filter(e => e.id !== id));
+    const docRef = doc(db, 'eurovision_entries', id);
+    deleteDocumentNonBlocking(docRef);
     toast({
       title: "Entry Removed",
       description: "The song entry has been successfully deleted.",
       variant: "destructive",
     });
+  };
+
+  const handleSave = () => {
+    if (!formData.country || !formData.artist || !formData.songTitle || !formData.videoUrl) {
+      toast({
+        title: "Missing Fields",
+        description: "Please fill in all required fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const id = `${formData.year}-${formData.country.toLowerCase().replace(/\s+/g, '-')}`;
+    const docRef = doc(db, 'eurovision_entries', id);
+    
+    setDocumentNonBlocking(docRef, {
+      ...formData,
+      id,
+      totalPoints: 0,
+      voteCount: 0
+    }, { merge: true });
+
+    toast({
+      title: "Entry Saved",
+      description: `${formData.songTitle} by ${formData.artist} has been added to the poll.`,
+    });
+
+    setFormData({
+      country: '',
+      year: new Date().getFullYear(),
+      artist: '',
+      songTitle: '',
+      videoUrl: ''
+    });
+    setIsDialogOpen(false);
   };
 
   return (
@@ -57,7 +108,7 @@ export default function AdminPage() {
             <p className="text-muted-foreground">Manage Eurovision songs, artists, and media.</p>
           </div>
           
-          <Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90">
                 <Plus className="h-4 w-4 mr-2" />
@@ -72,34 +123,59 @@ export default function AdminPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="country">Country</Label>
-                    <Input id="country" placeholder="e.g. Greece" />
+                    <Input 
+                      id="country" 
+                      placeholder="e.g. Greece" 
+                      value={formData.country}
+                      onChange={(e) => setFormData({...formData, country: e.target.value})}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="year">Year</Label>
-                    <Input id="year" type="number" defaultValue={2024} />
+                    <Input 
+                      id="year" 
+                      type="number" 
+                      value={formData.year}
+                      onChange={(e) => setFormData({...formData, year: parseInt(e.target.value)})}
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="artist">Artist</Label>
-                  <Input id="artist" placeholder="e.g. Marina Satti" />
+                  <Input 
+                    id="artist" 
+                    placeholder="e.g. Marina Satti" 
+                    value={formData.artist}
+                    onChange={(e) => setFormData({...formData, artist: e.target.value})}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="title">Song Title</Label>
-                  <Input id="title" placeholder="e.g. ZARI" />
+                  <Input 
+                    id="title" 
+                    placeholder="e.g. ZARI" 
+                    value={formData.songTitle}
+                    onChange={(e) => setFormData({...formData, songTitle: e.target.value})}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="video">YouTube Embed URL</Label>
-                  <Input id="video" placeholder="https://www.youtube.com/embed/..." />
+                  <Input 
+                    id="video" 
+                    placeholder="https://www.youtube.com/embed/..." 
+                    value={formData.videoUrl}
+                    onChange={(e) => setFormData({...formData, videoUrl: e.target.value})}
+                  />
                 </div>
               </div>
               <DialogFooter>
-                <Button className="w-full">Save Entry</Button>
+                <Button className="w-full" onClick={handleSave}>Save Entry</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
 
-        <div className="bg-card border rounded-xl overflow-hidden">
+        <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
           <div className="p-4 border-b bg-muted/20">
             <div className="relative max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -123,14 +199,23 @@ export default function AdminPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((entry) => (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      Loading entries...
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : filtered.map((entry) => (
                 <TableRow key={entry.id}>
                   <TableCell className="font-medium">{entry.year}</TableCell>
                   <TableCell>{entry.country}</TableCell>
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="font-medium">{entry.artist}</span>
-                      <span className="text-xs text-muted-foreground">{entry.title}</span>
+                      <span className="text-xs text-muted-foreground">{entry.songTitle}</span>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -164,9 +249,9 @@ export default function AdminPage() {
             </TableBody>
           </Table>
           
-          {filtered.length === 0 && (
+          {!isLoading && filtered.length === 0 && (
             <div className="p-12 text-center text-muted-foreground">
-              No entries found matching your search.
+              No entries found. Start by adding a new one!
             </div>
           )}
         </div>
