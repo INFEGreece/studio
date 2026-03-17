@@ -1,4 +1,6 @@
 
+export type ContestStage = 'Final' | 'Semi-Final 1' | 'Semi-Final 2';
+
 export interface Entry {
   id: string;
   country: string;
@@ -6,6 +8,7 @@ export interface Entry {
   songTitle: string;
   year: number;
   videoUrl: string;
+  stage: ContestStage;
   thumbnailUrl?: string;
   totalPoints?: number;
   voteCount?: number;

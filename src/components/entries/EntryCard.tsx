@@ -6,7 +6,7 @@ import { Entry } from '@/lib/types';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Music, Mic2, MapPin, Play, Star } from 'lucide-react';
+import { Mic2, MapPin, Play, Layers } from 'lucide-react';
 import { VoteDialog } from '@/components/voting/VoteDialog';
 
 interface EntryCardProps {
@@ -32,7 +32,7 @@ export function EntryCard({ entry, onVote, hasVoted }: EntryCardProps) {
           <>
             <img
               src={`https://picsum.photos/seed/${entry.id}/600/338`}
-              alt={entry.title}
+              alt={entry.songTitle}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -44,6 +44,11 @@ export function EntryCard({ entry, onVote, hasVoted }: EntryCardProps) {
               >
                 <Play className="h-8 w-8 fill-current" />
               </Button>
+            </div>
+            <div className="absolute top-2 right-2">
+              <Badge variant="secondary" className="bg-black/60 backdrop-blur-md text-[10px] py-0">
+                {entry.stage}
+              </Badge>
             </div>
           </>
         )}
@@ -57,7 +62,7 @@ export function EntryCard({ entry, onVote, hasVoted }: EntryCardProps) {
           </Badge>
           <span className="text-xs font-medium text-muted-foreground">{entry.year}</span>
         </div>
-        <h3 className="text-xl font-headline font-bold leading-tight line-clamp-1">{entry.title}</h3>
+        <h3 className="text-xl font-headline font-bold leading-tight line-clamp-1">{entry.songTitle}</h3>
         <p className="text-sm text-muted-foreground flex items-center gap-1.5">
           <Mic2 className="h-3.5 w-3.5" />
           {entry.artist}
@@ -67,9 +72,6 @@ export function EntryCard({ entry, onVote, hasVoted }: EntryCardProps) {
       <CardContent className="p-4 pt-0">
         <div className="flex items-center gap-2">
           <VoteDialog entry={entry} onVote={onVote} hasVoted={hasVoted} />
-          <Button variant="outline" size="sm" className="flex-1 text-xs">
-            Details
-          </Button>
         </div>
       </CardContent>
     </Card>

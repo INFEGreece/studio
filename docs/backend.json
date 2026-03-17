@@ -1,10 +1,11 @@
+
 {
   "entities": {
     "EurovisionEntry": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "EurovisionEntry",
       "type": "object",
-      "description": "Represents a single Eurovision song entry for a specific year.",
+      "description": "Represents a single Eurovision song entry for a specific year and stage.",
       "properties": {
         "id": {
           "type": "string",
@@ -31,9 +32,14 @@
           "description": "The URL for the embedded performance video.",
           "format": "uri"
         },
+        "stage": {
+          "type": "string",
+          "enum": ["Final", "Semi-Final 1", "Semi-Final 2"],
+          "description": "The stage of the contest the entry participated in."
+        },
         "description": {
           "type": "string",
-          "description": "An optional description or background information about the entry, useful for AI insights."
+          "description": "An optional description or background information about the entry."
         }
       },
       "required": [
@@ -42,22 +48,23 @@
         "country",
         "artist",
         "songTitle",
-        "videoUrl"
+        "videoUrl",
+        "stage"
       ]
     },
     "User": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents a user of the application, primarily for voting purposes. Authentication details are handled externally.",
+      "description": "Represents a user of the application.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the User entity, provided by the external authentication system."
+          "description": "Unique identifier for the User entity."
         },
         "username": {
           "type": "string",
-          "description": "A user-friendly username for display purposes."
+          "description": "A user-friendly username."
         }
       },
       "required": [
@@ -69,7 +76,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Vote",
       "type": "object",
-      "description": "Records a user's vote for a specific Eurovision entry in a given year.",
+      "description": "Records a user's vote for a specific Eurovision entry.",
       "properties": {
         "id": {
           "type": "string",
@@ -77,23 +84,23 @@
         },
         "userId": {
           "type": "string",
-          "description": "Reference to the User who cast this vote. (Relationship: User 1:N Vote)"
+          "description": "Reference to the User who cast this vote."
         },
         "eurovisionEntryId": {
           "type": "string",
-          "description": "Reference to the EurovisionEntry that received this vote. (Relationship: EurovisionEntry 1:N Vote)"
+          "description": "Reference to the EurovisionEntry."
         },
         "year": {
           "type": "number",
-          "description": "The year for which the vote was cast. Crucial for enforcing 'one vote per user per year' policy."
+          "description": "The year for which the vote was cast."
         },
         "points": {
           "type": "number",
-          "description": "The points awarded to the entry (e.g., 1-12 points)."
+          "description": "The points awarded (1-12)."
         },
         "votedAt": {
           "type": "string",
-          "description": "Timestamp indicating when the vote was submitted.",
+          "description": "Timestamp.",
           "format": "date-time"
         }
       },
@@ -122,13 +129,7 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profiles. Owned by the respective user. Authorization ensures `request.auth.uid` matches `userId` for read/write access.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique ID of the user, matching `request.auth.uid`."
-            }
-          ]
+          "description": "Stores user profiles."
         }
       },
       {
@@ -138,13 +139,7 @@
           "schema": {
             "$ref": "#/backend/entities/EurovisionEntry"
           },
-          "description": "Contains details for each Eurovision song entry. Documents are publicly readable. Includes denormalized 'totalPoints' and 'voteCount' fields for scoreboard aggregation, updated transactionally from votes. Write access is restricted to administrators.",
-          "params": [
-            {
-              "name": "entryId",
-              "description": "The unique ID of the Eurovision entry."
-            }
-          ]
+          "description": "Contains details for each Eurovision song entry."
         }
       },
       {
@@ -154,36 +149,10 @@
           "schema": {
             "$ref": "#/backend/entities/Vote"
           },
-          "description": "Records a user's vote for a specific Eurovision entry in a given year. The 'voteIdentifier' is a composite of '{year}_{eurovisionEntryId}' to enforce uniqueness (one vote per user per entry per year). Includes denormalized 'userId', 'eurovisionEntryId', and 'year' for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique ID of the user who cast the vote, matching the parent path segment and `request.auth.uid`."
-            },
-            {
-              "name": "voteIdentifier",
-              "description": "A unique identifier for the vote, structured as '{year}_{eurovisionEntryId}' to ensure one vote per user per entry per year."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/roles_admin/{adminId}",
-        "definition": {
-          "entityName": "Admin",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Serves as a global role collection for administrators. The existence of a document at `/roles_admin/{request.auth.uid}` grants administrative privileges, following the DBAC pattern. No specific schema beyond the ID is required, but it conceptually refers to a User entity.",
-          "params": [
-            {
-              "name": "adminId",
-              "description": "The unique ID of the user who is an administrator, matching `request.auth.uid`."
-            }
-          ]
+          "description": "Records a user's vote."
         }
       }
     ],
-    "reasoning": "The proposed Firestore structure prioritizes secure, scalable, and debuggable authorization by strictly adhering to the core design principles and mandates. \n\n**Authorization Independence (CRITICAL):**\n1.  **EurovisionEntry:** Documents in `/eurovision_entries/{entryId}` are publicly readable. Write access is granted to administrators, whose roles are checked independently via the dedicated `/roles_admin/{adminId}` collection. This DBAC (Database Access Control) pattern avoids any `get()` calls on parent documents or the `EurovisionEntry` itself for authorization, ensuring atomic operations and simplifying rules.\n2.  **User:** User profiles at `/users/{userId}` are inherently authorization-independent. Access rules simply verify `request.auth.uid == userId` for owner-based read/write, requiring no additional `get()` operations.\n3.  **Vote:** The `Vote` documents are nested under the user at `/users/{userId}/votes/{voteIdentifier}`. Crucially, each `Vote` document will explicitly contain its `userId`, `eurovisionEntryId`, and `year`. Authorization rules will verify that `request.auth.uid` matches the `userId` in the path (`{userId}`) and the `userId` field within the document (`request.resource.data.userId`). This denormalization of the `userId` into the `Vote` document itself ensures that the authorization context is entirely self-contained, eliminating any need for `get()` calls to a parent `User` document.\n\n**QAPs (Rules are not Filters):**\n1.  **EurovisionEntry:** The `/eurovision_entries` collection is designed for efficient and secure `list` operations. Since all entries are publicly browsable, read access is global. For the 'Dynamic Scoreboard' feature, each `EurovisionEntry` document will include denormalized aggregate fields such as `totalPoints` and `voteCount`. These fields are updated transactionally when votes are cast or modified. This structure allows the scoreboard to query and filter directly on the `/eurovision_entries` collection (e.g., by `year`, `totalPoints`), ensuring `list` operations are efficient and do not require filtering out unauthorized data, thus supporting QAPs.\n2.  **User:** The `/users/{userId}` path ensures that `list` operations are implicitly restricted to the authenticated user querying their own profile, as the rule `request.auth.uid == userId` will prevent unauthorized broad listing of user data.\n3.  **Vote:** The `/users/{userId}/votes/{voteIdentifier}` structure allows users to `list` their *own* votes efficiently. Firestore security rules will ensure that a user can only query their own subcollection, preventing unauthorized `list` operations across all users' private votes. Any global aggregations required for the scoreboard are handled by the denormalized fields in `EurovisionEntry`, not by `list` operations across all `Vote` subcollections, thereby maintaining QAP integrity.\n\n**Structural Segregation & Access Modeling:**\n*   `EurovisionEntry` documents are grouped in `/eurovision_entries` with a homogeneous security posture (public read, admin write).\n*   `User` profiles are stored in `/users/{userId}`, using path-based ownership for private data.\n*   `Vote` entities are structured hierarchically under the `User` at `/users/{userId}/votes/{voteIdentifier}`. The `voteIdentifier` will be a composite of `{year}_{eurovisionEntryId}` to enforce uniqueness (one vote per user per entry per year) directly through the document ID and simplify rules for creation/updates.\n*   Global roles for administrators are handled by the existence of a document in `/roles_admin/{adminId}`, using the efficient DBAC pattern."
+    "reasoning": "Standard Eurovision poll structure with stage categorization added."
   }
 }

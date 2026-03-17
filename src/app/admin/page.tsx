@@ -22,11 +22,19 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Search, ExternalLink, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import { Entry } from '@/lib/types';
+import { Entry, ContestStage } from '@/lib/types';
+import { Badge } from '@/components/ui/badge';
 
 export default function AdminPage() {
   const db = useFirestore();
@@ -37,10 +45,11 @@ export default function AdminPage() {
   // Form state
   const [formData, setFormData] = useState({
     country: '',
-    year: new Date().getFullYear(),
+    year: 2024,
     artist: '',
     songTitle: '',
-    videoUrl: ''
+    videoUrl: '',
+    stage: 'Final' as ContestStage
   });
 
   const entriesRef = useMemoFirebase(() => collection(db, 'eurovision_entries'), [db]);
@@ -50,7 +59,7 @@ export default function AdminPage() {
     e.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
     e.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
     e.songTitle.toLowerCase().includes(searchTerm.toLowerCase())
-  ).sort((a, b) => b.year - a.year);
+  ).sort((a, b) => b.year - a.year || a.country.localeCompare(b.country));
 
   const handleDelete = (id: string) => {
     const docRef = doc(db, 'eurovision_entries', id);
@@ -72,7 +81,8 @@ export default function AdminPage() {
       return;
     }
 
-    const id = `${formData.year}-${formData.country.toLowerCase().replace(/\s+/g, '-')}`;
+    const stageSlug = formData.stage.toLowerCase().replace(/\s+/g, '-');
+    const id = `${formData.year}-${stageSlug}-${formData.country.toLowerCase().replace(/\s+/g, '-')}`;
     const docRef = doc(db, 'eurovision_entries', id);
     
     setDocumentNonBlocking(docRef, {
@@ -84,15 +94,16 @@ export default function AdminPage() {
 
     toast({
       title: "Entry Saved",
-      description: `${formData.songTitle} by ${formData.artist} has been added to the poll.`,
+      description: `${formData.songTitle} by ${formData.artist} has been added.`,
     });
 
     setFormData({
       country: '',
-      year: new Date().getFullYear(),
+      year: 2024,
       artist: '',
       songTitle: '',
-      videoUrl: ''
+      videoUrl: '',
+      stage: 'Final'
     });
     setIsDialogOpen(false);
   };
@@ -104,8 +115,8 @@ export default function AdminPage() {
       <main className="flex-1 container px-4 py-12">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-headline font-bold">Entry Management</h1>
-            <p className="text-muted-foreground">Manage Eurovision songs, artists, and media.</p>
+            <h1 className="text-3xl font-headline font-bold text-primary">Entry Management</h1>
+            <p className="text-muted-foreground">Manage Eurovision songs, artists, and stages.</p>
           </div>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -122,15 +133,6 @@ export default function AdminPage() {
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="country">Country</Label>
-                    <Input 
-                      id="country" 
-                      placeholder="e.g. Greece" 
-                      value={formData.country}
-                      onChange={(e) => setFormData({...formData, country: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
                     <Label htmlFor="year">Year</Label>
                     <Input 
                       id="year" 
@@ -139,6 +141,31 @@ export default function AdminPage() {
                       onChange={(e) => setFormData({...formData, year: parseInt(e.target.value)})}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="stage">Stage</Label>
+                    <Select 
+                      value={formData.stage} 
+                      onValueChange={(v) => setFormData({...formData, stage: v as ContestStage})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select stage" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Final">Grand Final</SelectItem>
+                        <SelectItem value="Semi-Final 1">Semi-Final 1</SelectItem>
+                        <SelectItem value="Semi-Final 2">Semi-Final 2</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="country">Country</Label>
+                  <Input 
+                    id="country" 
+                    placeholder="e.g. Greece" 
+                    value={formData.country}
+                    onChange={(e) => setFormData({...formData, country: e.target.value})}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="artist">Artist</Label>
@@ -192,9 +219,9 @@ export default function AdminPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Year</TableHead>
+                <TableHead>Stage</TableHead>
                 <TableHead>Country</TableHead>
                 <TableHead>Artist & Song</TableHead>
-                <TableHead>Media</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -211,6 +238,11 @@ export default function AdminPage() {
               ) : filtered.map((entry) => (
                 <TableRow key={entry.id}>
                   <TableCell className="font-medium">{entry.year}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-[10px] py-0">
+                      {entry.stage}
+                    </Badge>
+                  </TableCell>
                   <TableCell>{entry.country}</TableCell>
                   <TableCell>
                     <div className="flex flex-col">
@@ -218,22 +250,13 @@ export default function AdminPage() {
                       <span className="text-xs text-muted-foreground">{entry.songTitle}</span>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <a 
-                      href={entry.videoUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline text-xs flex items-center gap-1"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      Video Link
-                    </a>
-                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
+                      <a href={entry.videoUrl} target="_blank" rel="noopener noreferrer">
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      </a>
                       <Button 
                         variant="ghost" 
                         size="icon" 
