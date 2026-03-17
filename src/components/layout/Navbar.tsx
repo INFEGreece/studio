@@ -42,9 +42,9 @@ export function Navbar() {
       <div className="container flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-3">
-            <div className="relative h-10 w-10 flex-shrink-0">
+            <div className="relative h-10 w-16 flex-shrink-0">
               <img 
-                src="https://infegreece.com/wp-content/uploads/2026/01/LOGO-INFE.png" 
+                src="https://infegreece.com/wp-content/uploads/2023/04/Infe-Greece.jpg" 
                 alt="INFE Greece Logo" 
                 className="h-full w-full object-contain"
               />

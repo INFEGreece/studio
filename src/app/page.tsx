@@ -27,7 +27,7 @@ export default function Home() {
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [selectedStage, setSelectedStage] = useState<string>("All");
 
-  // Ensure user is signed in anonymously to track votes
+  // Ensure user is signed in anonymously to track votes if not logged in
   useEffect(() => {
     if (!user) {
       initiateAnonymousSignIn(auth);
@@ -109,11 +109,11 @@ export default function Home() {
         <section className="relative w-full py-20 md:py-32 overflow-hidden bg-[url('https://picsum.photos/seed/eschero/1920/1080')] bg-cover bg-center">
           <div className="absolute inset-0 bg-black/75 backdrop-blur-sm"></div>
           <div className="container relative z-10 px-4 flex flex-col items-center text-center space-y-8">
-            <div className="w-32 md:w-48 mb-4">
+            <div className="w-48 md:w-64 mb-4">
               <img 
-                src="https://infegreece.com/wp-content/uploads/2026/01/LOGO-INFE.png" 
+                src="https://infegreece.com/wp-content/uploads/2023/04/Infe-Greece.jpg" 
                 alt="INFE Greece" 
-                className="w-full h-full object-contain drop-shadow-2xl"
+                className="w-full h-full object-contain drop-shadow-2xl rounded-lg"
               />
             </div>
             <div className="space-y-4">
@@ -251,11 +251,11 @@ export default function Home() {
       <footer className="border-t bg-card/50 py-16">
         <div className="container px-4 text-center space-y-8">
           <div className="flex flex-col items-center gap-4">
-            <div className="h-12 w-12 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all">
+            <div className="h-16 w-24 flex-shrink-0 opacity-80 hover:opacity-100 transition-all">
               <img 
-                src="https://infegreece.com/wp-content/uploads/2026/01/LOGO-INFE.png" 
+                src="https://infegreece.com/wp-content/uploads/2023/04/Infe-Greece.jpg" 
                 alt="INFE Greece Logo" 
-                className="h-full w-full object-contain"
+                className="h-full w-full object-contain rounded"
               />
             </div>
             <span className="text-2xl font-headline font-bold tracking-tight">INFE <span className="text-primary">GR Poll</span></span>
