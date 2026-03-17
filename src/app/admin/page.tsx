@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, ExternalLink, Loader2, Image as ImageIcon, ListPlus, Info } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, ExternalLink, Loader2, Image as ImageIcon, ListPlus, Info, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
@@ -160,6 +160,7 @@ export default function AdminPage() {
     let count = 0;
 
     lines.forEach(line => {
+      if (!line.trim()) return;
       const parts = line.split(';').map(p => p.trim());
       if (parts.length >= 3) {
         const [country, artist, song, videoUrl] = parts;
@@ -185,7 +186,7 @@ export default function AdminPage() {
 
     toast({
       title: "Bulk Import Complete",
-      description: `Successfully added ${count} entries for ${bulkYear}.`,
+      description: `Successfully added ${count} entries for ${bulkYear} (${bulkStage}).`,
     });
 
     setBulkText("");
@@ -213,9 +214,12 @@ export default function AdminPage() {
               </DialogTrigger>
               <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
-                  <DialogTitle>Bulk Import Entries</DialogTitle>
+                  <DialogTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Bulk Import Entries
+                  </DialogTitle>
                   <DialogDescription>
-                    Quickly add multiple songs for a specific year and stage.
+                    Add multiple songs for a specific year and stage. Use the semicolon-separated format.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -241,13 +245,13 @@ export default function AdminPage() {
                   <div className="space-y-2">
                     <Label className="flex items-center justify-between">
                       Entries List
-                      <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                      <span className="text-[10px] text-muted-foreground flex items-center gap-1 bg-muted px-2 py-0.5 rounded">
                         <Info className="h-3 w-3" />
-                        Format: Country; Artist; Song; VideoUrl (one per line)
+                        Format: Country; Artist; Song; VideoUrl
                       </span>
                     </Label>
                     <Textarea 
-                      placeholder="Greece; Marina Satti; ZARI; https://youtube.com/..." 
+                      placeholder={"Greece; Marina Satti; ZARI; https://youtube.com/...\nSweden; Marcus & Martinus; Unforgettable; https://youtube.com/..."} 
                       className="min-h-[200px] font-mono text-xs"
                       value={bulkText}
                       onChange={(e) => setBulkText(e.target.value)}
@@ -255,7 +259,9 @@ export default function AdminPage() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button onClick={handleBulkImport} className="w-full h-12">Import Entries</Button>
+                  <Button onClick={handleBulkImport} className="w-full h-12 bg-primary hover:bg-primary/90">
+                    Import {bulkText.split('\n').filter(l => l.trim()).length} Entries
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -400,7 +406,7 @@ export default function AdminPage() {
                 <TableRow key={entry.id}>
                   <TableCell className="font-medium">{entry.year}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="text-[10px] py-0">
+                    <Badge variant="outline" className="text-[10px] py-0 border-primary/30 text-primary">
                       {entry.stage}
                     </Badge>
                   </TableCell>
@@ -420,7 +426,7 @@ export default function AdminPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(entry)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => openEditDialog(entry)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <a href={entry.videoUrl} target="_blank" rel="noopener noreferrer">
