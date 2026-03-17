@@ -23,7 +23,18 @@ Once the app is deployed for the first time:
 5. Firebase will provide **DNS Records** (A or CNAME). 
 6. Log in to your domain provider (e.g., where you bought `infegreece.com`) and add these records to your DNS settings.
 
-### 3. Admin Access
+### 3. How to Embed in your Main Site
+If you want to show the poll inside a page on `infegreece.com`, use this HTML code in your website editor:
+```html
+<iframe 
+  src="https://infepoll.infegreece.com" 
+  width="100%" 
+  height="800px" 
+  style="border:none;"
+></iframe>
+```
+
+### 4. Admin Access
 To manage entries:
 1. Sign in to the app (create an account first).
 2. Go to the Firebase Console > **Firestore Database**.

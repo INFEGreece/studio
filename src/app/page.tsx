@@ -43,7 +43,10 @@ export default function Home() {
 
   const { data: rawEntries, isLoading } = useCollection<Entry>(entriesRef);
 
-  const filteredEntries = (rawEntries || []).slice().sort((a, b) => a.country.localeCompare(b.country));
+  // Sort alphabetically by country name
+  const filteredEntries = (rawEntries || [])
+    .slice()
+    .sort((a, b) => a.country.localeCompare(b.country));
 
   const userVotesRef = useMemoFirebase(() => {
     if (!user) return null;
