@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +34,7 @@ import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking, d
 import { collection, doc } from 'firebase/firestore';
 import { Entry, ContestStage } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
+import { getFlagUrl } from '@/lib/utils';
 
 export default function AdminPage() {
   const db = useFirestore();
@@ -48,13 +48,20 @@ export default function AdminPage() {
   const [formData, setFormData] = useState({
     country: '',
     flagUrl: '',
-    year: 2025,
+    year: 2026,
     artist: '',
     songTitle: '',
     videoUrl: '',
     thumbnailUrl: '',
     stage: 'Final' as ContestStage
   });
+
+  // Auto-set flag when country changes
+  useEffect(() => {
+    if (formData.country) {
+      setFormData(prev => ({ ...prev, flagUrl: getFlagUrl(prev.country) }));
+    }
+  }, [formData.country]);
 
   const entriesRef = useMemoFirebase(() => collection(db, 'eurovision_entries'), [db]);
   const { data: entries, isLoading } = useCollection<Entry>(entriesRef);
@@ -83,7 +90,7 @@ export default function AdminPage() {
     setFormData({
       country: '',
       flagUrl: '',
-      year: 2025,
+      year: 2026,
       artist: '',
       songTitle: '',
       videoUrl: '',
@@ -113,7 +120,7 @@ export default function AdminPage() {
     if (!formData.country || !formData.artist || !formData.songTitle || !formData.videoUrl) {
       toast({
         title: "Missing Fields",
-        description: "Please fill in all required fields.",
+        description: "Please fill in all required fields (Country, Artist, Song, Video URL).",
         variant: "destructive"
       });
       return;
@@ -184,27 +191,23 @@ export default function AdminPage() {
                     </Select>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="country">Country</Label>
-                    <Input 
-                      id="country" 
-                      placeholder="e.g. Greece" 
-                      value={formData.country}
-                      onChange={(e) => setFormData({...formData, country: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="flag" className="flex items-center gap-2">
-                      <Flag className="h-3 w-3" />
-                      Flag URL (Optional)
-                    </Label>
-                    <Input 
-                      id="flag" 
-                      placeholder="e.g. flagcdn.com/gr.svg" 
-                      value={formData.flagUrl}
-                      onChange={(e) => setFormData({...formData, flagUrl: e.target.value})}
-                    />
+                    <div className="flex gap-2">
+                      <Input 
+                        id="country" 
+                        placeholder="e.g. Greece" 
+                        value={formData.country}
+                        onChange={(e) => setFormData({...formData, country: e.target.value})}
+                      />
+                      {formData.flagUrl && (
+                        <div className="h-10 w-14 bg-muted rounded border overflow-hidden flex-shrink-0">
+                          <img src={formData.flagUrl} alt="" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">Flag is set automatically based on country name.</p>
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -226,10 +229,10 @@ export default function AdminPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="video">YouTube Embed URL</Label>
+                  <Label htmlFor="video">YouTube URL</Label>
                   <Input 
                     id="video" 
-                    placeholder="https://www.youtube.com/embed/..." 
+                    placeholder="https://www.youtube.com/watch?v=..." 
                     value={formData.videoUrl}
                     onChange={(e) => setFormData({...formData, videoUrl: e.target.value})}
                   />
@@ -248,7 +251,7 @@ export default function AdminPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button className="w-full" onClick={handleSave}>{isEditing ? 'Update' : 'Save'} Entry</Button>
+                <Button className="w-full h-12" onClick={handleSave}>{isEditing ? 'Update' : 'Save'} Entry</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -297,7 +300,7 @@ export default function AdminPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {entry.flagUrl && <img src={entry.flagUrl} alt="" className="h-4 w-6 object-cover rounded-sm" />}
+                      <img src={entry.flagUrl || getFlagUrl(entry.country)} alt="" className="h-4 w-6 object-cover rounded-sm shadow-sm" />
                       {entry.country}
                     </div>
                   </TableCell>
@@ -305,7 +308,6 @@ export default function AdminPage() {
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{entry.artist}</span>
-                        {entry.thumbnailUrl && <ImageIcon className="h-3 w-3 text-accent" />}
                       </div>
                       <span className="text-xs text-muted-foreground">{entry.songTitle}</span>
                     </div>

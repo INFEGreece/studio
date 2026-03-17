@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -8,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Mic2, MapPin, Play } from 'lucide-react';
 import { VoteDialog } from '@/components/voting/VoteDialog';
+import { getFlagUrl } from '@/lib/utils';
 
 interface EntryCardProps {
   entry: Entry;
@@ -27,7 +27,7 @@ function getEmbedUrl(url: string) {
   // Handle watch?v= format
   const watchMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/\s]+)/);
   if (watchMatch && watchMatch[1]) {
-    return `https://www.youtube.com/embed/${watchMatch[1]}`;
+    return `https://www.youtube.com/embed/${watchMatch[1]}?autoplay=1`;
   }
 
   return url;
@@ -36,6 +36,7 @@ function getEmbedUrl(url: string) {
 export function EntryCard({ entry, onVote, hasVoted }: EntryCardProps) {
   const [showVideo, setShowVideo] = useState(false);
   const embedUrl = getEmbedUrl(entry.videoUrl);
+  const flagUrl = entry.flagUrl || getFlagUrl(entry.country);
 
   return (
     <Card className="overflow-hidden group hover:shadow-xl hover:shadow-primary/5 transition-all border-muted/50">
@@ -68,13 +69,11 @@ export function EntryCard({ entry, onVote, hasVoted }: EntryCardProps) {
               <Badge variant="secondary" className="bg-black/60 backdrop-blur-md text-[10px] py-0">
                 {entry.stage}
               </Badge>
-              {entry.flagUrl && (
-                <img 
-                  src={entry.flagUrl} 
-                  alt="" 
-                  className="h-5 w-8 object-cover rounded shadow-sm border border-white/20" 
-                />
-              )}
+              <img 
+                src={flagUrl} 
+                alt="" 
+                className="h-5 w-8 object-cover rounded shadow-sm border border-white/20" 
+              />
             </div>
           </>
         )}
