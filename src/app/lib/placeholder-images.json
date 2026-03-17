@@ -1,0 +1,29 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "eurovision-stage",
+      "description": "Grand Eurovision stage with vibrant lights",
+      "imageUrl": "https://picsum.photos/seed/ev1/1200/600",
+      "imageHint": "eurovision stage"
+    },
+    {
+      "id": "microphone",
+      "description": "Professional studio microphone",
+      "imageUrl": "https://picsum.photos/seed/ev2/600/400",
+      "imageHint": "microphone singer"
+    },
+    {
+      "id": "flags",
+      "description": "International flags waving",
+      "imageUrl": "https://picsum.photos/seed/ev3/600/400",
+      "imageHint": "international flags"
+    },
+    {
+      "id": "winner-trophy",
+      "description": "Glass microphone trophy",
+      "imageUrl": "https://picsum.photos/seed/ev4/600/400",
+      "imageHint": "glass trophy"
+    }
+  ]
+}
