@@ -14,10 +14,13 @@ To host this on `infepoll.infegreece.com`:
 
 ## Managing Costs (Staying Free)
 This app is designed to run on the **Firebase Spark Plan ($0/month)**.
-- **Firestore:** Includes 50k reads and 20k writes per day.
+- **Firestore:** Includes 50k reads and 20k writes per day. 
 - **Auth:** Includes 50k monthly active users.
 - **Hosting:** Includes 10GB of storage.
-- **App Hosting:** Uses Google Cloud resources that have a free tier. To ensure you stay within free limits, the `apphosting.yaml` is configured with `maxInstances: 1`.
+- **App Hosting:** Uses Google Cloud resources. The `apphosting.yaml` is configured with `maxInstances: 1` to help you stay within the Google Cloud Free Tier.
+
+### Monitoring Usage
+You can monitor your daily usage in the "Usage and Billing" tab of the Firebase Console to ensure you are not approaching the free limits.
 
 ## Admin Access
 To manage entries:

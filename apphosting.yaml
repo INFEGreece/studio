@@ -2,6 +2,8 @@
 # https://firebase.google.com/docs/app-hosting/configure
 
 runConfig:
-  # Increase this value if you'd like to automatically spin up
-  # more instances in response to increased traffic.
+  # To stay within the free tier limits of Google Cloud (which powers App Hosting),
+  # we limit the number of active instances to 1.
   maxInstances: 1
+  # Memory limit for the server-side rendering (1GB is usually sufficient for this app)
+  memory: 1024MiB
