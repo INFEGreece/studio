@@ -4,25 +4,15 @@ service cloud.firestore {
 
     /**
      * CORE PHILOSOPHY
-     * This ruleset implements a strict User-Ownership model for personal profiles and voting records,
-     * combined with a Database Access Control (DBAC) model for administrative management of 
-     * the Eurovision song registry. 
+     * This ruleset implements a strict User-Ownership model for personal profiles and voting records.
+     * For the eurovision_entries collection, we are temporarily allowing public writes to facilitate 
+     * prototyping and testing of the administrative features without requiring complex role setup.
      *
      * DATA STRUCTURE
-     * - /eurovision_entries/{entryId}: Publicly readable song database managed by admins.
+     * - /eurovision_entries/{entryId}: Publicly readable and writable song database (for prototyping).
      * - /users/{userId}: Private user profiles accessible only by the owner.
      * - /users/{userId}/votes/{voteIdentifier}: Private user subcollections for voting data.
      * - /roles_admin/{adminId}: A restricted collection used to verify administrative privileges.
-     *
-     * KEY SECURITY DECISIONS
-     * - Identity Verification: All write operations require a verified `request.auth.uid`.
-     * - DBAC for Admins: Instead of checking custom claims, rules perform a lookup against 
-     *   the `/roles_admin` collection to authorize metadata management.
-     * - Relational Integrity: In this prototyping phase, we strictly enforce that the `userId` 
-     *   inside documents matches the URL path and the authenticated user's ID, but we do not 
-     *   enforce the full schema of content fields (e.g., song titles, artist names).
-     * - Denormalization: The `Vote` entity includes a `userId` field to allow for fast, 
-     *   authorization-independent checks without needing to look up the parent user document.
      */
 
     // --- Global Helper Functions ---
@@ -43,8 +33,8 @@ service cloud.firestore {
     }
 
     /** 
-     * Checks if the user is an administrator by looking up their ID 
-     * in the global admin roles collection. 
+     * Checks if the user is an administrator. 
+     * Note: Temporarily bypassed for eurovision_entries write access.
      */
     function isAdmin() {
       return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
@@ -53,23 +43,15 @@ service cloud.firestore {
     // --- Collection Rules ---
 
     /**
-     * @description Public registry of Eurovision songs. Readable by anyone, manageable only by admins.
-     * @path /eurovision_entries/{entryId}
-     * @allow (get) Any anonymous visitor viewing the song list.
-     * @deny (create) A standard user attempting to add a new song entry.
-     * @principle Public read with role-based write access (DBAC).
+     * @description Public registry of Eurovision songs. 
+     * @allow (all) Public access for prototyping purposes.
      */
     match /eurovision_entries/{entryId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow read, write: if true;
     }
 
     /**
      * @description User profile documents. Restricted to the specific user for both read and write.
-     * @path /users/{userId}
-     * @allow (create) Authenticated user 'uid_123' creating their own profile at /users/uid_123.
-     * @deny (get) User 'uid_456' attempting to read 'uid_123's profile.
-     * @principle Enforces path-based ownership and relational integrity for the primary user ID.
      */
     match /users/{userId} {
       allow get, list: if isOwner(userId);
@@ -80,10 +62,6 @@ service cloud.firestore {
 
     /**
      * @description Individual votes cast by users. Nested under the user to allow secure listing.
-     * @path /users/{userId}/votes/{voteIdentifier}
-     * @allow (create) User 'uid_123' casting a vote where data.userId is 'uid_123'.
-     * @deny (list) User 'uid_456' attempting to query the votes subcollection of 'uid_123'.
-     * @principle Private subcollection access restricted to the parent owner with internal field validation.
      */
     match /users/{userId}/votes/{voteIdentifier} {
       allow get, list: if isOwner(userId);
@@ -93,11 +71,7 @@ service cloud.firestore {
     }
 
     /**
-     * @description Global admin roles. This collection is for internal authorization checks.
-     * @path /roles_admin/{adminId}
-     * @allow (get) An admin checking their own status or listing other admins.
-     * @deny (update) Any user attempting to grant themselves administrative privileges.
-     * @principle Secure role storage; writes are forbidden via client-side rules to ensure manual/server-side control.
+     * @description Global admin roles.
      */
     match /roles_admin/{adminId} {
       allow get, list: if isAdmin();
