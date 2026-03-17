@@ -29,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, ExternalLink, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, ExternalLink, Loader2, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
@@ -45,10 +45,11 @@ export default function AdminPage() {
   // Form state
   const [formData, setFormData] = useState({
     country: '',
-    year: 2024,
+    year: 2025,
     artist: '',
     songTitle: '',
     videoUrl: '',
+    thumbnailUrl: '',
     stage: 'Final' as ContestStage
   });
 
@@ -99,10 +100,11 @@ export default function AdminPage() {
 
     setFormData({
       country: '',
-      year: 2024,
+      year: 2025,
       artist: '',
       songTitle: '',
       videoUrl: '',
+      thumbnailUrl: '',
       stage: 'Final'
     });
     setIsDialogOpen(false);
@@ -194,6 +196,18 @@ export default function AdminPage() {
                     onChange={(e) => setFormData({...formData, videoUrl: e.target.value})}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="thumbnail" className="flex items-center gap-2">
+                    <ImageIcon className="h-3 w-3" />
+                    Artist Photo URL (Optional)
+                  </Label>
+                  <Input 
+                    id="thumbnail" 
+                    placeholder="https://example.com/artist.jpg" 
+                    value={formData.thumbnailUrl}
+                    onChange={(e) => setFormData({...formData, thumbnailUrl: e.target.value})}
+                  />
+                </div>
               </div>
               <DialogFooter>
                 <Button className="w-full" onClick={handleSave}>Save Entry</Button>
@@ -246,7 +260,10 @@ export default function AdminPage() {
                   <TableCell>{entry.country}</TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-medium">{entry.artist}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{entry.artist}</span>
+                        {entry.thumbnailUrl && <ImageIcon className="h-3 w-3 text-accent" />}
+                      </div>
                       <span className="text-xs text-muted-foreground">{entry.songTitle}</span>
                     </div>
                   </TableCell>

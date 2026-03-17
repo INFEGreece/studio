@@ -32,6 +32,11 @@
           "description": "The URL for the embedded performance video.",
           "format": "uri"
         },
+        "thumbnailUrl": {
+          "type": "string",
+          "description": "An optional URL for a custom artist or performance photo.",
+          "format": "uri"
+        },
         "stage": {
           "type": "string",
           "enum": ["Final", "Semi-Final 1", "Semi-Final 2"],

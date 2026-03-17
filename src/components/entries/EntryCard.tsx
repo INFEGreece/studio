@@ -31,7 +31,7 @@ export function EntryCard({ entry, onVote, hasVoted }: EntryCardProps) {
         ) : (
           <>
             <img
-              src={`https://picsum.photos/seed/${entry.id}/600/338`}
+              src={entry.thumbnailUrl || `https://picsum.photos/seed/${entry.id}/600/338`}
               alt={entry.songTitle}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
