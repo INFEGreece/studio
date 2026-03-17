@@ -14,19 +14,24 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, History, Filter, Loader2 } from 'lucide-react';
+import { Trophy, History, Filter, Loader2, Layers } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Entry } from '@/lib/types';
 
 export default function Home() {
   const db = useFirestore();
-  const [selectedYear, setSelectedYear] = useState<number>(2024);
+  const [selectedYear, setSelectedYear] = useState<number>(2026);
+  const [selectedStage, setSelectedStage] = useState<string>("All");
   const [votedEntries, setVotedEntries] = useState<Set<string>>(new Set());
 
   const entriesRef = useMemoFirebase(() => {
-    return query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
-  }, [db, selectedYear]);
+    let baseQuery = query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
+    if (selectedStage !== "All") {
+      baseQuery = query(baseQuery, where('stage', '==', selectedStage));
+    }
+    return baseQuery;
+  }, [db, selectedYear, selectedStage]);
 
   const { data: filteredEntries, isLoading } = useCollection<Entry>(entriesRef);
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
@@ -45,63 +50,90 @@ export default function Home() {
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
           <div className="container relative z-10 px-4 flex flex-col items-center text-center space-y-6">
             <h1 className="text-4xl md:text-7xl font-headline font-extrabold tracking-tighter text-white">
-              The INFE Greece <br/><span className="text-primary">Eurovision Poll</span>
+              The INFE GR <br/><span className="text-primary">Eurovision Poll</span>
             </h1>
             <p className="max-w-[700px] text-lg md:text-xl text-muted-foreground">
-              Vote for your favorite entries, discover new musical gems, and see how the community ranks the best contest on Earth.
+              Celebrating 70 years of Eurovision. Vote for your favorite entries and see how the community ranks the best contest on Earth.
             </p>
             <div className="flex gap-4">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-8">
+              <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-8" onClick={() => {
+                const element = document.getElementById('browser-section');
+                element?.scrollIntoView({ behavior: 'smooth' });
+              }}>
                 Start Voting
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 backdrop-blur">
-                View Scoreboard
+              <Button size="lg" variant="outline" className="text-lg px-8 backdrop-blur" asChild>
+                <a href="/scoreboard">View Scoreboard</a>
               </Button>
             </div>
           </div>
         </section>
 
         {/* Browser Section */}
-        <section className="container px-4 py-12">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-            <div className="space-y-2">
-              <h2 className="text-3xl font-headline font-bold flex items-center gap-2">
-                <History className="h-7 w-7 text-accent" />
-                Browse Entries
-              </h2>
-              <p className="text-muted-foreground">Explore over 70 years of musical history.</p>
+        <section id="browser-section" className="container px-4 py-12">
+          <div className="flex flex-col gap-8 mb-12">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+              <div className="space-y-2">
+                <h2 className="text-3xl font-headline font-bold flex items-center gap-2">
+                  <History className="h-7 w-7 text-accent" />
+                  Browse Entries
+                </h2>
+                <p className="text-muted-foreground">Explore 70 years of musical history, from 1956 to 2026.</p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-muted-foreground">Decade:</span>
+                  <Tabs value={currentDecadeLabel} className="w-auto">
+                    <TabsList className="bg-secondary/50">
+                      {DECADES.map(d => (
+                        <TabsTrigger key={d.label} value={d.label} onClick={() => {
+                          setSelectedYear(d.years[0]);
+                          setSelectedStage("All");
+                        }}>
+                          {d.label}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-muted-foreground">Year:</span>
+                  <Select 
+                    value={selectedYear.toString()} 
+                    onValueChange={(v) => {
+                      setSelectedYear(parseInt(v));
+                      setSelectedStage("All");
+                    }}
+                  >
+                    <SelectTrigger className="w-[120px] bg-secondary/50">
+                      <SelectValue placeholder="Year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(DECADES.find(d => d.label === currentDecadeLabel)?.years || []).map(y => (
+                        <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-muted-foreground">Decade:</span>
-                <Tabs value={currentDecadeLabel} className="w-auto">
-                  <TabsList className="bg-secondary/50">
-                    {DECADES.map(d => (
-                      <TabsTrigger key={d.label} value={d.label} onClick={() => setSelectedYear(d.years[0])}>
-                        {d.label}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                </Tabs>
+            {/* Stage Filter */}
+            <div className="flex flex-col gap-4 p-4 rounded-xl bg-card border border-border/50">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-1">
+                <Layers className="h-4 w-4" />
+                Select Competition Stage:
               </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-muted-foreground">Year:</span>
-                <Select 
-                  value={selectedYear.toString()} 
-                  onValueChange={(v) => setSelectedYear(parseInt(v))}
-                >
-                  <SelectTrigger className="w-[120px] bg-secondary/50">
-                    <SelectValue placeholder="Year" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(DECADES.find(d => d.label === currentDecadeLabel)?.years || []).map(y => (
-                      <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Tabs value={selectedStage} onValueChange={setSelectedStage} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-muted/30">
+                  <TabsTrigger value="All">All Entries</TabsTrigger>
+                  <TabsTrigger value="Final">Grand Final</TabsTrigger>
+                  <TabsTrigger value="Semi-Final 1">Semi-Final 1</TabsTrigger>
+                  <TabsTrigger value="Semi-Final 2">Semi-Final 2</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
           </div>
 
@@ -124,8 +156,11 @@ export default function Home() {
           ) : (
             <div className="flex flex-col items-center justify-center py-20 bg-secondary/20 rounded-xl border-2 border-dashed border-muted">
               <Filter className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-xl font-medium text-muted-foreground">No entries found for {selectedYear}</p>
-              <Button variant="link" onClick={() => setSelectedYear(2024)}>Return to 2024</Button>
+              <p className="text-xl font-medium text-muted-foreground">No entries found for {selectedYear} {selectedStage !== "All" ? `(${selectedStage})` : ""}</p>
+              <Button variant="link" onClick={() => {
+                setSelectedYear(2026);
+                setSelectedStage("All");
+              }}>Return to 2026</Button>
             </div>
           )}
         </section>
@@ -138,7 +173,7 @@ export default function Home() {
             <span className="text-xl font-headline font-bold">INFE GR Poll</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            Created for fans by INFE Greece. Eurovision Song Contest results and assets are property of EBU.
+            Celebrating 70 years of Eurovision. Created for fans by INFE Greece. Eurovision Song Contest results and assets are property of EBU.
           </p>
           <div className="flex justify-center gap-6 text-sm text-muted-foreground">
             <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
