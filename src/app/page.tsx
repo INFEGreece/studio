@@ -27,14 +27,12 @@ export default function Home() {
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [selectedStage, setSelectedStage] = useState<string>("All");
 
-  // Ensure user is signed in anonymously to track votes if not logged in
   useEffect(() => {
     if (!user) {
       initiateAnonymousSignIn(auth);
     }
   }, [user, auth]);
 
-  // Fetch entries for the selected year and stage
   const entriesRef = useMemoFirebase(() => {
     let baseQuery = query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
     if (selectedStage !== "All") {
@@ -45,10 +43,8 @@ export default function Home() {
 
   const { data: rawEntries, isLoading } = useCollection<Entry>(entriesRef);
 
-  // Sort entries alphabetically by country
   const filteredEntries = (rawEntries || []).slice().sort((a, b) => a.country.localeCompare(b.country));
 
-  // Fetch current user's votes for this year to prevent duplicate points
   const userVotesRef = useMemoFirebase(() => {
     if (!user) return null;
     return query(
@@ -59,13 +55,11 @@ export default function Home() {
 
   const { data: userVotes } = useCollection<Vote>(userVotesRef);
 
-  // Map of entryId -> points for the current user
   const userVotesMap = (userVotes || []).reduce((acc, vote) => {
     acc[vote.eurovisionEntryId] = vote.points;
     return acc;
   }, {} as Record<string, number>);
 
-  // Set of points already used for other entries in this year
   const usedPoints = (userVotes || []).reduce((acc, vote) => {
     acc.add(vote.points);
     return acc;
@@ -76,7 +70,6 @@ export default function Home() {
   const handleVote = (entry: Entry, score: number, feedback: string) => {
     if (!user) return;
 
-    // Save vote to user's collection
     const voteId = `${selectedYear}-${entry.id}`;
     const voteRef = doc(db, 'users', user.uid, 'votes', voteId);
     
@@ -92,7 +85,6 @@ export default function Home() {
 
     setDocumentNonBlocking(voteRef, voteData, { merge: true });
 
-    // Update global entry stats
     const entryRef = doc(db, 'eurovision_entries', entry.id);
     setDocumentNonBlocking(entryRef, {
       totalPoints: (entry.totalPoints || 0) + score,
@@ -105,9 +97,7 @@ export default function Home() {
       <Navbar />
       
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="relative w-full py-20 md:py-32 overflow-hidden bg-[url('https://picsum.photos/seed/eschero/1920/1080')] bg-cover bg-center">
-          <div className="absolute inset-0 bg-black/75 backdrop-blur-sm"></div>
+        <section className="relative w-full py-20 md:py-32 overflow-hidden bg-secondary/20">
           <div className="container relative z-10 px-4 flex flex-col items-center text-center space-y-8">
             <div className="w-48 md:w-64 mb-4">
               <img 
@@ -117,7 +107,7 @@ export default function Home() {
               />
             </div>
             <div className="space-y-4">
-              <h1 className="text-4xl md:text-7xl font-headline font-extrabold tracking-tighter text-white">
+              <h1 className="text-4xl md:text-7xl font-headline font-extrabold tracking-tighter text-foreground">
                 The INFE GR <br/><span className="text-primary">Eurovision Poll</span>
               </h1>
               <p className="max-w-[700px] text-lg md:text-xl text-muted-foreground mx-auto">
@@ -131,14 +121,13 @@ export default function Home() {
               }}>
                 Start Voting
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-10 h-14 backdrop-blur-md bg-white/5 border-white/20 hover:bg-white/10" asChild>
+              <Button size="lg" variant="outline" className="text-lg px-10 h-14" asChild>
                 <a href="/scoreboard">View Scoreboard</a>
               </Button>
             </div>
           </div>
         </section>
 
-        {/* Browser Section */}
         <section id="browser-section" className="container px-4 py-16">
           <div className="flex flex-col gap-10 mb-12">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
@@ -194,7 +183,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Stage Filter */}
             <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-inner">
               <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">
                 <Layers className="h-4 w-4" />
@@ -233,16 +221,6 @@ export default function Home() {
             <div className="flex flex-col items-center justify-center py-24 bg-secondary/10 rounded-3xl border-2 border-dashed border-muted/50">
               <Filter className="h-16 w-16 text-muted-foreground mb-6" />
               <p className="text-2xl font-bold text-muted-foreground">No records for {selectedYear} {selectedStage !== "All" ? `(${selectedStage})` : ""}</p>
-              <Button 
-                variant="link" 
-                className="mt-4 text-primary text-lg"
-                onClick={() => {
-                  setSelectedYear(2026);
-                  setSelectedStage("All");
-                }}
-              >
-                Return to 2026
-              </Button>
             </div>
           )}
         </section>
@@ -251,7 +229,7 @@ export default function Home() {
       <footer className="border-t bg-card/50 py-16">
         <div className="container px-4 text-center space-y-8">
           <div className="flex flex-col items-center gap-4">
-            <div className="h-16 w-24 flex-shrink-0 opacity-80 hover:opacity-100 transition-all">
+            <div className="h-16 w-24 flex-shrink-0 opacity-80">
               <img 
                 src="https://infegreece.com/wp-content/uploads/2023/04/Infe-Greece.jpg" 
                 alt="INFE Greece Logo" 
@@ -261,14 +239,9 @@ export default function Home() {
             <span className="text-2xl font-headline font-bold tracking-tight">INFE <span className="text-primary">GR Poll</span></span>
           </div>
           <p className="max-w-2xl mx-auto text-muted-foreground">
-            Celebrating 70 years of Eurovision history. Created for fans by INFE Greece. The Eurovision Song Contest results and assets are property of the EBU.
+            Celebrating 70 years of Eurovision history. Created for fans by INFE Greece.
           </p>
-          <div className="flex justify-center gap-8 text-sm font-medium text-muted-foreground">
-            <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-primary transition-colors">Contact</a>
-          </div>
-          <p className="text-xs text-muted-foreground/50 pt-4">
+          <p className="text-xs text-muted-foreground/50">
             © {new Date().getFullYear()} INFE Greece. All rights reserved.
           </p>
         </div>

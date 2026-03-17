@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -18,21 +17,13 @@ interface EntryCardProps {
   usedPoints?: Set<number>;
 }
 
-/**
- * Transforms a standard YouTube URL into an embeddable URL.
- */
 function getEmbedUrl(url: string) {
   if (!url) return '';
-  
-  // If it's already an embed URL, return it
   if (url.includes('/embed/')) return url;
-
-  // Handle watch?v= format
   const watchMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/\s]+)/);
   if (watchMatch && watchMatch[1]) {
     return `https://www.youtube.com/embed/${watchMatch[1]}?autoplay=1`;
   }
-
   return url;
 }
 
@@ -42,7 +33,7 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints }: En
   const flagUrl = entry.flagUrl || getFlagUrl(entry.country);
 
   return (
-    <Card className="overflow-hidden group hover:shadow-xl hover:shadow-primary/5 transition-all border-muted/50">
+    <Card className="overflow-hidden group hover:shadow-xl transition-all border-muted/50">
       <div className="relative aspect-video bg-muted overflow-hidden">
         {showVideo ? (
           <iframe
@@ -63,7 +54,7 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints }: En
                 onClick={() => setShowVideo(true)} 
                 variant="secondary" 
                 size="icon" 
-                className="h-16 w-16 rounded-full bg-primary/90 hover:bg-primary text-white"
+                className="h-16 w-16 rounded-full bg-primary/90 text-white"
               >
                 <Play className="h-8 w-8 fill-current" />
               </Button>
@@ -96,11 +87,11 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints }: En
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-3 shrink-0">
-            <Badge className="bg-primary text-primary-foreground font-bold text-xs px-2.5 py-0.5 shadow-sm">
+          <div className="flex flex-col items-end gap-2 shrink-0">
+            <Badge className="bg-primary text-primary-foreground font-bold text-xs px-2.5 py-0.5">
               {entry.year}
             </Badge>
-            <div className="h-10 w-16 bg-muted rounded-md border border-border/50 overflow-hidden shadow-md group-hover:shadow-primary/20 transition-shadow">
+            <div className="h-12 w-16 bg-muted rounded border border-border/50 overflow-hidden shadow-sm">
               <img 
                 src={flagUrl} 
                 alt={`${entry.country} flag`} 
@@ -112,15 +103,13 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints }: En
       </CardHeader>
 
       <CardContent className="p-4 pt-0">
-        <div className="flex items-center gap-2">
-          <VoteDialog 
-            entry={entry} 
-            onVote={onVote} 
-            hasVoted={hasVoted} 
-            userScore={userScore}
-            usedPoints={usedPoints}
-          />
-        </div>
+        <VoteDialog 
+          entry={entry} 
+          onVote={onVote} 
+          hasVoted={hasVoted} 
+          userScore={userScore}
+          usedPoints={usedPoints}
+        />
       </CardContent>
     </Card>
   );

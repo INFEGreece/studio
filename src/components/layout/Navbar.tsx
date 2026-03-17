@@ -24,7 +24,6 @@ export function Navbar() {
   const db = useFirestore();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
-  // Check if current user is an admin
   const adminDocRef = useMemoFirebase(() => {
     if (!user) return null;
     return doc(db, 'roles_admin', user.uid);
@@ -46,7 +45,7 @@ export function Navbar() {
               <img 
                 src="https://infegreece.com/wp-content/uploads/2023/04/Infe-Greece.jpg" 
                 alt="INFE Greece Logo" 
-                className="h-full w-full object-contain"
+                className="h-full w-full object-contain rounded"
               />
             </div>
             <span className="text-xl font-headline font-bold tracking-tight text-foreground hidden sm:inline-block">

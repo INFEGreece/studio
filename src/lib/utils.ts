@@ -28,6 +28,5 @@ export function getFlagUrl(countryName: string): string {
     return `https://flagcdn.com/w160/${code}.png`;
   }
   
-  // Fallback to a generic globe if not found
   return `https://flagcdn.com/w160/un.png`;
 }
