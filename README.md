@@ -1,45 +1,51 @@
 
-# INFE Greece Eurovision Poll 2026 (Free Spark Plan Version)
+# INFE Greece Eurovision Poll 2026 (Free Static Version)
 
-This version is optimized for the **Firebase Spark Plan ($0/month)**. It does not require a billing account or credit card.
+This version is optimized for **100% Free Hosting**. You can host it on your existing **Plesk** server or use the **Firebase Spark Plan ($0/mo)** without a credit card.
 
-## 🚀 How to Deploy for FREE
+## 🚀 How to Build your Website (Do this first)
+Before uploading to Plesk, you must turn the code into actual website files.
 
-To avoid the Blaze plan requirement, we use **Classic Firebase Hosting** with a Static Export.
+1. **Find the Terminal**: Look at the bottom of this editor window for a tab named **"Terminal"**.
+2. **Run the build command**: Click inside that terminal, type the following, and press Enter:
+   `npm run build`
+3. **The Result**: A new folder named `out` will appear in your file list on the left. This folder contains your entire website.
 
-### 1. Install Firebase Tools
-Open your terminal and run:
-`npm install -g firebase-tools`
+---
 
-### 2. Login and Initialize
-1. Run `firebase login` and follow the browser instructions.
-2. Run `firebase init hosting`.
-3. Choose **"Use an existing project"** and select your project.
-4. Set the public directory to `out`.
-5. Configure as a single-page app? **Yes**.
-6. Set up automatic builds/deploys with GitHub? **Optional (recommended)**.
+## 📂 Option 1: Hosting on your Plesk (Recommended)
+If you already have a Plesk server for `infegreece.com`:
 
-### 3. Build and Deploy
-Run these commands every time you want to update your site:
-1. `npm run build`
-2. `firebase deploy`
+1. Build the files using the instructions above.
+2. Open your **Plesk File Manager**.
+3. Go to the folder for your subdomain (e.g., `infepoll.infegreece.com`).
+4. **Upload**: Drag and drop all the files and folders found **inside** the `out` folder directly into your server's root folder (usually `httpdocs`).
+5. **Done**: Your poll is live on your server!
 
-### 4. Connect Your Custom Domain
-1. Go to the [Firebase Console](https://console.firebase.google.com/).
-2. Select **Hosting** from the left menu.
-3. Click **Add Custom Domain**.
-4. Enter `infepoll.infegreece.com`.
-5. Add the provided DNS records to your domain provider.
+---
+
+## 🔥 Option 2: Hosting on Firebase (Spark Plan)
+If you prefer to use Firebase's free hosting:
+
+1. In the terminal below, run: `firebase login` (follow the link in your browser).
+2. Run: `firebase init hosting`.
+   - Select your project.
+   - For "public directory", type: `out`.
+   - For "single-page app", choose: **Yes**.
+3. Run: `firebase deploy`.
+
+---
 
 ## 🛠 Admin Setup
-1. Sign in to your app (at `infepoll.infegreece.com/admin`).
-2. Go to Firebase Console > Firestore Database.
-3. Create a collection `roles_admin`.
-4. Create a document where the **ID** is your **User UID**.
-5. Add a field `role: "admin"`.
+1. Go to your live site at `infepoll.infegreece.com/admin`.
+2. Sign in (or create an account).
+3. To give yourself permission to manage entries:
+   - Go to **Firebase Console** > **Firestore Database**.
+   - Create a collection: `roles_admin`.
+   - Create a document with **ID** set to your **User UID** (found in the Authentication tab after you sign in).
+   - Add any field, e.g., `role: "admin"`.
 
 ## ✨ Features
-- **$0 Cost**: Runs entirely on the free Spark tier.
-- **Static Export**: Fast loading and secure.
-- **Alphabetical Sorting**: Countries sorted by name automatically.
-- **Flag Fallbacks**: Flags show automatically if no photo is uploaded.
+- **$0 Cost**: No billing account or credit card required.
+- **Alphabetical Sorting**: Countries sorted by name automatically everywhere.
+- **Flag Fallbacks**: If you don't upload an artist photo, the country's flag is used automatically.
