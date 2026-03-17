@@ -54,7 +54,8 @@ export default function AdminPage() {
     if (!user) return null;
     return doc(db, 'roles_admin', user.uid);
   }, [db, user]);
-  const { data: adminData, isLoading: isAdminLoading } = useDoc(adminDocRef);
+  
+  const { data: adminData, isLoading: isAdminLoading, error: adminError } = useDoc(adminDocRef);
   const isAdmin = !!adminData;
 
   // Bulk import state
@@ -82,7 +83,7 @@ export default function AdminPage() {
   }, [formData.country]);
 
   const entriesRef = useMemoFirebase(() => collection(db, 'eurovision_entries'), [db]);
-  const { data: entries, isLoading } = useCollection<Entry>(entriesRef);
+  const { data: entries, isLoading: isEntriesLoading } = useCollection<Entry>(entriesRef);
 
   const filtered = (entries || []).filter(e => 
     e.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -90,15 +91,20 @@ export default function AdminPage() {
     e.songTitle.toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => b.year - a.year || a.country.localeCompare(b.country));
 
+  // Show loading state while checking user status
   if (isUserLoading || isAdminLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <p className="text-muted-foreground animate-pulse font-medium">Verifying credentials...</p>
+        </div>
       </div>
     );
   }
 
-  if (!user || !isAdmin) {
+  // Redirect or show access denied if not an admin
+  if (!user || (!isAdmin && !isAdminLoading)) {
     return (
       <div className="flex flex-col min-h-screen">
         <Navbar />
@@ -111,10 +117,10 @@ export default function AdminPage() {
               <h1 className="text-2xl font-bold font-headline">Access Denied</h1>
               <p className="text-muted-foreground">
                 You do not have administrative privileges to access this area. 
-                Please sign in with an authorized account.
+                Please sign in with an authorized account or contact the site owner.
               </p>
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 pt-4">
               <Link href="/">
                 <Button variant="outline" className="w-full">Return Home</Button>
               </Link>
@@ -438,7 +444,7 @@ export default function AdminPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
+              {isEntriesLoading ? (
                 <TableRow>
                   <TableCell colSpan={5} className="h-24 text-center">
                     <div className="flex items-center justify-center gap-2">
@@ -494,7 +500,7 @@ export default function AdminPage() {
             </TableBody>
           </Table>
           
-          {!isLoading && filtered.length === 0 && (
+          {!isEntriesLoading && filtered.length === 0 && (
             <div className="p-12 text-center text-muted-foreground">
               No entries found. Start by adding a new one!
             </div>
