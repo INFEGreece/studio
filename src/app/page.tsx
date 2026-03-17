@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { EntryCard } from '@/components/entries/EntryCard';
 import { DECADES } from '@/lib/data';
@@ -15,16 +15,27 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, History, Filter, Loader2, Layers } from 'lucide-react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
-import { Entry } from '@/lib/types';
+import { useCollection, useFirestore, useMemoFirebase, useUser, setDocumentNonBlocking } from '@/firebase';
+import { collection, query, where, doc } from 'firebase/firestore';
+import { Entry, Vote } from '@/lib/types';
+import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
+import { useAuth } from '@/firebase';
 
 export default function Home() {
   const db = useFirestore();
+  const auth = useAuth();
+  const { user } = useUser();
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [selectedStage, setSelectedStage] = useState<string>("All");
-  const [votedEntries, setVotedEntries] = useState<Set<string>>(new Set());
 
+  // Ensure user is signed in anonymously to track votes
+  useEffect(() => {
+    if (!user) {
+      initiateAnonymousSignIn(auth);
+    }
+  }, [user, auth]);
+
+  // Fetch entries for the selected year and stage
   const entriesRef = useMemoFirebase(() => {
     let baseQuery = query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
     if (selectedStage !== "All") {
@@ -34,10 +45,57 @@ export default function Home() {
   }, [db, selectedYear, selectedStage]);
 
   const { data: filteredEntries, isLoading } = useCollection<Entry>(entriesRef);
+
+  // Fetch current user's votes for this year to prevent duplicate points
+  const userVotesRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(
+      collection(db, 'users', user.uid, 'votes'),
+      where('year', '==', selectedYear)
+    );
+  }, [db, user, selectedYear]);
+
+  const { data: userVotes } = useCollection<Vote>(userVotesRef);
+
+  // Map of entryId -> points for the current user
+  const userVotesMap = (userVotes || []).reduce((acc, vote) => {
+    acc[vote.eurovisionEntryId] = vote.points;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Set of points already used for other entries in this year
+  const usedPoints = (userVotes || []).reduce((acc, vote) => {
+    acc.add(vote.points);
+    return acc;
+  }, new Set<number>());
+
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
 
-  const handleVote = (entryId: string) => {
-    setVotedEntries(prev => new Set(prev).add(entryId));
+  const handleVote = (entry: Entry, score: number, feedback: string) => {
+    if (!user) return;
+
+    // Save vote to user's collection
+    const voteId = `${selectedYear}-${entry.id}`;
+    const voteRef = doc(db, 'users', user.uid, 'votes', voteId);
+    
+    const voteData: Vote = {
+      id: voteId,
+      userId: user.uid,
+      eurovisionEntryId: entry.id,
+      year: selectedYear,
+      points: score,
+      votedAt: new Date().toISOString(),
+      feedback: feedback
+    };
+
+    setDocumentNonBlocking(voteRef, voteData, { merge: true });
+
+    // Update global entry stats (optional, could be handled by a cloud function for production)
+    const entryRef = doc(db, 'eurovision_entries', entry.id);
+    setDocumentNonBlocking(entryRef, {
+      totalPoints: (entry.totalPoints || 0) + score,
+      voteCount: (entry.voteCount || 0) + 1
+    }, { merge: true });
   };
 
   return (
@@ -148,8 +206,10 @@ export default function Home() {
                 <EntryCard 
                   key={entry.id} 
                   entry={entry} 
-                  onVote={() => handleVote(entry.id)}
-                  hasVoted={votedEntries.has(entry.id)}
+                  onVote={(score, feedback) => handleVote(entry, score, feedback)}
+                  hasVoted={!!userVotesMap[entry.id]}
+                  userScore={userVotesMap[entry.id]}
+                  usedPoints={usedPoints}
                 />
               ))}
             </div>

@@ -13,19 +13,22 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { Star, Wand2, Loader2, CheckCircle2 } from 'lucide-react';
+import { Star, Wand2, Loader2, CheckCircle2, Info } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { suggestVoteFeedback } from '@/ai/flows/vote-feedback-suggester';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 interface VoteDialogProps {
   entry: Entry;
   onVote?: (score: number, feedback: string) => void;
   hasVoted?: boolean;
+  userScore?: number;
+  usedPoints?: Set<number>;
 }
 
-export function VoteDialog({ entry, onVote, hasVoted }: VoteDialogProps) {
-  const [score, setScore] = useState<number>(0);
+export function VoteDialog({ entry, onVote, hasVoted, userScore, usedPoints = new Set() }: VoteDialogProps) {
+  const [score, setScore] = useState<number>(userScore || 0);
   const [feedback, setFeedback] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -81,33 +84,46 @@ export function VoteDialog({ entry, onVote, hasVoted }: VoteDialogProps) {
       <DialogTrigger asChild>
         <Button 
           className="flex-1 flex items-center gap-2" 
-          disabled={hasVoted}
           variant={hasVoted ? "secondary" : "default"}
         >
           {hasVoted ? <CheckCircle2 className="h-4 w-4" /> : <Star className="h-4 w-4" />}
-          {hasVoted ? "Voted" : "Vote"}
+          {hasVoted ? `Voted (${userScore} pts)` : "Vote"}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="font-headline text-2xl">Vote for {entry.country}</DialogTitle>
+          <DialogTitle className="font-headline text-2xl flex items-center gap-2">
+            Vote for {entry.country}
+            {hasVoted && <Badge variant="outline" className="ml-2">Editing</Badge>}
+          </DialogTitle>
           <DialogDescription>
-            How many points would you give {entry.artist}'s "{entry.title}"?
+            Assign a point value to {entry.artist}'s "{entry.title}". Remember: you can only give each point value once per year!
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-6 py-4">
-          <div className="grid grid-cols-5 gap-2">
-            {points.map((p) => (
-              <Button
-                key={p}
-                variant={score === p ? "default" : "outline"}
-                className={`h-12 w-full text-lg font-bold ${score === p ? "bg-primary" : "hover:border-primary hover:text-primary"}`}
-                onClick={() => setScore(p)}
-              >
-                {p}
-              </Button>
-            ))}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 p-2 rounded">
+              <Info className="h-3 w-3" />
+              <span>Greyed out numbers have already been given to other countries.</span>
+            </div>
+            <div className="grid grid-cols-5 gap-2">
+              {points.map((p) => {
+                const isUsedByOther = usedPoints.has(p) && p !== userScore;
+                return (
+                  <Button
+                    key={p}
+                    disabled={isUsedByOther}
+                    variant={score === p ? "default" : "outline"}
+                    className={`h-12 w-full text-lg font-bold relative ${score === p ? "bg-primary" : "hover:border-primary hover:text-primary"}`}
+                    onClick={() => setScore(p)}
+                  >
+                    {p}
+                    {isUsedByOther && <div className="absolute inset-0 bg-background/50 cursor-not-allowed rounded-md" />}
+                  </Button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -138,8 +154,8 @@ export function VoteDialog({ entry, onVote, hasVoted }: VoteDialogProps) {
         </div>
 
         <DialogFooter>
-          <Button onClick={handleSubmit} disabled={score === 0} className="w-full h-12 text-lg">
-            Submit Vote
+          <Button onClick={handleSubmit} disabled={score === 0 || (usedPoints.has(score) && score !== userScore)} className="w-full h-12 text-lg">
+            {hasVoted ? "Update Vote" : "Submit Vote"}
           </Button>
         </DialogFooter>
       </DialogContent>

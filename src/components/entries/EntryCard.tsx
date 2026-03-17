@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -13,6 +14,8 @@ interface EntryCardProps {
   entry: Entry;
   onVote?: (score: number, feedback: string) => void;
   hasVoted?: boolean;
+  userScore?: number;
+  usedPoints?: Set<number>;
 }
 
 /**
@@ -33,7 +36,7 @@ function getEmbedUrl(url: string) {
   return url;
 }
 
-export function EntryCard({ entry, onVote, hasVoted }: EntryCardProps) {
+export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints }: EntryCardProps) {
   const [showVideo, setShowVideo] = useState(false);
   const embedUrl = getEmbedUrl(entry.videoUrl);
   const flagUrl = entry.flagUrl || getFlagUrl(entry.country);
@@ -110,7 +113,13 @@ export function EntryCard({ entry, onVote, hasVoted }: EntryCardProps) {
 
       <CardContent className="p-4 pt-0">
         <div className="flex items-center gap-2">
-          <VoteDialog entry={entry} onVote={onVote} hasVoted={hasVoted} />
+          <VoteDialog 
+            entry={entry} 
+            onVote={onVote} 
+            hasVoted={hasVoted} 
+            userScore={userScore}
+            usedPoints={usedPoints}
+          />
         </div>
       </CardContent>
     </Card>
