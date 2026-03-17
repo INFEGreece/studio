@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Trophy, Music, BarChart3, Settings, User as UserIcon, LogIn, LogOut } from 'lucide-react';
+import { Music, BarChart3, Settings, User as UserIcon, LogIn, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -41,9 +41,13 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="bg-primary p-1.5 rounded-lg shadow-lg shadow-primary/20">
-              <Trophy className="h-6 w-6 text-primary-foreground" />
+          <Link href="/" className="flex items-center gap-3">
+            <div className="relative h-10 w-10 flex-shrink-0">
+              <img 
+                src="https://infegreece.com/wp-content/uploads/2026/01/LOGO-INFE.png" 
+                alt="INFE Greece Logo" 
+                className="h-full w-full object-contain"
+              />
             </div>
             <span className="text-xl font-headline font-bold tracking-tight text-foreground hidden sm:inline-block">
               INFE <span className="text-primary">GR Poll</span>

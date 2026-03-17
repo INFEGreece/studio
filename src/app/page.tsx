@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -14,7 +13,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, History, Filter, Loader2, Layers } from 'lucide-react';
+import { History, Filter, Loader2, Layers } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, useUser, setDocumentNonBlocking } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import { Entry, Vote } from '@/lib/types';
@@ -93,7 +92,7 @@ export default function Home() {
 
     setDocumentNonBlocking(voteRef, voteData, { merge: true });
 
-    // Update global entry stats (optional, could be handled by a cloud function for production)
+    // Update global entry stats
     const entryRef = doc(db, 'eurovision_entries', entry.id);
     setDocumentNonBlocking(entryRef, {
       totalPoints: (entry.totalPoints || 0) + score,
@@ -107,23 +106,32 @@ export default function Home() {
       
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative w-full py-12 md:py-24 overflow-hidden bg-[url('https://picsum.photos/seed/eschero/1920/1080')] bg-cover bg-center">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
-          <div className="container relative z-10 px-4 flex flex-col items-center text-center space-y-6">
-            <h1 className="text-4xl md:text-7xl font-headline font-extrabold tracking-tighter text-white">
-              The INFE GR <br/><span className="text-primary">Eurovision Poll</span>
-            </h1>
-            <p className="max-w-[700px] text-lg md:text-xl text-muted-foreground">
-              Celebrating 70 years of Eurovision. Vote for your favorite entries and see how the community ranks the best contest on Earth.
-            </p>
-            <div className="flex gap-4">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-8" onClick={() => {
+        <section className="relative w-full py-20 md:py-32 overflow-hidden bg-[url('https://picsum.photos/seed/eschero/1920/1080')] bg-cover bg-center">
+          <div className="absolute inset-0 bg-black/75 backdrop-blur-sm"></div>
+          <div className="container relative z-10 px-4 flex flex-col items-center text-center space-y-8">
+            <div className="w-32 md:w-48 mb-4">
+              <img 
+                src="https://infegreece.com/wp-content/uploads/2026/01/LOGO-INFE.png" 
+                alt="INFE Greece" 
+                className="w-full h-full object-contain drop-shadow-2xl"
+              />
+            </div>
+            <div className="space-y-4">
+              <h1 className="text-4xl md:text-7xl font-headline font-extrabold tracking-tighter text-white">
+                The INFE GR <br/><span className="text-primary">Eurovision Poll</span>
+              </h1>
+              <p className="max-w-[700px] text-lg md:text-xl text-muted-foreground mx-auto">
+                Celebrating 70 years of Eurovision. Vote for your favorite entries and see how the community ranks the best contest on Earth.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-10 h-14" onClick={() => {
                 const element = document.getElementById('browser-section');
                 element?.scrollIntoView({ behavior: 'smooth' });
               }}>
                 Start Voting
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 backdrop-blur" asChild>
+              <Button size="lg" variant="outline" className="text-lg px-10 h-14 backdrop-blur-md bg-white/5 border-white/20 hover:bg-white/10" asChild>
                 <a href="/scoreboard">View Scoreboard</a>
               </Button>
             </div>
@@ -131,27 +139,32 @@ export default function Home() {
         </section>
 
         {/* Browser Section */}
-        <section id="browser-section" className="container px-4 py-12">
-          <div className="flex flex-col gap-8 mb-12">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-              <div className="space-y-2">
-                <h2 className="text-3xl font-headline font-bold flex items-center gap-2">
-                  <History className="h-7 w-7 text-accent" />
+        <section id="browser-section" className="container px-4 py-16">
+          <div className="flex flex-col gap-10 mb-12">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+              <div className="space-y-3">
+                <h2 className="text-3xl md:text-4xl font-headline font-bold flex items-center gap-3">
+                  <History className="h-8 w-8 text-accent" />
                   Browse Entries
                 </h2>
-                <p className="text-muted-foreground">Explore 70 years of musical history, from 1956 to 2026.</p>
+                <p className="text-muted-foreground text-lg">Explore 70 years of musical history, from 1956 to 2026.</p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-muted-foreground">Decade:</span>
+              <div className="flex flex-wrap items-center gap-6">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Decade:</span>
                   <Tabs value={currentDecadeLabel} className="w-auto">
-                    <TabsList className="bg-secondary/50">
+                    <TabsList className="bg-secondary/50 p-1">
                       {DECADES.map(d => (
-                        <TabsTrigger key={d.label} value={d.label} onClick={() => {
-                          setSelectedYear(d.years[0]);
-                          setSelectedStage("All");
-                        }}>
+                        <TabsTrigger 
+                          key={d.label} 
+                          value={d.label} 
+                          className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                          onClick={() => {
+                            setSelectedYear(d.years[0]);
+                            setSelectedStage("All");
+                          }}
+                        >
                           {d.label}
                         </TabsTrigger>
                       ))}
@@ -159,8 +172,8 @@ export default function Home() {
                   </Tabs>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-muted-foreground">Year:</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Year:</span>
                   <Select 
                     value={selectedYear.toString()} 
                     onValueChange={(v) => {
@@ -168,12 +181,12 @@ export default function Home() {
                       setSelectedStage("All");
                     }}
                   >
-                    <SelectTrigger className="w-[120px] bg-secondary/50">
+                    <SelectTrigger className="w-[140px] bg-secondary/50 border-none h-10 font-bold">
                       <SelectValue placeholder="Year" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-[300px]">
                       {(DECADES.find(d => d.label === currentDecadeLabel)?.years || []).map(y => (
-                        <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                        <SelectItem key={y} value={y.toString()} className="font-bold">{y}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -182,29 +195,29 @@ export default function Home() {
             </div>
 
             {/* Stage Filter */}
-            <div className="flex flex-col gap-4 p-4 rounded-xl bg-card border border-border/50">
-              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-1">
+            <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-inner">
+              <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">
                 <Layers className="h-4 w-4" />
-                Select Competition Stage:
+                Competition Stage
               </div>
               <Tabs value={selectedStage} onValueChange={setSelectedStage} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-muted/30">
-                  <TabsTrigger value="All">All Entries</TabsTrigger>
-                  <TabsTrigger value="Final">Grand Final</TabsTrigger>
-                  <TabsTrigger value="Semi-Final 1">Semi-Final 1</TabsTrigger>
-                  <TabsTrigger value="Semi-Final 2">Semi-Final 2</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-muted/30 h-12 p-1">
+                  <TabsTrigger value="All" className="h-10">All entries</TabsTrigger>
+                  <TabsTrigger value="Final" className="h-10">Grand Final</TabsTrigger>
+                  <TabsTrigger value="Semi-Final 1" className="h-10">Semi-Final 1</TabsTrigger>
+                  <TabsTrigger value="Semi-Final 2" className="h-10">Semi-Final 2</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
           </div>
 
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-              <p className="text-lg font-medium text-muted-foreground">Loading entries for {selectedYear}...</p>
+            <div className="flex flex-col items-center justify-center py-32">
+              <Loader2 className="h-16 w-16 animate-spin text-primary mb-6" />
+              <p className="text-xl font-bold text-muted-foreground animate-pulse">Retrieving {selectedYear} data...</p>
             </div>
           ) : filteredEntries && filteredEntries.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {filteredEntries.map((entry) => (
                 <EntryCard 
                   key={entry.id} 
@@ -217,32 +230,47 @@ export default function Home() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 bg-secondary/20 rounded-xl border-2 border-dashed border-muted">
-              <Filter className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-xl font-medium text-muted-foreground">No entries found for {selectedYear} {selectedStage !== "All" ? `(${selectedStage})` : ""}</p>
-              <Button variant="link" onClick={() => {
-                setSelectedYear(2026);
-                setSelectedStage("All");
-              }}>Return to 2026</Button>
+            <div className="flex flex-col items-center justify-center py-24 bg-secondary/10 rounded-3xl border-2 border-dashed border-muted/50">
+              <Filter className="h-16 w-16 text-muted-foreground mb-6" />
+              <p className="text-2xl font-bold text-muted-foreground">No records for {selectedYear} {selectedStage !== "All" ? `(${selectedStage})` : ""}</p>
+              <Button 
+                variant="link" 
+                className="mt-4 text-primary text-lg"
+                onClick={() => {
+                  setSelectedYear(2026);
+                  setSelectedStage("All");
+                }}
+              >
+                Return to 2026
+              </Button>
             </div>
           )}
         </section>
       </main>
 
-      <footer className="border-t bg-card/50 py-12">
-        <div className="container px-4 text-center space-y-4">
-          <div className="flex items-center justify-center gap-2">
-            <Trophy className="h-6 w-6 text-primary" />
-            <span className="text-xl font-headline font-bold">INFE GR Poll</span>
+      <footer className="border-t bg-card/50 py-16">
+        <div className="container px-4 text-center space-y-8">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-12 w-12 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all">
+              <img 
+                src="https://infegreece.com/wp-content/uploads/2026/01/LOGO-INFE.png" 
+                alt="INFE Greece Logo" 
+                className="h-full w-full object-contain"
+              />
+            </div>
+            <span className="text-2xl font-headline font-bold tracking-tight">INFE <span className="text-primary">GR Poll</span></span>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Celebrating 70 years of Eurovision. Created for fans by INFE Greece. Eurovision Song Contest results and assets are property of EBU.
+          <p className="max-w-2xl mx-auto text-muted-foreground">
+            Celebrating 70 years of Eurovision history. Created for fans by INFE Greece. The Eurovision Song Contest results and assets are property of the EBU.
           </p>
-          <div className="flex justify-center gap-6 text-sm text-muted-foreground">
+          <div className="flex justify-center gap-8 text-sm font-medium text-muted-foreground">
             <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
             <a href="#" className="hover:text-primary transition-colors">Contact</a>
           </div>
+          <p className="text-xs text-muted-foreground/50 pt-4">
+            © {new Date().getFullYear()} INFE Greece. All rights reserved.
+          </p>
         </div>
       </footer>
     </div>
