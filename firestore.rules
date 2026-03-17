@@ -5,36 +5,22 @@ service cloud.firestore {
     /**
      * CORE PHILOSOPHY
      * This ruleset implements a strict User-Ownership model for personal profiles and voting records.
-     * For the eurovision_entries collection, we are temporarily allowing public writes to facilitate 
-     * prototyping and testing of the administrative features without requiring complex role setup.
-     *
-     * DATA STRUCTURE
-     * - /eurovision_entries/{entryId}: Publicly readable and writable song database (for prototyping).
-     * - /users/{userId}: Private user profiles accessible only by the owner.
-     * - /users/{userId}/votes/{voteIdentifier}: Private user subcollections for voting data.
-     * - /roles_admin/{adminId}: A restricted collection used to verify administrative privileges.
+     * Administrative actions on the global song database are restricted to authorized accounts.
      */
 
     // --- Global Helper Functions ---
 
-    /** Checks if the request is from a signed-in user. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** Checks if the user's UID matches the provided ID. */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** Checks if the user's UID matches the owner of an existing document. */
-    function isExistingOwner(ownerId) {
-      return resource != null && isOwner(ownerId);
-    }
-
     /** 
      * Checks if the user is an administrator. 
-     * Note: Temporarily bypassed for eurovision_entries write access.
+     * An admin is a user whose UID exists in the 'roles_admin' collection.
      */
     function isAdmin() {
       return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
@@ -44,38 +30,43 @@ service cloud.firestore {
 
     /**
      * @description Public registry of Eurovision songs. 
-     * @allow (all) Public access for prototyping purposes.
+     * READ: Publicly accessible.
+     * WRITE: Only authorized administrators.
      */
     match /eurovision_entries/{entryId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     /**
-     * @description User profile documents. Restricted to the specific user for both read and write.
+     * @description User profile documents. Restricted to the specific user.
      */
     match /users/{userId} {
       allow get, list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
+      allow update: if isOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isOwner(userId);
     }
 
     /**
-     * @description Individual votes cast by users. Nested under the user to allow secure listing.
+     * @description Individual votes cast by users. 
+     * Nested under the user to ensure private, isolated voting data.
      */
     match /users/{userId}/votes/{voteIdentifier} {
       allow get, list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(userId);
+      allow update: if isOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isOwner(userId);
     }
 
     /**
-     * @description Global admin roles.
+     * @description Global admin roles list.
+     * Only admins can see who else is an admin. No one can write here via client.
      */
     match /roles_admin/{adminId} {
-      allow get, list: if isAdmin();
-      allow create, update, delete: if false;
+      allow get: if isSignedIn();
+      allow list: if isAdmin();
+      allow write: if false; 
     }
   }
 }

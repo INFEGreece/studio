@@ -30,16 +30,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, ExternalLink, Loader2, Image as ImageIcon, ListPlus, Info, FileText } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, ExternalLink, Loader2, Image as ImageIcon, ListPlus, Info, FileText, ShieldAlert } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { Entry, ContestStage } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { getFlagUrl } from '@/lib/utils';
+import Link from 'next/link';
 
 export default function AdminPage() {
   const db = useFirestore();
+  const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -47,6 +49,14 @@ export default function AdminPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [currentId, setCurrentId] = useState<string | null>(null);
   
+  // Admin Authorization check
+  const adminDocRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return doc(db, 'roles_admin', user.uid);
+  }, [db, user]);
+  const { data: adminData, isLoading: isAdminLoading } = useDoc(adminDocRef);
+  const isAdmin = !!adminData;
+
   // Bulk import state
   const [bulkText, setBulkText] = useState("");
   const [bulkYear, setBulkYear] = useState(2026);
@@ -79,6 +89,41 @@ export default function AdminPage() {
     e.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
     e.songTitle.toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => b.year - a.year || a.country.localeCompare(b.country));
+
+  if (isUserLoading || isAdminLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user || !isAdmin) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-1 container flex items-center justify-center p-4">
+          <div className="max-w-md w-full text-center space-y-6 bg-card border rounded-2xl p-8 shadow-xl">
+            <div className="bg-destructive/10 p-4 rounded-full w-20 h-20 mx-auto flex items-center justify-center">
+              <ShieldAlert className="h-10 w-10 text-destructive" />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-2xl font-bold font-headline">Access Denied</h1>
+              <p className="text-muted-foreground">
+                You do not have administrative privileges to access this area. 
+                Please sign in with an authorized account.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Link href="/">
+                <Button variant="outline" className="w-full">Return Home</Button>
+              </Link>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   const handleDelete = (id: string) => {
     if (confirm("Are you sure you want to delete this entry?")) {
