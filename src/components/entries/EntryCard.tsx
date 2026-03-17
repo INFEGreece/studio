@@ -6,7 +6,7 @@ import { Entry } from '@/lib/types';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Mic2, MapPin, Play, Layers } from 'lucide-react';
+import { Mic2, MapPin, Play } from 'lucide-react';
 import { VoteDialog } from '@/components/voting/VoteDialog';
 
 interface EntryCardProps {
@@ -15,15 +15,34 @@ interface EntryCardProps {
   hasVoted?: boolean;
 }
 
+/**
+ * Transforms a standard YouTube URL into an embeddable URL.
+ */
+function getEmbedUrl(url: string) {
+  if (!url) return '';
+  
+  // If it's already an embed URL, return it
+  if (url.includes('/embed/')) return url;
+
+  // Handle watch?v= format
+  const watchMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/\s]+)/);
+  if (watchMatch && watchMatch[1]) {
+    return `https://www.youtube.com/embed/${watchMatch[1]}`;
+  }
+
+  return url;
+}
+
 export function EntryCard({ entry, onVote, hasVoted }: EntryCardProps) {
   const [showVideo, setShowVideo] = useState(false);
+  const embedUrl = getEmbedUrl(entry.videoUrl);
 
   return (
     <Card className="overflow-hidden group hover:shadow-xl hover:shadow-primary/5 transition-all border-muted/50">
       <div className="relative aspect-video bg-muted overflow-hidden">
         {showVideo ? (
           <iframe
-            src={entry.videoUrl}
+            src={embedUrl}
             className="w-full h-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
