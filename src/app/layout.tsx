@@ -1,11 +1,10 @@
-
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'EuroVisionary | Eurovision Voting & Insights',
-  description: 'The ultimate Eurovision fan companion for voting, browsing, and AI-powered insights.',
+  title: 'INFE GR Poll | Eurovision Voting & Insights',
+  description: 'The official INFE Greece fan poll for Eurovision voting and community insights.',
 };
 
 export default function RootLayout({

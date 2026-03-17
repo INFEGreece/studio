@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -37,10 +36,10 @@ export default function Home() {
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
           <div className="container relative z-10 px-4 flex flex-col items-center text-center space-y-6">
             <h1 className="text-4xl md:text-7xl font-headline font-extrabold tracking-tighter text-white">
-              Your Eurovision <br/><span className="text-primary">Journey Starts Here</span>
+              The INFE Greece <br/><span className="text-primary">Eurovision Poll</span>
             </h1>
             <p className="max-w-[700px] text-lg md:text-xl text-muted-foreground">
-              Vote for your favorite entries, discover new musical gems, and see how the world ranks the best contest on Earth.
+              Vote for your favorite entries, discover new musical gems, and see how the community ranks the best contest on Earth.
             </p>
             <div className="flex gap-4">
               <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-8">
@@ -122,10 +121,10 @@ export default function Home() {
         <div className="container px-4 text-center space-y-4">
           <div className="flex items-center justify-center gap-2">
             <Trophy className="h-6 w-6 text-primary" />
-            <span className="text-xl font-headline font-bold">EuroVisionary</span>
+            <span className="text-xl font-headline font-bold">INFE GR Poll</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            Created for fans by fans. Eurovision Song Contest results and assets are property of EBU.
+            Created for fans by INFE Greece. Eurovision Song Contest results and assets are property of EBU.
           </p>
           <div className="flex justify-center gap-6 text-sm text-muted-foreground">
             <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>

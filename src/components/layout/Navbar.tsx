@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -24,7 +23,7 @@ export function Navbar() {
               <Trophy className="h-6 w-6 text-primary-foreground" />
             </div>
             <span className="text-xl font-headline font-bold tracking-tight text-foreground hidden sm:inline-block">
-              Euro<span className="text-primary">Visionary</span>
+              INFE <span className="text-primary">GR Poll</span>
             </span>
           </Link>
         </div>
