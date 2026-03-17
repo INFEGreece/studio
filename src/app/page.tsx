@@ -69,7 +69,7 @@ export default function Home() {
                 <History className="h-7 w-7 text-accent" />
                 Browse Entries
               </h2>
-              <p className="text-muted-foreground">Explore over 60 years of musical history.</p>
+              <p className="text-muted-foreground">Explore over 70 years of musical history.</p>
             </div>
 
             <div className="flex flex-wrap items-center gap-4">

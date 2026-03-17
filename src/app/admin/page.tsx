@@ -29,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, ExternalLink, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, ExternalLink, Loader2, Image as ImageIcon, Flag } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
@@ -41,10 +41,13 @@ export default function AdminPage() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentId, setCurrentId] = useState<string | null>(null);
   
   // Form state
   const [formData, setFormData] = useState({
     country: '',
+    flagUrl: '',
     year: 2025,
     artist: '',
     songTitle: '',
@@ -63,13 +66,47 @@ export default function AdminPage() {
   ).sort((a, b) => b.year - a.year || a.country.localeCompare(b.country));
 
   const handleDelete = (id: string) => {
-    const docRef = doc(db, 'eurovision_entries', id);
-    deleteDocumentNonBlocking(docRef);
-    toast({
-      title: "Entry Removed",
-      description: "The song entry has been successfully deleted.",
-      variant: "destructive",
+    if (confirm("Are you sure you want to delete this entry?")) {
+      const docRef = doc(db, 'eurovision_entries', id);
+      deleteDocumentNonBlocking(docRef);
+      toast({
+        title: "Entry Removed",
+        description: "The song entry has been successfully deleted.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const openAddDialog = () => {
+    setIsEditing(false);
+    setCurrentId(null);
+    setFormData({
+      country: '',
+      flagUrl: '',
+      year: 2025,
+      artist: '',
+      songTitle: '',
+      videoUrl: '',
+      thumbnailUrl: '',
+      stage: 'Final'
     });
+    setIsDialogOpen(true);
+  };
+
+  const openEditDialog = (entry: Entry) => {
+    setIsEditing(true);
+    setCurrentId(entry.id);
+    setFormData({
+      country: entry.country,
+      flagUrl: entry.flagUrl || '',
+      year: entry.year,
+      artist: entry.artist,
+      songTitle: entry.songTitle,
+      videoUrl: entry.videoUrl,
+      thumbnailUrl: entry.thumbnailUrl || '',
+      stage: entry.stage
+    });
+    setIsDialogOpen(true);
   };
 
   const handleSave = () => {
@@ -83,30 +120,19 @@ export default function AdminPage() {
     }
 
     const stageSlug = formData.stage.toLowerCase().replace(/\s+/g, '-');
-    const id = `${formData.year}-${stageSlug}-${formData.country.toLowerCase().replace(/\s+/g, '-')}`;
+    const id = currentId || `${formData.year}-${stageSlug}-${formData.country.toLowerCase().replace(/\s+/g, '-')}`;
     const docRef = doc(db, 'eurovision_entries', id);
     
     setDocumentNonBlocking(docRef, {
       ...formData,
-      id,
-      totalPoints: 0,
-      voteCount: 0
+      id
     }, { merge: true });
 
     toast({
-      title: "Entry Saved",
-      description: `${formData.songTitle} by ${formData.artist} has been added.`,
+      title: isEditing ? "Entry Updated" : "Entry Saved",
+      description: `${formData.songTitle} by ${formData.artist} has been ${isEditing ? 'updated' : 'added'}.`,
     });
 
-    setFormData({
-      country: '',
-      year: 2025,
-      artist: '',
-      songTitle: '',
-      videoUrl: '',
-      thumbnailUrl: '',
-      stage: 'Final'
-    });
     setIsDialogOpen(false);
   };
 
@@ -118,19 +144,17 @@ export default function AdminPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-headline font-bold text-primary">Entry Management</h1>
-            <p className="text-muted-foreground">Manage Eurovision songs, artists, and stages.</p>
+            <p className="text-muted-foreground">Manage over 70 years of Eurovision songs, artists, and stages.</p>
           </div>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90">
-                <Plus className="h-4 w-4 mr-2" />
-                Add New Entry
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <Button onClick={openAddDialog} className="bg-primary hover:bg-primary/90">
+              <Plus className="h-4 w-4 mr-2" />
+              Add New Entry
+            </Button>
+            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Create Eurovision Entry</DialogTitle>
+                <DialogTitle>{isEditing ? 'Edit' : 'Create'} Eurovision Entry</DialogTitle>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -160,14 +184,28 @@ export default function AdminPage() {
                     </Select>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="country">Country</Label>
-                  <Input 
-                    id="country" 
-                    placeholder="e.g. Greece" 
-                    value={formData.country}
-                    onChange={(e) => setFormData({...formData, country: e.target.value})}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="country">Country</Label>
+                    <Input 
+                      id="country" 
+                      placeholder="e.g. Greece" 
+                      value={formData.country}
+                      onChange={(e) => setFormData({...formData, country: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="flag" className="flex items-center gap-2">
+                      <Flag className="h-3 w-3" />
+                      Flag URL (Optional)
+                    </Label>
+                    <Input 
+                      id="flag" 
+                      placeholder="e.g. flagcdn.com/gr.svg" 
+                      value={formData.flagUrl}
+                      onChange={(e) => setFormData({...formData, flagUrl: e.target.value})}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="artist">Artist</Label>
@@ -210,7 +248,7 @@ export default function AdminPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button className="w-full" onClick={handleSave}>Save Entry</Button>
+                <Button className="w-full" onClick={handleSave}>{isEditing ? 'Update' : 'Save'} Entry</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -257,7 +295,12 @@ export default function AdminPage() {
                       {entry.stage}
                     </Badge>
                   </TableCell>
-                  <TableCell>{entry.country}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {entry.flagUrl && <img src={entry.flagUrl} alt="" className="h-4 w-6 object-cover rounded-sm" />}
+                      {entry.country}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2">
@@ -269,6 +312,9 @@ export default function AdminPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(entry)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
                       <a href={entry.videoUrl} target="_blank" rel="noopener noreferrer">
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                           <ExternalLink className="h-4 w-4" />

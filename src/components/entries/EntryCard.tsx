@@ -45,10 +45,17 @@ export function EntryCard({ entry, onVote, hasVoted }: EntryCardProps) {
                 <Play className="h-8 w-8 fill-current" />
               </Button>
             </div>
-            <div className="absolute top-2 right-2">
+            <div className="absolute top-2 right-2 flex flex-col items-end gap-2">
               <Badge variant="secondary" className="bg-black/60 backdrop-blur-md text-[10px] py-0">
                 {entry.stage}
               </Badge>
+              {entry.flagUrl && (
+                <img 
+                  src={entry.flagUrl} 
+                  alt="" 
+                  className="h-5 w-8 object-cover rounded shadow-sm border border-white/20" 
+                />
+              )}
             </div>
           </>
         )}

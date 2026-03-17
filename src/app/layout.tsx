@@ -1,3 +1,4 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
@@ -5,7 +6,7 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
   title: 'INFE GR Poll | Eurovision Voting & Insights',
-  description: 'The official INFE Greece fan poll for Eurovision voting and community insights.',
+  description: 'The official INFE Greece fan poll celebrating 70 years of Eurovision voting and community insights.',
 };
 
 export default function RootLayout({

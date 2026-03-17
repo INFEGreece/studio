@@ -19,6 +19,11 @@
           "type": "string",
           "description": "The country represented by this Eurovision entry."
         },
+        "flagUrl": {
+          "type": "string",
+          "description": "The URL for the country's flag image.",
+          "format": "uri"
+        },
         "artist": {
           "type": "string",
           "description": "The artist(s) performing the song."
@@ -158,6 +163,6 @@
         }
       }
     ],
-    "reasoning": "Standard Eurovision poll structure with stage categorization added."
+    "reasoning": "Standard Eurovision poll structure with stage categorization and flag support added."
   }
 }

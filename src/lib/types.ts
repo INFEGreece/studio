@@ -4,6 +4,7 @@ export type ContestStage = 'Final' | 'Semi-Final 1' | 'Semi-Final 2';
 export interface Entry {
   id: string;
   country: string;
+  flagUrl?: string;
   artist: string;
   songTitle: string;
   year: number;
