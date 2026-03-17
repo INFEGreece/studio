@@ -44,7 +44,10 @@ export default function Home() {
     return baseQuery;
   }, [db, selectedYear, selectedStage]);
 
-  const { data: filteredEntries, isLoading } = useCollection<Entry>(entriesRef);
+  const { data: rawEntries, isLoading } = useCollection<Entry>(entriesRef);
+
+  // Sort entries alphabetically by country
+  const filteredEntries = (rawEntries || []).slice().sort((a, b) => a.country.localeCompare(b.country));
 
   // Fetch current user's votes for this year to prevent duplicate points
   const userVotesRef = useMemoFirebase(() => {

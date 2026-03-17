@@ -54,7 +54,7 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints }: En
         ) : (
           <>
             <img
-              src={entry.thumbnailUrl || `https://picsum.photos/seed/${entry.id}/600/338`}
+              src={entry.thumbnailUrl || flagUrl}
               alt={entry.songTitle}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
