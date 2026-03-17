@@ -74,32 +74,37 @@ export function EntryCard({ entry, onVote, hasVoted }: EntryCardProps) {
         )}
       </div>
       
-      <CardHeader className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img 
-              src={flagUrl} 
-              alt="" 
-              className="h-4 w-6 object-cover rounded-sm shadow-sm border border-border/50" 
-            />
-            <Badge variant="outline" className="flex items-center gap-1 border-accent/50 text-accent bg-accent/5">
+      <CardHeader className="p-4">
+        <div className="flex justify-between items-start gap-4">
+          <div className="space-y-3 flex-1">
+            <Badge variant="outline" className="flex items-center gap-1 border-accent/50 text-accent bg-accent/5 w-fit">
               <MapPin className="h-3 w-3" />
               {entry.country}
             </Badge>
+            
+            <div className="space-y-1">
+              <h3 className="text-xl font-headline font-bold leading-tight line-clamp-1 group-hover:text-primary transition-colors">
+                {entry.songTitle}
+              </h3>
+              <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                <Mic2 className="h-3.5 w-3.5 text-primary/70" />
+                {entry.artist}
+              </p>
+            </div>
           </div>
-          <Badge className="bg-primary/20 text-primary hover:bg-primary/30 border-none font-bold text-xs px-2 py-0">
-            {entry.year}
-          </Badge>
-        </div>
-        
-        <div className="space-y-1">
-          <h3 className="text-xl font-headline font-bold leading-tight line-clamp-1 group-hover:text-primary transition-colors">
-            {entry.songTitle}
-          </h3>
-          <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-            <Mic2 className="h-3.5 w-3.5 text-primary/70" />
-            {entry.artist}
-          </p>
+
+          <div className="flex flex-col items-end gap-3 shrink-0">
+            <Badge className="bg-primary text-primary-foreground font-bold text-xs px-2.5 py-0.5 shadow-sm">
+              {entry.year}
+            </Badge>
+            <div className="h-10 w-16 bg-muted rounded-md border border-border/50 overflow-hidden shadow-md group-hover:shadow-primary/20 transition-shadow">
+              <img 
+                src={flagUrl} 
+                alt={`${entry.country} flag`} 
+                className="w-full h-full object-cover" 
+              />
+            </div>
+          </div>
         </div>
       </CardHeader>
 
