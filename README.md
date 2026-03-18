@@ -1,38 +1,36 @@
 
-# INFE Greece Eurovision Poll 2026
+# INFE Greece Eurovision Poll 2026 - Plesk Guide
 
-The official fan poll for INFE Greece. This app is designed to run on **Firebase App Hosting** to support dynamic features like real-time voting and AI-powered feedback suggestions.
+This app is optimized for **Static Hosting** so you can host it for free on **Plesk** without needing a Google billing account.
 
-## 🚀 Deployment Guide (Custom Domain)
+## 🚀 How to get your HTML files for Plesk
 
-To get your app live on **infepoll.infegreece.com**:
+1. **Open the Terminal**: Click the "Terminal" tab at the bottom of this editor window.
+2. **Run the Build**: Type the following command and press Enter:
+   ```bash
+   npm run build
+   ```
+3. **Locate the Output**: Once the build finishes, a folder named `out` will appear in your project files on the left.
+4. **Download**: Right-click the `out` folder and select "Download" (or download the files inside it).
+5. **Upload to Plesk**: 
+   - Log in to your Plesk panel.
+   - Go to **File Manager**.
+   - Navigate to the `httpdocs` folder of `infepoll.infegreece.com`.
+   - Upload all the contents of the `out` folder directly into `httpdocs`.
 
-1. **GitHub Connection**:
-   - Push this code to a GitHub repository.
-   - Go to the **Firebase Console** > **App Hosting**.
-   - Click "Get Started" and connect your GitHub repo.
-
-2. **Pricing Plan**:
-   - App Hosting requires the **Blaze (Pay-as-you-go) Plan**. 
-   - **Important**: You still have a generous free tier. For a fan poll, you will likely pay **$0.00/month** unless you have extreme traffic.
-
-3. **Custom Domain**:
-   - Once the app is deployed, go to the **App Hosting** dashboard.
-   - Click the **Settings** tab > **Custom Domains**.
-   - Enter `infepoll.infegreece.com`.
-   - Add the provided DNS records to your domain provider (where you manage `infegreece.com`).
+## ✨ Features
+- **Alphabetical Sorting**: Countries are sorted automatically by name.
+- **Dynamic Scoreboard**: Real-time results powered by Firebase.
+- **Flag Fallbacks**: National flags are used automatically if no artist photo is uploaded.
+- **Branding**: Official INFE Greece logo used throughout the site.
 
 ## 🛠 Admin Setup
-1. Sign in to your site at `infepoll.infegreece.com`.
+1. Sign in to your site.
 2. Go to your **Firebase Console** > **Authentication** and find your **User UID**.
 3. Go to **Firestore Database** > Create a collection named `roles_admin`.
 4. Add a document:
    - **ID**: Paste your User UID here.
    - **Fields**: Any field (e.g., `role: "admin"`).
-5. You can now access the `/admin` page to manage entries.
+5. You can now access the `/admin` page on your site to manage entries.
 
-## ✨ Features
-- **AI Feedback**: Users can click "Suggest with AI" while voting to get descriptive reasons for their score.
-- **Alphabetical Sorting**: Countries are sorted automatically by name.
-- **Dynamic Scoreboard**: Real-time results with interactive charts.
-- **Flag Fallbacks**: National flags are used automatically if no artist photo is uploaded.
+*Note: AI suggestions are disabled in the static version to remain 100% free and serverless.*

@@ -13,11 +13,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { Star, CheckCircle2, Info, Sparkles, Loader2 } from 'lucide-react';
+import { Star, CheckCircle2, Info } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { suggestVoteFeedback } from '@/ai/flows/vote-feedback-suggester';
 
 interface VoteDialogProps {
   entry: Entry;
@@ -31,32 +30,7 @@ export function VoteDialog({ entry, onVote, hasVoted, userScore, usedPoints = ne
   const [score, setScore] = useState<number>(userScore || 0);
   const [feedback, setFeedback] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const [isAiLoading, setIsAiLoading] = useState(false);
   const { toast } = useToast();
-
-  const handleAiSuggest = async () => {
-    if (score === 0) {
-      toast({ title: "Select a score first", description: "The AI needs a score to generate feedback.", variant: "destructive" });
-      return;
-    }
-    setIsAiLoading(true);
-    try {
-      const result = await suggestVoteFeedback({
-        entry: {
-          title: entry.songTitle,
-          artist: entry.artist,
-          country: entry.country,
-          year: entry.year
-        },
-        score: score
-      });
-      setFeedback(result.suggestion);
-    } catch (error) {
-      toast({ title: "AI Error", description: "Could not generate suggestion.", variant: "destructive" });
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
 
   const handleSubmit = () => {
     if (score === 0) return;
@@ -118,19 +92,7 @@ export function VoteDialog({ entry, onVote, hasVoted, userScore, usedPoints = ne
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Why this score? (Optional)</label>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-7 text-[10px] text-primary hover:text-primary/80"
-                onClick={handleAiSuggest}
-                disabled={isAiLoading || score === 0}
-              >
-                {isAiLoading ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
-                Suggest with AI
-              </Button>
-            </div>
+            <label className="text-sm font-medium">Why this score? (Optional)</label>
             <Textarea
               placeholder="The vocals were stunning..."
               value={feedback}
