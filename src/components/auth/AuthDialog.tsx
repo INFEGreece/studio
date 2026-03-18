@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Mail, Lock, User } from 'lucide-react';
+import { Loader2, Mail, Lock, User, UserPlus, LogIn } from 'lucide-react';
 
 interface AuthDialogProps {
   open: boolean;
@@ -59,7 +59,8 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-headline font-bold text-center">
+          <DialogTitle className="text-2xl font-headline font-bold text-center flex items-center justify-center gap-2">
+            {isSignUp ? <UserPlus className="h-6 w-6 text-primary" /> : <LogIn className="h-6 w-6 text-primary" />}
             {isSignUp ? 'Create account' : 'Welcome back'}
           </DialogTitle>
           <DialogDescription className="text-center">
