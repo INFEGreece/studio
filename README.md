@@ -8,6 +8,7 @@ If you have deployed this code to GitHub, follow these steps to get your HTML fi
 
 1. **Build Locally**: 
    - Open your computer's terminal (Command Prompt or PowerShell on Windows, Terminal on Mac).
+   - Navigate to your project folder.
    - Type `npm install` and then `npm run build`.
    - A folder named **`out`** will be created.
 2. **Upload to Plesk**:
