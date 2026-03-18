@@ -1,30 +1,32 @@
 # INFE Greece Eurovision Poll 2026 - Plesk & GitHub Guide
 
-This app is now fully optimized for **Static Hosting** on your **Plesk** server without needing a Google billing account or Node.js installed on your computer.
+This app is optimized for **Static Hosting** on your **Plesk** server. Since you have Node.js on Plesk, you have two easy ways to get your site live.
 
-## 🚀 How to get your HTML files (via GitHub)
-Since you have deployed this code to GitHub, follow these simple steps:
+## 🚀 Option 1: Using GitHub Actions (Easiest)
+GitHub will build the files for you so you don't have to do anything technical.
 
-1. **Push Changes**: Push the latest code to your GitHub `main` branch.
-2. **Go to GitHub Actions**: 
-   - Open your repository on GitHub.com.
-   - Click the **"Actions"** tab at the top.
+1. **Push Changes**: Push your latest code to GitHub.
+2. **Go to GitHub Actions**: Click the **"Actions"** tab in your repository.
 3. **Download the Build**:
-   - You will see a workflow named **"Build Static Site"**.
-   - Once it finishes (shows a green checkmark), click on it.
-   - Scroll down to the **"Artifacts"** section.
-   - Click **"out-folder"** to download the zip file.
+   - Click on the **"Build Static Site"** workflow.
+   - Once it shows a green checkmark, scroll down to **"Artifacts"**.
+   - Click **"out-folder"** to download the zip.
 4. **Upload to Plesk**:
-   - Extract the downloaded zip file on your computer.
-   - Log in to your **Plesk** panel.
-   - Go to **File Manager** -> `httpdocs`.
-   - Upload all files and folders from the extracted zip directly into `httpdocs`.
+   - Extract the zip on your computer.
+   - Upload all files from the `out` folder directly into your Plesk `httpdocs`.
+
+## 🛠️ Option 2: Using Node.js on Plesk
+If you prefer to build directly on your server:
+
+1. **Upload Code**: Upload all your project files to your Plesk `httpdocs` folder.
+2. **Open Node.js**: In Plesk, click on the **"Node.js"** icon for your domain.
+3. **Install Dependencies**: Click the **"NPM Install"** button in the Plesk UI.
+4. **Build the Site**: 
+   - Look for the "Run script" option or use the terminal in Plesk.
+   - Run: `npm run build`
+5. **Set Document Root**: Ensure your domain's "Document Root" in Plesk points to the **`out`** folder created by the build.
 
 ## ✨ Features
-- **100% Free**: No monthly hosting fees or credit cards required.
-- **Alphabetical Sorting**: Countries are automatically sorted A-Z for easy voting.
-- **Official Branding**: Features official INFE Greece logo and colors.
-- **Real-time Stats**: Scoreboard updates instantly using your Firebase project.
-
-## ⚠️ AI Features Note
-To keep this app 100% free and compatible with Plesk, the "AI Feedback Suggestions" have been disabled as they require a paid server.
+- **Alphabetical Sorting**: All countries are sorted A-Z automatically.
+- **Official Branding**: Features the official INFE Greece logo and theme.
+- **Real-time Stats**: Connects to your Firebase project for live scores.

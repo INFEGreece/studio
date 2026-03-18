@@ -15,11 +15,12 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { History, Filter, Loader2, Layers } from 'lucide-react';
-import { useCollection, useFirestore, useMemoFirebase, useUser, setDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import { Entry, Vote } from '@/lib/types';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 import { useAuth } from '@/firebase';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 export default function Home() {
   const db = useFirestore();
@@ -44,7 +45,7 @@ export default function Home() {
 
   const { data: rawEntries, isLoading } = useCollection<Entry>(entriesRef);
 
-  // Sort alphabetically by country name
+  // CRITICAL: Sort alphabetically by country name for easy browsing
   const filteredEntries = (rawEntries || [])
     .slice()
     .sort((a, b) => a.country.localeCompare(b.country));
@@ -236,7 +237,7 @@ export default function Home() {
       <footer className="border-t bg-card/50 py-16">
         <div className="container px-4 text-center space-y-8">
           <div className="flex flex-col items-center gap-4">
-            <div className="relative h-16 w-24 flex-shrink-0 opacity-80">
+            <div className="relative h-10 w-16 opacity-80">
               <Image 
                 src="https://infegreece.com/wp-content/uploads/2023/04/Infe-Greece.jpg" 
                 alt="INFE Greece Logo" 
