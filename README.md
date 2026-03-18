@@ -1,26 +1,30 @@
-
 # INFE Greece Eurovision Poll 2026 - Plesk & GitHub Guide
 
-This app is now fully optimized for **Static Hosting**. You can host it for free on your **Plesk** server without a Google billing account.
+This app is now fully optimized for **Static Hosting** on your **Plesk** server without needing a Google billing account or Node.js installed on your computer.
 
-## 🚀 Deployment to Plesk (via GitHub)
-If you have deployed this code to GitHub, follow these steps to get your HTML files:
+## 🚀 How to get your HTML files (via GitHub)
+Since you have deployed this code to GitHub, follow these simple steps:
 
-1. **Build Locally**: 
-   - Open your computer's terminal (Command Prompt or PowerShell on Windows, Terminal on Mac).
-   - Navigate to your project folder.
-   - Type `npm install` and then `npm run build`.
-   - A folder named **`out`** will be created.
-2. **Upload to Plesk**:
-   - Log in to your Plesk panel.
+1. **Push Changes**: Push the latest code to your GitHub `main` branch.
+2. **Go to GitHub Actions**: 
+   - Open your repository on GitHub.com.
+   - Click the **"Actions"** tab at the top.
+3. **Download the Build**:
+   - You will see a workflow named **"Build Static Site"**.
+   - Once it finishes (shows a green checkmark), click on it.
+   - Scroll down to the **"Artifacts"** section.
+   - Click **"out-folder"** to download the zip file.
+4. **Upload to Plesk**:
+   - Extract the downloaded zip file on your computer.
+   - Log in to your **Plesk** panel.
    - Go to **File Manager** -> `httpdocs`.
-   - Upload all files and folders inside your local **`out`** folder to `httpdocs`.
+   - Upload all files and folders from the extracted zip directly into `httpdocs`.
 
 ## ✨ Features
-- **Alphabetical Sorting**: Countries are automatically sorted A-Z.
-- **Official Branding**: Official INFE Greece logo and colors.
-- **Static Export**: 100% serverless, meaning no monthly hosting fees.
-- **Real-time Stats**: Scoreboard updates instantly using Firebase.
+- **100% Free**: No monthly hosting fees or credit cards required.
+- **Alphabetical Sorting**: Countries are automatically sorted A-Z for easy voting.
+- **Official Branding**: Features official INFE Greece logo and colors.
+- **Real-time Stats**: Scoreboard updates instantly using your Firebase project.
 
-## ⚠️ Note on AI Features
-To keep this app 100% free and compatible with Plesk, the "AI Feedback Suggestions" have been disabled as they require a paid Google Cloud server.
+## ⚠️ AI Features Note
+To keep this app 100% free and compatible with Plesk, the "AI Feedback Suggestions" have been disabled as they require a paid server.
