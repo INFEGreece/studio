@@ -1,6 +1,8 @@
+
 "use client";
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Music, BarChart3, Settings, User as UserIcon, LogIn, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -42,10 +44,12 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-3">
             <div className="relative h-10 w-16 flex-shrink-0">
-              <img 
+              <Image 
                 src="https://infegreece.com/wp-content/uploads/2023/04/Infe-Greece.jpg" 
                 alt="INFE Greece Logo" 
-                className="h-full w-full object-contain rounded"
+                fill
+                className="object-contain rounded"
+                priority
               />
             </div>
             <span className="text-xl font-headline font-bold tracking-tight text-foreground hidden sm:inline-block">

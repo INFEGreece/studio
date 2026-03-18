@@ -1,6 +1,8 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Navbar } from '@/components/layout/Navbar';
 import { EntryCard } from '@/components/entries/EntryCard';
 import { DECADES } from '@/lib/data';
@@ -102,11 +104,13 @@ export default function Home() {
       <main className="flex-1">
         <section className="relative w-full py-20 md:py-32 overflow-hidden bg-secondary/20">
           <div className="container relative z-10 px-4 flex flex-col items-center text-center space-y-8">
-            <div className="w-48 md:w-64 mb-4">
-              <img 
+            <div className="relative w-48 h-24 md:w-64 md:h-32 mb-4">
+              <Image 
                 src="https://infegreece.com/wp-content/uploads/2023/04/Infe-Greece.jpg" 
                 alt="INFE Greece" 
-                className="w-full h-full object-contain drop-shadow-2xl rounded-lg"
+                fill
+                className="object-contain drop-shadow-2xl rounded-lg"
+                priority
               />
             </div>
             <div className="space-y-4">
@@ -232,11 +236,12 @@ export default function Home() {
       <footer className="border-t bg-card/50 py-16">
         <div className="container px-4 text-center space-y-8">
           <div className="flex flex-col items-center gap-4">
-            <div className="h-16 w-24 flex-shrink-0 opacity-80">
-              <img 
+            <div className="relative h-16 w-24 flex-shrink-0 opacity-80">
+              <Image 
                 src="https://infegreece.com/wp-content/uploads/2023/04/Infe-Greece.jpg" 
                 alt="INFE Greece Logo" 
-                className="h-full w-full object-contain rounded"
+                fill
+                className="object-contain rounded"
               />
             </div>
             <span className="text-2xl font-headline font-bold tracking-tight">INFE <span className="text-primary">GR Poll</span></span>
