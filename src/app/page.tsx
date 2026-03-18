@@ -45,7 +45,7 @@ export default function Home() {
 
   const { data: rawEntries, isLoading } = useCollection<Entry>(entriesRef);
 
-  // CRITICAL: Sort alphabetically by country name for easy browsing
+  // Sort alphabetically by country name for easy browsing
   const filteredEntries = (rawEntries || [])
     .slice()
     .sort((a, b) => a.country.localeCompare(b.country));
