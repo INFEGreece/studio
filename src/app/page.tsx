@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -108,7 +107,8 @@ export default function Home() {
               <Image 
                 src="https://infegreece.com/wp-content/uploads/2023/04/Infe-Greece.jpg" 
                 alt="INFE Greece" 
-                fill
+                width={256}
+                height={128}
                 className="object-contain drop-shadow-2xl rounded-lg"
                 priority
               />
