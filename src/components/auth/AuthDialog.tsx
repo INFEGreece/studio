@@ -11,10 +11,17 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup
+} from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Mail, Lock, User, UserPlus, LogIn } from 'lucide-react';
+import { Loader2, Mail, Lock, User, UserPlus, LogIn, Chrome } from 'lucide-react';
 
 interface AuthDialogProps {
   open: boolean;
@@ -29,6 +36,24 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   const [name, setName] = useState('');
   const auth = useAuth();
   const { toast } = useToast();
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      toast({ title: "Welcome!", description: "Signed in with Google successfully." });
+      onOpenChange(false);
+    } catch (error: any) {
+      toast({
+        title: "Google Sign-In Error",
+        description: error.message || "Failed to sign in with Google. Check if your domain is authorized.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,72 +95,93 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleAuth} className="space-y-4 py-4">
-          {isSignUp && (
+        <div className="space-y-4 py-4">
+          <Button 
+            variant="outline" 
+            className="w-full h-11 border-2 font-bold hover:bg-muted" 
+            onClick={handleGoogleSignIn}
+            disabled={isLoading}
+          >
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Chrome className="h-4 w-4 mr-2" />}
+            Continue with Google
+          </Button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <Separator />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Or with email</span>
+            </div>
+          </div>
+
+          <form onSubmit={handleAuth} className="space-y-4">
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    id="name" 
+                    placeholder="John Doe" 
+                    className="pl-10"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="email">Email address</Label>
               <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input 
-                  id="name" 
-                  placeholder="John Doe" 
+                  id="email" 
+                  type="email" 
+                  placeholder="name@example.com" 
                   className="pl-10"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
             </div>
-          )}
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email address</Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="name@example.com" 
-                className="pl-10"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  id="password" 
+                  type="password" 
+                  placeholder="••••••••" 
+                  className="pl-10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input 
-                id="password" 
-                type="password" 
-                placeholder="••••••••" 
-                className="pl-10"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+            <Button type="submit" className="w-full h-11 text-lg bg-primary hover:bg-primary/90" disabled={isLoading}>
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {isSignUp ? 'Create Account' : 'Sign In'}
+            </Button>
+
+            <div className="text-center text-sm text-muted-foreground pt-2">
+              {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+              <button 
+                type="button" 
+                className="text-primary font-bold hover:underline"
+                onClick={() => setIsSignUp(!isSignUp)}
+              >
+                {isSignUp ? 'Sign In' : 'Create One'}
+              </button>
             </div>
-          </div>
-
-          <Button type="submit" className="w-full h-11 text-lg bg-primary hover:bg-primary/90" disabled={isLoading}>
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            {isSignUp ? 'Create Account' : 'Sign In'}
-          </Button>
-
-          <div className="text-center text-sm text-muted-foreground pt-2">
-            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-            <button 
-              type="button" 
-              className="text-primary font-bold hover:underline"
-              onClick={() => setIsSignUp(!isSignUp)}
-            >
-              {isSignUp ? 'Sign In' : 'Create One'}
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
