@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { Navbar } from '@/components/layout/Navbar';
 import { EntryCard } from '@/components/entries/EntryCard';
@@ -18,22 +18,16 @@ import { History, Filter, Loader2, Layers } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import { Entry, Vote } from '@/lib/types';
-import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 import { useAuth } from '@/firebase';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Home() {
   const db = useFirestore();
-  const auth = useAuth();
   const { user } = useUser();
+  const { toast } = useToast();
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [selectedStage, setSelectedStage] = useState<string>("All");
-
-  useEffect(() => {
-    if (!user) {
-      initiateAnonymousSignIn(auth);
-    }
-  }, [user, auth]);
 
   const entriesRef = useMemoFirebase(() => {
     let baseQuery = query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
@@ -73,7 +67,14 @@ export default function Home() {
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
 
   const handleVote = (entry: Entry, score: number, feedback: string) => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to cast your vote.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     const voteId = `${selectedYear}-${entry.id}`;
     const voteRef = doc(db, 'users', user.uid, 'votes', voteId);
