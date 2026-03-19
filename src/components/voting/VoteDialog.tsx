@@ -11,8 +11,15 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from '@/components/ui/button';
-import { Star, CheckCircle2, Info } from 'lucide-react';
+import { Star, CheckCircle2, Info, Trophy } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -47,63 +54,80 @@ export function VoteDialog({ entry, onVote, hasVoted, userScore, usedPoints = ne
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button 
-          className="flex-1 flex items-center gap-2" 
+          className="flex-1 flex items-center gap-2 h-11 rounded-xl font-bold transition-all hover:scale-[1.02]" 
           variant={hasVoted ? "secondary" : "default"}
         >
-          {hasVoted ? <CheckCircle2 className="h-4 w-4" /> : <Star className="h-4 w-4" />}
-          {hasVoted ? `Voted (${userScore} pts)` : "Vote"}
+          {hasVoted ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <Star className="h-4 w-4" />}
+          {hasVoted ? `Voted (${userScore} pts)` : "Cast Vote"}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] rounded-[2rem]">
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl flex items-center gap-2">
             Vote for {entry.country}
-            {hasVoted && <Badge variant="outline" className="ml-2">Editing</Badge>}
+            {hasVoted && <Badge variant="outline" className="ml-2 border-primary text-primary bg-primary/5">Editing</Badge>}
           </DialogTitle>
-          <DialogDescription>
-            Assign a point value to {entry.artist}'s "{entry.title}". Remember: you can only give each point value once per year!
+          <DialogDescription className="text-base">
+            Assign points to {entry.artist}'s performance. You can only use each score once per year.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-6 py-4">
+        <div className="grid gap-6 py-6">
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 p-2 rounded">
-              <Info className="h-3 w-3" />
-              <span>Greyed out numbers have already been given to other countries.</span>
-            </div>
-            <div className="grid grid-cols-5 gap-2">
-              {points.map((p) => {
-                const isUsedByOther = usedPoints.has(p) && p !== userScore;
-                return (
-                  <Button
-                    key={p}
-                    disabled={isUsedByOther}
-                    variant={score === p ? "default" : "outline"}
-                    className={`h-12 w-full text-lg font-bold relative ${score === p ? "bg-primary" : "hover:border-primary hover:text-primary"}`}
-                    onClick={() => setScore(p)}
-                  >
-                    {p}
-                    {isUsedByOther && <div className="absolute inset-0 bg-background/50 cursor-not-allowed rounded-md" />}
-                  </Button>
-                );
-              })}
+            <label className="text-sm font-bold uppercase tracking-widest text-muted-foreground ml-1">Select Points</label>
+            <Select 
+              value={score > 0 ? score.toString() : ""} 
+              onValueChange={(v) => setScore(parseInt(v))}
+            >
+              <SelectTrigger className="h-14 rounded-2xl border-2 bg-muted/20 text-lg font-bold">
+                <SelectValue placeholder="How many points?" />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl border-2">
+                {points.map((p) => {
+                  const isUsedByOther = usedPoints.has(p) && p !== userScore;
+                  return (
+                    <SelectItem 
+                      key={p} 
+                      value={p.toString()} 
+                      disabled={isUsedByOther}
+                      className="h-12 font-bold focus:bg-primary focus:text-primary-foreground"
+                    >
+                      <div className="flex items-center justify-between w-full gap-4">
+                        <span className="flex items-center gap-2">
+                          <Trophy className={`h-4 w-4 ${p === 12 ? 'text-yellow-500' : p === 10 ? 'text-slate-400' : 'text-muted-foreground'}`} />
+                          {p} Points
+                        </span>
+                        {isUsedByOther && <span className="text-[10px] uppercase tracking-tighter opacity-50 italic">Already Assigned</span>}
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground bg-muted/50 p-3 rounded-xl">
+              <Info className="h-3.5 w-3.5 shrink-0" />
+              <span>Eurovision standard points: 1-8, 10, and the legendary 12 points!</span>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Why this score? (Optional)</label>
+          <div className="space-y-3">
+            <label className="text-sm font-bold uppercase tracking-widest text-muted-foreground ml-1">Comments (Optional)</label>
             <Textarea
-              placeholder="The vocals were stunning..."
+              placeholder="What did you think of the staging and vocals?"
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
-              className="min-h-[100px] bg-secondary/30"
+              className="min-h-[120px] bg-muted/20 border-2 rounded-2xl p-4 focus:border-primary transition-colors"
             />
           </div>
         </div>
 
-        <DialogFooter>
-          <Button onClick={handleSubmit} disabled={score === 0 || (usedPoints.has(score) && score !== userScore)} className="w-full h-12 text-lg">
-            {hasVoted ? "Update Vote" : "Submit Vote"}
+        <DialogFooter className="sm:justify-start">
+          <Button 
+            onClick={handleSubmit} 
+            disabled={score === 0 || (usedPoints.has(score) && score !== userScore)} 
+            className="w-full h-14 text-xl font-bold rounded-2xl shadow-lg shadow-primary/20"
+          >
+            {hasVoted ? "Update My Vote" : "Submit Score"}
           </Button>
         </DialogFooter>
       </DialogContent>
