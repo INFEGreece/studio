@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Navbar } from '@/components/layout/Navbar';
 import { EntryCard } from '@/components/entries/EntryCard';
@@ -28,6 +28,12 @@ export default function Home() {
   const { toast } = useToast();
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [selectedStage, setSelectedStage] = useState<string>("All");
+  const [currentYear, setCurrentYear] = useState<number>(2026);
+
+  // Fix hydration mismatch for dynamic dates
+  useEffect(() => {
+    setCurrentYear(new Date().getFullYear());
+  }, []);
 
   const entriesRef = useMemoFirebase(() => {
     let baseQuery = query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
@@ -167,7 +173,7 @@ export default function Home() {
                 <div className="flex flex-col gap-2 w-full sm:w-auto">
                   <span className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Decade</span>
                   <Tabs value={currentDecadeLabel} className="w-full sm:w-auto">
-                    <TabsList className="bg-secondary/50 p-1.5 rounded-full w-full sm:w-auto whitespace-nowrap overflow-x-auto scrollbar-hide">
+                    <TabsList className="bg-secondary/50 p-1.5 rounded-full w-full sm:w-auto overflow-x-auto">
                       {DECADES.map(d => (
                         <TabsTrigger 
                           key={d.label} 
@@ -298,7 +304,7 @@ export default function Home() {
           </p>
           <div className="pt-12 border-t border-white/5">
             <p className="text-[10px] md:text-xs text-muted-foreground/40 tracking-[0.3em] uppercase">
-              &copy; {new Date().getFullYear()} INFE GREECE OFFICIAL FAN POLL • PROUDLY SERVING EUROFANS
+              &copy; {currentYear} INFE GREECE OFFICIAL FAN POLL • PROUDLY SERVING EUROFANS
             </p>
           </div>
         </div>
