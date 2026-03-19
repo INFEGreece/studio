@@ -29,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, Loader2, Image as ImageIcon, ListPlus, ShieldAlert } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, Image as ImageIcon, ListPlus, ShieldAlert, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
@@ -82,6 +82,13 @@ export default function AdminPage() {
     )
     .sort((a, b) => a.country.localeCompare(b.country));
 
+  const copyUid = () => {
+    if (user?.uid) {
+      navigator.clipboard.writeText(user.uid);
+      toast({ title: "UID Copied", description: "Now add this to your roles_admin collection in Firebase." });
+    }
+  };
+
   if (isUserLoading || isAdminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -99,6 +106,22 @@ export default function AdminPage() {
             <ShieldAlert className="h-12 w-12 text-destructive mx-auto" />
             <h1 className="text-2xl font-bold">Access Denied</h1>
             <p className="text-muted-foreground">You must be an administrator to manage entries.</p>
+            
+            {user && (
+              <div className="p-4 bg-muted/50 rounded-lg text-left space-y-2">
+                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Your Admin ID (UID):</p>
+                <div className="flex items-center gap-2 bg-background border p-2 rounded text-xs font-mono break-all">
+                  {user.uid}
+                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={copyUid}>
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground leading-tight italic">
+                  Copy this ID and add it as a Document ID in a new Firestore collection called "roles_admin" to get access.
+                </p>
+              </div>
+            )}
+
             <Button variant="outline" className="w-full" asChild>
               <Link href="/">Return Home</Link>
             </Button>

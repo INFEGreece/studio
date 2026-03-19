@@ -33,12 +33,13 @@ To use the "Continue with Google" button on your site:
 ## 👑 HOW TO BECOME AN ADMIN
 To see the Management page and add songs:
 1. Log in to your website (using Google or Email).
-2. Go to the [Firebase Console](https://console.firebase.google.com/).
-3. Click **Authentication** and find the **User UID** for your account (e.g., `abc123xyz...`).
-4. Click **Firestore Database** in the left menu.
-5. Create a new collection called `roles_admin`.
-6. Add a document where the **Document ID** is exactly your **User UID**.
-7. You don't need any fields inside; just having the ID there makes you an Admin.
+2. Go to the **Management** page on your site. It will say "Access Denied" but it will show you your **User UID** (e.g., `abc123xyz...`).
+3. **Copy your UID**.
+4. Go to the [Firebase Console](https://console.firebase.google.com/).
+5. Click **Firestore Database** in the left menu.
+6. Create a new collection called `roles_admin`.
+7. Add a document where the **Document ID** is exactly your **User UID**.
+8. You don't need any fields inside; just having the ID there makes you an Admin.
 
 ---
 Created by INFE Greece. Celebrating 70 years of Eurovision history.
