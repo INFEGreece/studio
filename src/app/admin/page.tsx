@@ -120,9 +120,9 @@ export default function AdminPage() {
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground leading-relaxed italic">
                     1. Copy this UID above.<br/>
-                    2. Go to Firebase Console -> Firestore.<br/>
+                    2. Go to Firebase Console &rarr; Firestore Database.<br/>
                     3. Add a collection named <strong>roles_admin</strong>.<br/>
-                    4. Create a document with the **Document ID** as your UID.
+                    4. Create a document with the <strong>Document ID</strong> as your UID.
                   </p>
                 </div>
               </div>
