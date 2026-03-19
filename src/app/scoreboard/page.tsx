@@ -1,11 +1,12 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Entry } from '@/lib/types';
+import { DECADES } from '@/lib/data';
 import { 
   Table, 
   TableBody, 
@@ -16,6 +17,14 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
   BarChart, 
   Bar, 
   XAxis, 
@@ -25,13 +34,15 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
-import { Trophy, TrendingUp, Users, Loader2, ListOrdered } from 'lucide-react';
+import { Trophy, TrendingUp, Users, Loader2, ListOrdered, Calendar } from 'lucide-react';
 import { getFlagUrl } from '@/lib/utils';
 import Link from 'next/link';
 
 export default function ScoreboardPage() {
   const db = useFirestore();
   const [selectedYear, setSelectedYear] = useState(2026);
+
+  const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
 
   const entriesQuery = useMemoFirebase(() => {
     return query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
@@ -61,14 +72,57 @@ export default function ScoreboardPage() {
       <Navbar />
       
       <main className="flex-1 container px-4 py-8 md:py-12">
-        <header className="mb-8 md:mb-12 space-y-4">
+        <header className="mb-8 md:mb-12 flex flex-col xl:flex-row xl:items-end justify-between gap-8">
           <div className="flex items-center gap-3">
-            <div className="bg-primary/20 p-2 rounded-lg">
+            <div className="bg-primary/20 p-2 rounded-lg shrink-0">
               <Trophy className="h-6 w-6 md:h-8 md:w-8 text-primary" />
             </div>
             <div>
               <h1 className="text-3xl md:text-4xl font-headline font-extrabold tracking-tight">Eurovision Scoreboard</h1>
-              <p className="text-sm md:text-base text-muted-foreground">Community rankings for the {selectedYear} season</p>
+              <p className="text-sm md:text-base text-muted-foreground">Live community rankings for the selected season</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-4 md:gap-6">
+            <div className="flex flex-col gap-1 w-full sm:w-auto">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-1">
+                <Calendar className="h-3 w-3" /> Decade
+              </span>
+              <Tabs value={currentDecadeLabel} className="w-full sm:w-auto">
+                <TabsList className="bg-secondary/50 p-1 rounded-full w-full sm:w-auto overflow-x-auto">
+                  {DECADES.map(d => (
+                    <TabsTrigger 
+                      key={d.label} 
+                      value={d.label} 
+                      className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs h-9"
+                      onClick={() => {
+                        setSelectedYear(d.years[0]);
+                      }}
+                    >
+                      {d.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </div>
+
+            <div className="flex flex-col gap-1 w-full sm:w-auto">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Year</span>
+              <Select 
+                value={selectedYear.toString()} 
+                onValueChange={(v) => {
+                  setSelectedYear(parseInt(v));
+                }}
+              >
+                <SelectTrigger className="w-full sm:w-[140px] bg-secondary/50 border-none h-11 font-bold rounded-xl">
+                  <SelectValue placeholder="Year" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px] rounded-xl">
+                  {(DECADES.find(d => d.label === currentDecadeLabel)?.years || []).map(y => (
+                    <SelectItem key={y} value={y.toString()} className="font-bold">{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </header>
@@ -76,13 +130,13 @@ export default function ScoreboardPage() {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="h-10 w-10 md:h-12 md:w-12 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground font-medium">Calculating final scores...</p>
+            <p className="text-muted-foreground font-medium">Calculating community results for {selectedYear}...</p>
           </div>
         ) : scoreboardData.length === 0 ? (
           <div className="text-center py-20 md:py-32 bg-muted/20 rounded-[1.5rem] md:rounded-[2rem] border-2 border-dashed">
             <Users className="h-12 w-12 md:h-16 md:w-16 mx-auto text-muted-foreground/30 mb-4" />
-            <p className="text-lg md:text-xl font-headline font-bold text-muted-foreground">No voting data yet</p>
-            <p className="text-xs md:text-sm text-muted-foreground">Entries will appear here once users start voting.</p>
+            <p className="text-lg md:text-xl font-headline font-bold text-muted-foreground">No data for {selectedYear} yet</p>
+            <p className="text-xs md:text-sm text-muted-foreground">Entries will appear here once users start voting for this season.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start">

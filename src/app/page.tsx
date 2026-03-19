@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Navbar } from '@/components/layout/Navbar';
 import { EntryCard } from '@/components/entries/EntryCard';
 import { DECADES } from '@/lib/data';
@@ -16,7 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { History, Filter, Loader2, Layers, Music, RotateCcw, AlertCircle } from 'lucide-react';
+import { History, Filter, Loader2, Layers, Music, RotateCcw } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import { Entry, Vote } from '@/lib/types';
@@ -152,7 +153,7 @@ export default function Home() {
                   <Music className="mr-2 h-6 w-6" /> Start Voting
                 </Button>
                 <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg md:text-xl px-10 md:px-14 h-16 md:h-20 rounded-full border-2" asChild>
-                  <a href="/scoreboard">Live Scoreboard</a>
+                  <Link href="/scoreboard">Live Scoreboard</Link>
                 </Button>
               </div>
             </div>
@@ -244,12 +245,15 @@ export default function Home() {
 
               {userVotes && userVotes.length > 0 && (
                 <div className="flex flex-wrap gap-2 pt-4">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground w-full mb-1">Your assigned points for {selectedYear}:</span>
+                  <div className="w-full flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Your assigned points for {selectedYear}:</span>
+                    <Badge variant="outline" className="text-[9px] h-5 bg-primary/10 border-primary/20 text-primary">Leaderboard Status</Badge>
+                  </div>
                   {[12, 10, 8, 7, 6, 5, 4, 3, 2, 1].map(p => (
                     <Badge 
                       key={p} 
                       variant={usedPoints.has(p) ? "default" : "outline"}
-                      className={`h-8 w-12 flex items-center justify-center font-bold text-sm rounded-lg ${usedPoints.has(p) ? 'bg-primary' : 'opacity-30'}`}
+                      className={`h-8 w-12 flex items-center justify-center font-bold text-sm rounded-lg transition-all ${usedPoints.has(p) ? 'bg-primary shadow-lg shadow-primary/20' : 'opacity-30 border-dashed'}`}
                     >
                       {p}
                     </Badge>
@@ -290,14 +294,14 @@ export default function Home() {
       <footer className="border-t bg-card/50 py-16 md:py-28 mt-20 md:mt-32">
         <div className="container px-4 text-center space-y-12 md:space-y-16">
           <div className="flex flex-col items-center gap-6 md:gap-8">
-            <div className="relative h-12 w-20 md:h-16 md:w-28 opacity-90">
+            <Link href="/" className="relative h-12 w-20 md:h-16 md:w-28 opacity-90 transition-opacity hover:opacity-100">
               <Image 
                 src="https://infegreece.com/wp-content/uploads/2023/04/Infe-Greece.jpg" 
                 alt="INFE Greece Logo" 
                 fill
                 className="object-contain rounded-xl"
               />
-            </div>
+            </Link>
             <span className="text-3xl md:text-4xl font-headline font-bold tracking-tight">INFE <span className="text-primary italic">GR Poll</span></span>
           </div>
           <p className="max-w-3xl mx-auto text-lg md:text-xl text-muted-foreground leading-relaxed px-6">
