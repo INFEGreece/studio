@@ -85,7 +85,7 @@ export default function AdminPage() {
   const copyUid = () => {
     if (user?.uid) {
       navigator.clipboard.writeText(user.uid);
-      toast({ title: "UID Copied", description: "Now add this to your roles_admin collection in Firebase." });
+      toast({ title: "UID Copied", description: "Now add this as a Document ID in your roles_admin collection." });
     }
   };
 
@@ -102,27 +102,34 @@ export default function AdminPage() {
       <div className="flex flex-col min-h-screen">
         <Navbar />
         <main className="flex-1 container flex items-center justify-center p-4">
-          <div className="max-w-md w-full text-center space-y-6 bg-card border rounded-2xl p-8 shadow-xl">
-            <ShieldAlert className="h-12 w-12 text-destructive mx-auto" />
-            <h1 className="text-2xl font-bold">Access Denied</h1>
-            <p className="text-muted-foreground">You must be an administrator to manage entries.</p>
+          <div className="max-w-md w-full text-center space-y-8 bg-card border rounded-[2rem] p-10 shadow-2xl">
+            <div className="bg-destructive/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto">
+              <ShieldAlert className="h-10 w-10 text-destructive" />
+            </div>
+            <h1 className="text-3xl font-headline font-bold">Access Denied</h1>
+            <p className="text-muted-foreground">You need administrator privileges to manage the Eurovision database.</p>
             
             {user && (
-              <div className="p-4 bg-muted/50 rounded-lg text-left space-y-2">
-                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Your Admin ID (UID):</p>
-                <div className="flex items-center gap-2 bg-background border p-2 rounded text-xs font-mono break-all">
+              <div className="p-6 bg-muted/50 rounded-2xl text-left space-y-4">
+                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Your Account UID:</p>
+                <div className="flex items-center gap-3 bg-background border p-3 rounded-xl text-sm font-mono break-all group relative">
                   {user.uid}
-                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={copyUid}>
-                    <Copy className="h-3 w-3" />
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 hover:bg-primary/10 hover:text-primary" onClick={copyUid}>
+                    <Copy className="h-4 w-4" />
                   </Button>
                 </div>
-                <p className="text-[10px] text-muted-foreground leading-tight italic">
-                  Copy this ID and add it as a Document ID in a new Firestore collection called "roles_admin" to get access.
-                </p>
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground leading-relaxed italic">
+                    1. Copy this UID above.<br/>
+                    2. Go to Firebase Console -> Firestore.<br/>
+                    3. Add a collection named <strong>roles_admin</strong>.<br/>
+                    4. Create a document with the **Document ID** as your UID.
+                  </p>
+                </div>
               </div>
             )}
 
-            <Button variant="outline" className="w-full" asChild>
+            <Button variant="outline" className="w-full h-12 rounded-xl" asChild>
               <Link href="/">Return Home</Link>
             </Button>
           </div>
@@ -132,7 +139,7 @@ export default function AdminPage() {
   }
 
   const handleDelete = (id: string) => {
-    if (confirm("Are you sure?")) {
+    if (confirm("Remove this entry permanently?")) {
       const docRef = doc(db, 'eurovision_entries', id);
       deleteDocumentNonBlocking(docRef);
       toast({ title: "Entry Removed", variant: "destructive" });
@@ -157,7 +164,7 @@ export default function AdminPage() {
 
   const handleSave = () => {
     if (!formData.country || !formData.artist || !formData.songTitle) {
-      toast({ title: "Error", description: "Missing required fields.", variant: "destructive" });
+      toast({ title: "Error", description: "All fields are required.", variant: "destructive" });
       return;
     }
 
@@ -173,7 +180,7 @@ export default function AdminPage() {
     }, { merge: true });
 
     setIsDialogOpen(false);
-    toast({ title: "Entry Saved" });
+    toast({ title: "Database Updated" });
   };
 
   const handleBulkImport = () => {
@@ -203,71 +210,111 @@ export default function AdminPage() {
     });
     setBulkText("");
     setIsBulkOpen(false);
-    toast({ title: "Bulk Import Complete" });
+    toast({ title: "Bulk Import Successful" });
   };
 
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <main className="flex-1 container px-4 py-12">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-headline font-bold text-primary">Management</h1>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setIsBulkOpen(true)}>
-              <ListPlus className="h-4 w-4 mr-2" /> Bulk
+      <main className="flex-1 container px-4 py-16">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+          <div>
+            <h1 className="text-4xl font-headline font-bold text-primary">Contest Management</h1>
+            <p className="text-muted-foreground mt-1 text-lg">Manage entries for all Eurovision years and stages.</p>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" className="h-12 px-6 rounded-xl" onClick={() => setIsBulkOpen(true)}>
+              <ListPlus className="h-5 w-5 mr-2" /> Bulk Import
             </Button>
-            <Button onClick={openAddDialog}>
-              <Plus className="h-4 w-4 mr-2" /> Single
+            <Button className="h-12 px-6 rounded-xl bg-primary hover:bg-primary/90" onClick={openAddDialog}>
+              <Plus className="h-5 w-5 mr-2" /> New Entry
             </Button>
           </div>
         </div>
 
-        <div className="bg-card border rounded-xl overflow-hidden">
-          <div className="p-4 border-b">
-            <div className="relative max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input className="pl-9" placeholder="Search entries..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+        <div className="bg-card border rounded-2xl overflow-hidden shadow-sm">
+          <div className="p-6 border-b bg-muted/20">
+            <div className="relative max-w-md">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input className="pl-11 h-12 rounded-xl bg-background border-muted/50" placeholder="Filter countries or artists..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
           </div>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Country</TableHead>
-                <TableHead>Song</TableHead>
-                <TableHead>Year</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="font-bold py-4">Country</TableHead>
+                <TableHead className="font-bold py-4">Song Title</TableHead>
+                <TableHead className="font-bold py-4">Artist</TableHead>
+                <TableHead className="font-bold py-4">Year</TableHead>
+                <TableHead className="text-right font-bold py-4">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((entry) => (
-                <TableRow key={entry.id}>
-                  <TableCell className="font-medium flex items-center gap-2">
-                    <img src={entry.flagUrl || getFlagUrl(entry.country)} alt="" className="h-4 w-6 object-cover rounded-sm" />
+                <TableRow key={entry.id} className="group transition-colors">
+                  <TableCell className="font-bold flex items-center gap-3">
+                    <img src={entry.flagUrl || getFlagUrl(entry.country)} alt="" className="h-5 w-8 object-cover rounded shadow-sm" />
                     {entry.country}
                   </TableCell>
-                  <TableCell>{entry.songTitle}</TableCell>
-                  <TableCell>{entry.year}</TableCell>
+                  <TableCell className="text-muted-foreground italic font-medium">{entry.songTitle}</TableCell>
+                  <TableCell>{entry.artist}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="font-bold">{entry.year}</Badge>
+                  </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(entry.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    <Button variant="ghost" size="icon" className="hover:text-destructive transition-colors" onClick={() => handleDelete(entry.id)}>
+                      <Trash2 className="h-5 w-5" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
+              {filtered.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-40 text-center text-muted-foreground">
+                    No entries found matching your search.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>
 
         <Dialog open={isBulkOpen} onOpenChange={setIsBulkOpen}>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Bulk Import</DialogTitle></DialogHeader>
-            <div className="space-y-4 py-4">
+          <DialogContent className="sm:max-w-[600px] rounded-3xl">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-headline font-bold">Bulk Import Entries</DialogTitle>
+              <p className="text-sm text-muted-foreground">Paste lines in the format: <strong>Country; Artist; Song; VideoUrl</strong></p>
+            </DialogHeader>
+            <div className="space-y-6 py-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Year</Label>
+                  <Input type="number" value={bulkYear} onChange={(e) => setBulkYear(parseInt(e.target.value))} className="h-11 rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Stage</Label>
+                  <Select value={bulkStage} onValueChange={(v) => setBulkStage(v as ContestStage)}>
+                    <SelectTrigger className="h-11 rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Final">Grand Final</SelectItem>
+                      <SelectItem value="Semi-Final 1">Semi-Final 1</SelectItem>
+                      <SelectItem value="Semi-Final 2">Semi-Final 2</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <Textarea 
-                placeholder="Country; Artist; Song; VideoUrl"
-                className="min-h-[200px] font-mono text-xs"
+                placeholder="Greece; Marina Satti; Zari; https://youtu.be/..."
+                className="min-h-[250px] font-mono text-xs rounded-xl p-4 bg-muted/20 border-muted/50"
                 value={bulkText}
                 onChange={(e) => setBulkText(e.target.value)}
               />
             </div>
-            <DialogFooter><Button onClick={handleBulkImport} className="w-full">Import</Button></DialogFooter>
+            <DialogFooter>
+              <Button onClick={handleBulkImport} className="w-full h-12 rounded-xl text-lg">Import Entries</Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </main>

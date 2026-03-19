@@ -101,64 +101,63 @@ export default function Home() {
       <Navbar />
       
       <main className="flex-1">
-        <section className="relative w-full py-16 md:py-24 overflow-hidden bg-secondary/20">
+        <section className="relative w-full py-20 md:py-32 overflow-hidden bg-secondary/20">
           <div className="container relative z-10 px-4 flex flex-col items-center text-center">
-            {/* Logo Container with Margin to prevent overlap */}
-            <div className="mb-12 w-full flex justify-center">
-              <div className="relative w-56 h-28 md:w-80 md:h-40">
+            <div className="mb-16 w-full flex justify-center">
+              <div className="relative w-64 h-32 md:w-96 md:h-48">
                 <Image 
                   src="https://infegreece.com/wp-content/uploads/2023/04/Infe-Greece.jpg" 
                   alt="INFE Greece" 
                   fill
-                  className="object-contain drop-shadow-2xl rounded-lg"
+                  className="object-contain drop-shadow-2xl rounded-xl"
                   priority
                 />
               </div>
             </div>
-            {/* Hero Text */}
-            <div className="space-y-6 max-w-4xl">
-              <h1 className="text-4xl md:text-7xl font-headline font-extrabold tracking-tighter text-foreground leading-tight">
-                The INFE GR <br/><span className="text-primary">Eurovision Poll</span>
+            
+            <div className="space-y-8 max-w-4xl">
+              <h1 className="text-5xl md:text-8xl font-headline font-extrabold tracking-tighter text-foreground leading-none">
+                THE INFE GR <br/><span className="text-primary italic">Eurovision Poll</span>
               </h1>
-              <p className="max-w-[700px] text-lg md:text-xl text-muted-foreground mx-auto">
-                Celebrating 70 years of Eurovision. Vote for your favorite entries and see how the community ranks the best contest on Earth.
+              <p className="max-w-[700px] text-lg md:text-2xl text-muted-foreground mx-auto font-medium">
+                70 Years of Eurovision History. Your Voice. Your Vote. Our Community.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 pt-6 justify-center">
-                <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-10 h-14" onClick={() => {
+              <div className="flex flex-col sm:flex-row gap-4 pt-8 justify-center">
+                <Button size="lg" className="bg-primary hover:bg-primary/90 text-xl px-12 h-16 rounded-full shadow-lg shadow-primary/20" onClick={() => {
                   const element = document.getElementById('browser-section');
                   element?.scrollIntoView({ behavior: 'smooth' });
                 }}>
                   Start Voting
                 </Button>
-                <Button size="lg" variant="outline" className="text-lg px-10 h-14" asChild>
-                  <a href="/scoreboard">View Scoreboard</a>
+                <Button size="lg" variant="outline" className="text-xl px-12 h-16 rounded-full border-2" asChild>
+                  <a href="/scoreboard">Live Scoreboard</a>
                 </Button>
               </div>
             </div>
           </div>
         </section>
 
-        <section id="browser-section" className="container px-4 py-16">
-          <div className="flex flex-col gap-10 mb-12">
+        <section id="browser-section" className="container px-4 py-20">
+          <div className="flex flex-col gap-12 mb-16">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-              <div className="space-y-3">
-                <h2 className="text-3xl md:text-4xl font-headline font-bold flex items-center gap-3">
-                  <History className="h-8 w-8 text-accent" />
-                  Browse Entries
+              <div className="space-y-4">
+                <h2 className="text-3xl md:text-5xl font-headline font-bold flex items-center gap-4">
+                  <History className="h-10 w-10 text-accent" />
+                  Explore History
                 </h2>
-                <p className="text-muted-foreground text-lg">Explore 70 years of musical history, from 1956 to 2026.</p>
+                <p className="text-muted-foreground text-xl">Select a year to see the entries and cast your 12 points.</p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-6">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Decade:</span>
+              <div className="flex flex-wrap items-center gap-8">
+                <div className="flex items-center gap-4">
+                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Decade</span>
                   <Tabs value={currentDecadeLabel} className="w-auto">
-                    <TabsList className="bg-secondary/50 p-1">
+                    <TabsList className="bg-secondary/50 p-1 rounded-full">
                       {DECADES.map(d => (
                         <TabsTrigger 
                           key={d.label} 
                           value={d.label} 
-                          className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                          className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6"
                           onClick={() => {
                             setSelectedYear(d.years[0]);
                             setSelectedStage("All");
@@ -171,8 +170,8 @@ export default function Home() {
                   </Tabs>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Year:</span>
+                <div className="flex items-center gap-4">
+                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Year</span>
                   <Select 
                     value={selectedYear.toString()} 
                     onValueChange={(v) => {
@@ -180,10 +179,10 @@ export default function Home() {
                       setSelectedStage("All");
                     }}
                   >
-                    <SelectTrigger className="w-[140px] bg-secondary/50 border-none h-10 font-bold">
+                    <SelectTrigger className="w-[160px] bg-secondary/50 border-none h-12 font-bold rounded-full text-lg">
                       <SelectValue placeholder="Year" />
                     </SelectTrigger>
-                    <SelectContent className="max-h-[300px]">
+                    <SelectContent className="max-h-[300px] rounded-xl">
                       {(DECADES.find(d => d.label === currentDecadeLabel)?.years || []).map(y => (
                         <SelectItem key={y} value={y.toString()} className="font-bold">{y}</SelectItem>
                       ))}
@@ -193,29 +192,29 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-inner">
-              <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-muted-foreground mb-4">
-                <Layers className="h-4 w-4" />
-                Competition Stage
+            <div className="p-8 rounded-[2rem] bg-card border border-border/50 shadow-2xl">
+              <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground mb-6">
+                <Layers className="h-5 w-5" />
+                Competition Phase
               </div>
               <Tabs value={selectedStage} onValueChange={setSelectedStage} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-muted/30 h-12 p-1">
-                  <TabsTrigger value="All" className="h-10">All entries</TabsTrigger>
-                  <TabsTrigger value="Final" className="h-10">Grand Final</TabsTrigger>
-                  <TabsTrigger value="Semi-Final 1" className="h-10">Semi-Final 1</TabsTrigger>
-                  <TabsTrigger value="Semi-Final 2" className="h-10">Semi-Final 2</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-muted/30 h-14 p-1.5 rounded-xl">
+                  <TabsTrigger value="All" className="h-11 rounded-lg text-base">All Entries</TabsTrigger>
+                  <TabsTrigger value="Final" className="h-11 rounded-lg text-base">Grand Final</TabsTrigger>
+                  <TabsTrigger value="Semi-Final 1" className="h-11 rounded-lg text-base">Semi 1</TabsTrigger>
+                  <TabsTrigger value="Semi-Final 2" className="h-11 rounded-lg text-base">Semi 2</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
           </div>
 
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-32">
-              <Loader2 className="h-16 w-16 animate-spin text-primary mb-6" />
-              <p className="text-xl font-bold text-muted-foreground animate-pulse">Retrieving {selectedYear} data...</p>
+            <div className="flex flex-col items-center justify-center py-40">
+              <Loader2 className="h-20 w-20 animate-spin text-primary mb-8" />
+              <p className="text-2xl font-headline font-bold text-muted-foreground animate-pulse">Loading Contest Data...</p>
             </div>
           ) : filteredEntries && filteredEntries.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
               {filteredEntries.map((entry) => (
                 <EntryCard 
                   key={entry.id} 
@@ -228,33 +227,36 @@ export default function Home() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-24 bg-secondary/10 rounded-3xl border-2 border-dashed border-muted/50">
-              <Filter className="h-16 w-16 text-muted-foreground mb-6" />
-              <p className="text-2xl font-bold text-muted-foreground">No records for {selectedYear} {selectedStage !== "All" ? `(${selectedStage})` : ""}</p>
+            <div className="flex flex-col items-center justify-center py-32 bg-secondary/5 rounded-[3rem] border-4 border-dashed border-muted/20">
+              <Filter className="h-24 w-24 text-muted-foreground/30 mb-8" />
+              <p className="text-3xl font-headline font-bold text-muted-foreground">No records found for {selectedYear}</p>
+              <p className="text-muted-foreground mt-2">Try selecting a different year or competition stage.</p>
             </div>
           )}
         </section>
       </main>
 
-      <footer className="border-t bg-card/50 py-16">
-        <div className="container px-4 text-center space-y-8">
-          <div className="flex flex-col items-center gap-4">
-            <div className="relative h-10 w-16 opacity-80">
+      <footer className="border-t bg-card/50 py-20 mt-20">
+        <div className="container px-4 text-center space-y-10">
+          <div className="flex flex-col items-center gap-6">
+            <div className="relative h-12 w-20 opacity-90">
               <Image 
                 src="https://infegreece.com/wp-content/uploads/2023/04/Infe-Greece.jpg" 
                 alt="INFE Greece Logo" 
                 fill
-                className="object-contain rounded"
+                className="object-contain rounded-lg"
               />
             </div>
-            <span className="text-2xl font-headline font-bold tracking-tight">INFE <span className="text-primary">GR Poll</span></span>
+            <span className="text-3xl font-headline font-bold tracking-tight">INFE <span className="text-primary italic">GR Poll</span></span>
           </div>
-          <p className="max-w-2xl mx-auto text-muted-foreground">
-            Celebrating 70 years of Eurovision history. Created for fans by INFE Greece.
+          <p className="max-w-2xl mx-auto text-lg text-muted-foreground leading-relaxed">
+            Celebrating 70 years of music, culture, and unity. Created by fans, for fans, at INFE Greece.
           </p>
-          <p className="text-xs text-muted-foreground/50">
-            © {new Date().getFullYear()} INFE Greece. All rights reserved.
-          </p>
+          <div className="pt-8 border-t border-white/5">
+            <p className="text-sm text-muted-foreground/50 tracking-widest uppercase">
+              &copy; {new Date().getFullYear()} INFE GREECE OFFICIAL FAN POLL
+            </p>
+          </div>
         </div>
       </footer>
     </div>

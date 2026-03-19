@@ -82,27 +82,27 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent className="sm:max-w-[400px] rounded-3xl p-8">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-headline font-bold text-center flex items-center justify-center gap-2">
-            {isSignUp ? <UserPlus className="h-6 w-6 text-primary" /> : <LogIn className="h-6 w-6 text-primary" />}
-            {isSignUp ? 'Create account' : 'Welcome back'}
+          <DialogTitle className="text-3xl font-headline font-bold text-center flex items-center justify-center gap-3">
+            {isSignUp ? <UserPlus className="h-8 w-8 text-primary" /> : <LogIn className="h-8 w-8 text-primary" />}
+            {isSignUp ? 'Join Us' : 'Welcome Back'}
           </DialogTitle>
-          <DialogDescription className="text-center">
+          <DialogDescription className="text-center text-base">
             {isSignUp 
-              ? 'Join the community to save your votes permanently.' 
-              : 'Sign in to access your saved votes and profile.'}
+              ? 'Join the community and celebrate Eurovision history.' 
+              : 'Sign in to access your votes and live rankings.'}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-6 py-4">
           <Button 
             variant="outline" 
-            className="w-full h-11 border-2 font-bold hover:bg-muted" 
+            className="w-full h-14 border-2 font-bold hover:bg-muted text-lg rounded-xl" 
             onClick={handleGoogleSignIn}
             disabled={isLoading}
           >
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Chrome className="h-4 w-4 mr-2" />}
+            {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-3" /> : <Chrome className="h-5 w-5 mr-3 text-primary" />}
             Continue with Google
           </Button>
 
@@ -110,21 +110,21 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
             <div className="absolute inset-0 flex items-center">
               <Separator />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or with email</span>
+            <div className="relative flex justify-center text-xs uppercase tracking-[0.2em]">
+              <span className="bg-background px-4 text-muted-foreground">OR</span>
             </div>
           </div>
 
           <form onSubmit={handleAuth} className="space-y-4">
             {isSignUp && (
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider ml-1">Full Name</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
                     id="name" 
-                    placeholder="John Doe" 
-                    className="pl-10"
+                    placeholder="Enter your name" 
+                    className="pl-11 h-12 bg-muted/20 border-muted/50 focus:border-primary rounded-xl"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
@@ -134,14 +134,14 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
+              <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider ml-1">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
                   id="email" 
                   type="email" 
                   placeholder="name@example.com" 
-                  className="pl-10"
+                  className="pl-11 h-12 bg-muted/20 border-muted/50 focus:border-primary rounded-xl"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -150,14 +150,14 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider ml-1">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
                   id="password" 
                   type="password" 
                   placeholder="••••••••" 
-                  className="pl-10"
+                  className="pl-11 h-12 bg-muted/20 border-muted/50 focus:border-primary rounded-xl"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -165,19 +165,19 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
               </div>
             </div>
 
-            <Button type="submit" className="w-full h-11 text-lg bg-primary hover:bg-primary/90" disabled={isLoading}>
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            <Button type="submit" className="w-full h-14 text-xl bg-primary hover:bg-primary/90 rounded-xl shadow-lg shadow-primary/20" disabled={isLoading}>
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-3" /> : null}
               {isSignUp ? 'Create Account' : 'Sign In'}
             </Button>
 
-            <div className="text-center text-sm text-muted-foreground pt-2">
+            <div className="text-center text-sm text-muted-foreground pt-4">
               {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
               <button 
                 type="button" 
-                className="text-primary font-bold hover:underline"
+                className="text-primary font-bold hover:underline transition-all"
                 onClick={() => setIsSignUp(!isSignUp)}
               >
-                {isSignUp ? 'Sign In' : 'Create One'}
+                {isSignUp ? 'Sign In Now' : 'Join for Free'}
               </button>
             </div>
           </form>
