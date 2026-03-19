@@ -19,7 +19,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
@@ -29,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, Loader2, Image as ImageIcon, ListPlus, ShieldAlert, Copy } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, ListPlus, ShieldAlert, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
@@ -162,9 +161,25 @@ export default function AdminPage() {
     setIsDialogOpen(true);
   };
 
+  const openEditDialog = (entry: Entry) => {
+    setIsEditing(true);
+    setCurrentId(entry.id);
+    setFormData({
+      country: entry.country,
+      flagUrl: entry.flagUrl || '',
+      year: entry.year,
+      artist: entry.artist,
+      songTitle: entry.songTitle,
+      videoUrl: entry.videoUrl,
+      thumbnailUrl: entry.thumbnailUrl || '',
+      stage: entry.stage
+    });
+    setIsDialogOpen(true);
+  };
+
   const handleSave = () => {
     if (!formData.country || !formData.artist || !formData.songTitle) {
-      toast({ title: "Error", description: "All fields are required.", variant: "destructive" });
+      toast({ title: "Error", description: "Country, Artist, and Song Title are required.", variant: "destructive" });
       return;
     }
 
@@ -175,12 +190,11 @@ export default function AdminPage() {
     setDocumentNonBlocking(docRef, {
       ...formData,
       id,
-      totalPoints: 0,
-      voteCount: 0
+      flagUrl: formData.flagUrl || getFlagUrl(formData.country)
     }, { merge: true });
 
     setIsDialogOpen(false);
-    toast({ title: "Database Updated" });
+    toast({ title: isEditing ? "Entry Updated" : "Entry Created" });
   };
 
   const handleBulkImport = () => {
@@ -203,8 +217,6 @@ export default function AdminPage() {
           year: bulkYear,
           stage: bulkStage,
           flagUrl: getFlagUrl(country),
-          totalPoints: 0,
-          voteCount: 0
         }, { merge: true });
       }
     });
@@ -246,6 +258,7 @@ export default function AdminPage() {
                 <TableHead className="font-bold py-4">Song Title</TableHead>
                 <TableHead className="font-bold py-4">Artist</TableHead>
                 <TableHead className="font-bold py-4">Year</TableHead>
+                <TableHead className="font-bold py-4">Stage</TableHead>
                 <TableHead className="text-right font-bold py-4">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -261,16 +274,24 @@ export default function AdminPage() {
                   <TableCell>
                     <Badge variant="outline" className="font-bold">{entry.year}</Badge>
                   </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className="text-[10px]">{entry.stage}</Badge>
+                  </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="hover:text-destructive transition-colors" onClick={() => handleDelete(entry.id)}>
-                      <Trash2 className="h-5 w-5" />
-                    </Button>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="icon" className="hover:text-primary transition-colors" onClick={() => openEditDialog(entry)}>
+                        <Pencil className="h-5 w-5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="hover:text-destructive transition-colors" onClick={() => handleDelete(entry.id)}>
+                        <Trash2 className="h-5 w-5" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-40 text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="h-40 text-center text-muted-foreground">
                     No entries found matching your search.
                   </TableCell>
                 </TableRow>
@@ -279,11 +300,63 @@ export default function AdminPage() {
           </Table>
         </div>
 
+        {/* Edit/Add Dialog */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="sm:max-w-[500px] rounded-3xl">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-headline font-bold">
+                {isEditing ? "Edit Entry" : "New Entry"}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="country">Country</Label>
+                  <Input id="country" value={formData.country} onChange={(e) => setFormData({ ...formData, country: e.target.value })} className="rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="year">Year</Label>
+                  <Input id="year" type="number" value={formData.year} onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })} className="rounded-xl" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="artist">Artist</Label>
+                <Input id="artist" value={formData.artist} onChange={(e) => setFormData({ ...formData, artist: e.target.value })} className="rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="songTitle">Song Title</Label>
+                <Input id="songTitle" value={formData.songTitle} onChange={(e) => setFormData({ ...formData, songTitle: e.target.value })} className="rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="stage">Stage</Label>
+                <Select value={formData.stage} onValueChange={(v) => setFormData({ ...formData, stage: v as ContestStage })}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Final">Grand Final</SelectItem>
+                    <SelectItem value="Semi-Final 1">Semi-Final 1</SelectItem>
+                    <SelectItem value="Semi-Final 2">Semi-Final 2</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="videoUrl">Video URL (YouTube)</Label>
+                <Input id="videoUrl" value={formData.videoUrl} onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })} className="rounded-xl" />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleSave} className="w-full h-12 rounded-xl text-lg">Save Changes</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Dialog */}
         <Dialog open={isBulkOpen} onOpenChange={setIsBulkOpen}>
           <DialogContent className="sm:max-w-[600px] rounded-3xl">
             <DialogHeader>
               <DialogTitle className="text-2xl font-headline font-bold">Bulk Import Entries</DialogTitle>
-              <p className="text-sm text-muted-foreground">Paste lines in the format: <strong>Country; Artist; Song; VideoUrl</strong></p>
+              <p className="text-sm text-muted-foreground">Paste lines: <strong>Country; Artist; Song; VideoUrl</strong></p>
             </DialogHeader>
             <div className="space-y-6 py-6">
               <div className="grid grid-cols-2 gap-4">
