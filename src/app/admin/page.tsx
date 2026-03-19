@@ -29,20 +29,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, Loader2, ListPlus, ShieldAlert, Copy, Image as ImageIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, ListPlus, ShieldAlert, Copy, Image as ImageIcon, Filter } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { Entry, ContestStage } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { getFlagUrl } from '@/lib/utils';
+import { DECADES } from '@/lib/data';
 import Link from 'next/link';
 
 export default function AdminPage() {
   const db = useFirestore();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
+  
+  // Filtering states
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterYear, setFilterYear] = useState<string>("All");
+  const [filterStage, setFilterStage] = useState<string>("All");
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -74,12 +80,21 @@ export default function AdminPage() {
   const entriesRef = useMemoFirebase(() => collection(db, 'eurovision_entries'), [db]);
   const { data: entries, isLoading: isEntriesLoading } = useCollection<Entry>(entriesRef);
 
+  // Generate list of all years from DECADES helper
+  const allYears = DECADES.flatMap(d => d.years).sort((a, b) => b - a);
+
   const filtered = (entries || [])
-    .filter(e => 
-      e.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      e.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      e.songTitle.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    .filter(e => {
+      const matchesSearch = 
+        e.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.songTitle.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesYear = filterYear === "All" || e.year.toString() === filterYear;
+      const matchesStage = filterStage === "All" || e.stage === filterStage;
+
+      return matchesSearch && matchesYear && matchesStage;
+    })
     .sort((a, b) => b.year - a.year || a.country.localeCompare(b.country));
 
   const copyUid = () => {
@@ -246,10 +261,44 @@ export default function AdminPage() {
         </div>
 
         <div className="bg-card border rounded-2xl overflow-hidden shadow-sm">
-          <div className="p-4 md:p-6 border-b bg-muted/20">
-            <div className="relative max-w-md">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
-              <Input className="pl-10 md:pl-11 h-11 md:h-12 rounded-xl bg-background border-muted/50" placeholder="Filter countries or artists..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <div className="p-4 md:p-6 border-b bg-muted/20 space-y-4">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">
+              <Filter className="h-3 w-3" /> Filters
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="relative md:col-span-2">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
+                <Input 
+                  className="pl-10 md:pl-11 h-11 md:h-12 rounded-xl bg-background border-muted/50" 
+                  placeholder="Filter countries or artists..." 
+                  value={searchTerm} 
+                  onChange={(e) => setSearchTerm(e.target.value)} 
+                />
+              </div>
+              
+              <Select value={filterYear} onValueChange={setFilterYear}>
+                <SelectTrigger className="h-11 md:h-12 rounded-xl bg-background border-muted/50">
+                  <SelectValue placeholder="All Years" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Years</SelectItem>
+                  {allYears.map(y => (
+                    <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={filterStage} onValueChange={setFilterStage}>
+                <SelectTrigger className="h-11 md:h-12 rounded-xl bg-background border-muted/50">
+                  <SelectValue placeholder="All Stages" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Stages</SelectItem>
+                  <SelectItem value="Final">Grand Final</SelectItem>
+                  <SelectItem value="Semi-Final 1">Semi-Final 1</SelectItem>
+                  <SelectItem value="Semi-Final 2">Semi-Final 2</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -296,7 +345,7 @@ export default function AdminPage() {
                 {filtered.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="h-40 text-center text-muted-foreground">
-                      No entries found matching your search.
+                      No entries found matching your search and filters.
                     </TableCell>
                   </TableRow>
                 )}
