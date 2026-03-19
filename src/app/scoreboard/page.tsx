@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo } from 'react';
@@ -25,21 +24,19 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
-import { Trophy, TrendingUp, Users, Loader2 } from 'lucide-react';
+import { Trophy, TrendingUp, Users, Loader2, ListOrdered } from 'lucide-react';
 import { getFlagUrl } from '@/lib/utils';
 
 export default function ScoreboardPage() {
   const db = useFirestore();
   const [selectedYear, setSelectedYear] = useState(2026);
 
-  // Fetch real data from Firestore
   const entriesQuery = useMemoFirebase(() => {
     return query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
   }, [db, selectedYear]);
 
   const { data: entries, isLoading } = useCollection<Entry>(entriesQuery);
 
-  // Process data for the scoreboard
   const scoreboardData = useMemo(() => {
     if (!entries) return [];
     return entries
@@ -64,12 +61,12 @@ export default function ScoreboardPage() {
       <main className="flex-1 container px-4 py-12">
         <header className="mb-12 space-y-4">
           <div className="flex items-center gap-3">
-            <div className="bg-accent/20 p-2 rounded-lg">
-              <TrendingUp className="h-8 w-8 text-accent" />
+            <div className="bg-primary/20 p-2 rounded-lg">
+              <Trophy className="h-8 w-8 text-primary" />
             </div>
             <div>
-              <h1 className="text-4xl font-headline font-extrabold tracking-tight">Global Scoreboard</h1>
-              <p className="text-muted-foreground">Live community rankings for {selectedYear}</p>
+              <h1 className="text-4xl font-headline font-extrabold tracking-tight">Eurovision Scoreboard</h1>
+              <p className="text-muted-foreground">Community rankings for the {selectedYear} season</p>
             </div>
           </div>
         </header>
@@ -77,80 +74,85 @@ export default function ScoreboardPage() {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground font-medium">Calculating scores...</p>
+            <p className="text-muted-foreground font-medium">Calculating final scores...</p>
+          </div>
+        ) : scoreboardData.length === 0 ? (
+          <div className="text-center py-32 bg-muted/20 rounded-[2rem] border-2 border-dashed">
+            <Users className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
+            <p className="text-xl font-headline font-bold text-muted-foreground">No voting data yet</p>
+            <p className="text-sm text-muted-foreground">Entries will appear here once users start voting.</p>
           </div>
         ) : (
-          <>
-            {/* Quick Stats / Podium */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              {top3.length > 0 ? top3.map((item, idx) => (
-                <div key={item.id} className="relative bg-card border rounded-xl p-6 overflow-hidden group hover:border-primary/50 transition-colors">
-                  <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity`}>
-                    <Trophy className={`h-24 w-24 ${idx === 0 ? 'text-yellow-500' : idx === 1 ? 'text-slate-400' : 'text-amber-600'}`} />
-                  </div>
-                  <div className="space-y-2 relative z-10">
-                    <div className="flex items-center gap-2 mb-2">
-                      <img src={item.flagUrl} alt="" className="h-4 w-6 object-cover rounded-sm shadow-sm" />
-                      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Rank #{idx + 1}</span>
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-12 items-start">
+            {/* Column 1: Visual Highlights */}
+            <div className="xl:col-span-5 space-y-8">
+              <div className="space-y-4">
+                <h2 className="text-xl font-headline font-bold flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-yellow-500" />
+                  Podium Finishers
+                </h2>
+                <div className="grid grid-cols-1 gap-4">
+                  {top3.map((item, idx) => (
+                    <div key={item.id} className="relative bg-card border rounded-2xl p-6 group hover:border-primary/50 transition-all shadow-sm">
+                      <div className="flex items-center gap-4">
+                        <div className={`h-12 w-12 rounded-full flex items-center justify-center font-bold text-lg ${
+                          idx === 0 ? 'bg-yellow-500/20 text-yellow-600 border border-yellow-500/30' : 
+                          idx === 1 ? 'bg-slate-400/20 text-slate-500 border border-slate-400/30' : 
+                          'bg-amber-600/20 text-amber-700 border border-amber-600/30'
+                        }`}>
+                          {idx + 1}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <img src={item.flagUrl} alt="" className="h-4 w-6 object-cover rounded shadow-sm" />
+                            <h3 className="font-bold text-lg">{item.name}</h3>
+                          </div>
+                          <p className="text-xs text-muted-foreground line-clamp-1">{item.artist} — {item.title}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-2xl font-extrabold text-primary">{item.score}</span>
+                          <p className="text-[10px] uppercase font-bold text-muted-foreground">Pts</p>
+                        </div>
+                      </div>
                     </div>
-                    <h3 className="text-2xl font-headline font-bold text-primary">{item.name}</h3>
-                    <p className="text-sm text-muted-foreground font-medium truncate">{item.artist}</p>
-                    <div className="pt-4 flex items-baseline gap-2">
-                      <span className="text-3xl font-extrabold text-foreground">{item.score}</span>
-                      <span className="text-sm text-muted-foreground uppercase">Points</span>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              )) : (
-                <div className="col-span-3 text-center py-12 text-muted-foreground bg-muted/20 rounded-xl border-2 border-dashed">
-                  No voting data available for {selectedYear} yet.
-                </div>
-              )}
-            </div>
+              </div>
 
-            {/* Chart Section */}
-            {scoreboardData.length > 0 && (
-              <div className="bg-card border rounded-xl p-6 mb-12 shadow-sm">
+              <div className="bg-card border rounded-2xl p-6 shadow-sm">
                 <h2 className="text-xl font-headline font-bold mb-6 flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
                   Points Distribution
                 </h2>
-                <div className="h-[400px] w-full">
+                <div className="h-[300px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={scoreboardData} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                      <XAxis 
+                    <BarChart data={scoreboardData.slice(0, 10)} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="hsl(var(--border))" />
+                      <XAxis type="number" hide />
+                      <YAxis 
                         dataKey="name" 
-                        angle={-45} 
-                        textAnchor="end" 
-                        interval={0}
-                        stroke="hsl(var(--muted-foreground))"
-                        fontSize={12}
+                        type="category" 
+                        width={100} 
+                        stroke="hsl(var(--muted-foreground))" 
+                        fontSize={10} 
+                        tick={{ fontWeight: 'bold' }}
                       />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                       <RechartsTooltip 
-                        cursor={{ fill: 'hsl(var(--secondary))', opacity: 0.4 }}
                         content={({ active, payload }) => {
                           if (active && payload && payload.length) {
                             const data = payload[0].payload;
                             return (
-                              <div className="bg-popover border p-3 rounded-lg shadow-xl ring-1 ring-black/5">
+                              <div className="bg-popover border p-3 rounded-xl shadow-xl">
                                 <p className="font-bold text-primary">{data.name}</p>
-                                <p className="text-xs text-muted-foreground mb-1">{data.artist}</p>
-                                <div className="flex items-center gap-4 pt-2 border-t mt-2">
-                                  <span className="text-sm font-bold">{data.score} Pts</span>
-                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Users className="h-3 w-3" /> {data.votes} votes
-                                  </span>
-                                </div>
+                                <p className="text-[10px] font-bold">{data.score} Points</p>
                               </div>
                             );
                           }
                           return null;
                         }}
                       />
-                      <Bar dataKey="score" radius={[4, 4, 0, 0]}>
-                        {scoreboardData.map((entry, index) => (
+                      <Bar dataKey="score" radius={[0, 4, 4, 0]}>
+                        {scoreboardData.slice(0, 10).map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={index === 0 ? 'hsl(var(--primary))' : 'hsl(var(--primary)/0.6)'} />
                         ))}
                       </Bar>
@@ -158,18 +160,23 @@ export default function ScoreboardPage() {
                   </ResponsiveContainer>
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* Table Section */}
-            {scoreboardData.length > 0 && (
-              <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
+            {/* Column 2: Detailed Table */}
+            <div className="xl:col-span-7">
+              <div className="bg-card border rounded-2xl overflow-hidden shadow-sm">
+                <div className="p-6 border-b bg-muted/10">
+                  <h2 className="text-xl font-headline font-bold flex items-center gap-2">
+                    <ListOrdered className="h-5 w-5 text-primary" />
+                    Detailed Rankings
+                  </h2>
+                </div>
                 <Table>
                   <TableHeader className="bg-muted/30">
                     <TableRow>
                       <TableHead className="w-[80px]">Rank</TableHead>
                       <TableHead>Country & Artist</TableHead>
                       <TableHead>Points</TableHead>
-                      <TableHead>Average</TableHead>
                       <TableHead className="text-right">Votes</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -177,32 +184,29 @@ export default function ScoreboardPage() {
                     {scoreboardData.map((item, idx) => (
                       <TableRow key={item.id} className="hover:bg-muted/30 transition-colors">
                         <TableCell className="font-bold">
-                          {idx + 1 === 1 ? <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30">1st</Badge> : 
-                           idx + 1 === 2 ? <Badge className="bg-slate-400/20 text-slate-400 border-slate-400/30">2nd</Badge> :
-                           idx + 1 === 3 ? <Badge className="bg-amber-600/20 text-amber-600 border-amber-600/30">3rd</Badge> : 
+                          {idx + 1 === 1 ? <Badge className="bg-yellow-500/20 text-yellow-600 border-yellow-500/30">1st</Badge> : 
+                           idx + 1 === 2 ? <Badge className="bg-slate-400/20 text-slate-500 border-slate-400/30">2nd</Badge> :
+                           idx + 1 === 3 ? <Badge className="bg-amber-600/20 text-amber-700 border-amber-600/30">3rd</Badge> : 
                            `#${idx + 1}`}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <img src={item.flagUrl} alt="" className="h-4 w-6 object-cover rounded-sm shadow-xs flex-shrink-0" />
-                            <div className="flex flex-col">
-                              <span className="font-bold text-foreground">{item.name}</span>
-                              <span className="text-xs text-muted-foreground truncate max-w-[200px]">{item.artist} - {item.title}</span>
+                            <img src={item.flagUrl} alt="" className="h-4 w-6 object-cover rounded-sm flex-shrink-0" />
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-bold text-foreground truncate">{item.name}</span>
+                              <span className="text-[10px] text-muted-foreground truncate">{item.artist}</span>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell className="font-bold text-primary">{item.score}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {item.votes > 0 ? (item.score / item.votes).toFixed(1) : '0.0'}
-                        </TableCell>
                         <TableCell className="text-right text-muted-foreground">{item.votes}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </div>
-            )}
-          </>
+            </div>
+          </div>
         )}
       </main>
     </div>

@@ -25,11 +25,11 @@ Once you have pushed your code:
 
 ## 👑 HOW TO BECOME AN ADMIN
 1. Log in to your website.
-2. Go to the **Management** page. It will show you your **User UID** (e.g., `abc123xyz...`).
+2. Go to the **Management** (Admin) page. It will show you your **User UID** (e.g., `abc123xyz...`).
 3. **Copy your UID**.
 4. In Firebase Console, go to **Firestore Database**.
 5. Create a collection called `roles_admin`.
-6. Add a document where the **Document ID** is your **UID**. Leave it empty. You are now an Admin!
+6. Add a document where the **Document ID** is exactly your **UID**. Leave it empty. You are now an Admin!
 
 ## 🚨 PLESK CLEANUP
-Before uploading, delete `default.php`, `index.php`, or any existing `index.html` that Plesk created automatically.
+Before uploading, delete `default.php`, `index.php`, or any existing `index.html` that Plesk created automatically. These "default" files will block your app from showing if not deleted.
