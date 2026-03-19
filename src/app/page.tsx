@@ -54,7 +54,9 @@ export default function Home() {
   const { data: userVotes } = useCollection<Vote>(userVotesRef);
 
   const userVotesMap = (userVotes || []).reduce((acc, vote) => {
-    acc[vote.eurovisionEntryId] = vote.points;
+    if (vote.eurovisionEntryId) {
+      acc[vote.eurovisionEntryId] = vote.points;
+    }
     return acc;
   }, {} as Record<string, number>);
 
@@ -104,9 +106,6 @@ export default function Home() {
       userVotes.forEach(vote => {
         const voteRef = doc(db, 'users', user.uid, 'votes', vote.id);
         deleteDocumentNonBlocking(voteRef);
-        
-        // Note: Global stats update on reset is complex in client-only environments
-        // but removing the user document is the priority for the user experience.
       });
       toast({ title: "Votes Reset", description: `Your leaderboard for ${selectedYear} is now empty.` });
     }
