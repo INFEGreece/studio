@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -18,10 +19,11 @@ import {
   createUserWithEmailAndPassword, 
   updateProfile,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  browserPopupBlockedHandler
 } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Mail, Lock, User, UserPlus, LogIn, Chrome } from 'lucide-react';
+import { Loader2, Mail, Lock, User, UserPlus, LogIn, Chrome, AlertTriangle } from 'lucide-react';
 
 interface AuthDialogProps {
   open: boolean;
@@ -40,14 +42,33 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
+    // Hint for account selection
+    provider.setCustomParameters({ prompt: 'select_account' });
+
     try {
-      await signInWithPopup(auth, provider);
-      toast({ title: "Welcome!", description: "Signed in with Google successfully." });
-      onOpenChange(false);
+      if (!auth) throw new Error("Authentication service is not initialized.");
+      
+      const result = await signInWithPopup(auth, provider);
+      if (result.user) {
+        toast({ title: "Welcome!", description: "Signed in successfully." });
+        onOpenChange(false);
+      }
     } catch (error: any) {
+      console.error("Google Sign-In Error:", error);
+      
+      let errorMessage = "Failed to sign in. Please try again.";
+      
+      if (error.code === 'auth/popup-blocked') {
+        errorMessage = "Sign-in popup was blocked. Please enable popups for this site or try a different browser.";
+      } else if (error.code === 'auth/unauthorized-domain') {
+        errorMessage = "This domain is not authorized for Google login. Admin needs to add this domain in Firebase Console.";
+      } else if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
+        errorMessage = "Sign-in was cancelled.";
+      }
+
       toast({
-        title: "Google Sign-In Error",
-        description: error.message || "Failed to sign in with Google. Check if your domain is authorized in Firebase Console.",
+        title: "Sign-In Error",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -82,27 +103,27 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px] rounded-3xl p-8">
+      <DialogContent className="sm:max-w-[400px] rounded-[2rem] p-8 overflow-hidden">
         <DialogHeader>
-          <DialogTitle className="text-3xl font-headline font-bold text-center flex items-center justify-center gap-3">
-            {isSignUp ? <UserPlus className="h-8 w-8 text-primary" /> : <LogIn className="h-8 w-8 text-primary" />}
-            {isSignUp ? 'Join Us' : 'Welcome Back'}
+          <DialogTitle className="text-2xl font-headline font-bold text-center flex items-center justify-center gap-3">
+            {isSignUp ? <UserPlus className="h-6 w-6 text-primary" /> : <LogIn className="h-6 w-6 text-primary" />}
+            {isSignUp ? 'Join the Community' : 'Welcome Back'}
           </DialogTitle>
-          <DialogDescription className="text-center text-base">
+          <DialogDescription className="text-center">
             {isSignUp 
-              ? 'Join the community and celebrate Eurovision history.' 
-              : 'Sign in to access your votes and live rankings.'}
+              ? 'Create an account to save your votes.' 
+              : 'Sign in to access your dashboard.'}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           <Button 
             variant="outline" 
-            className="w-full h-14 border-2 font-bold hover:bg-muted text-lg rounded-xl" 
+            className="w-full h-14 border-2 font-bold hover:bg-muted text-lg rounded-xl flex items-center justify-center gap-3" 
             onClick={handleGoogleSignIn}
             disabled={isLoading}
           >
-            {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-3" /> : <Chrome className="h-5 w-5 mr-3 text-primary" />}
+            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Chrome className="h-5 w-5 text-primary" />}
             Continue with Google
           </Button>
 
@@ -110,7 +131,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
             <div className="absolute inset-0 flex items-center">
               <Separator />
             </div>
-            <div className="relative flex justify-center text-xs uppercase tracking-[0.2em]">
+            <div className="relative flex justify-center text-[10px] uppercase tracking-[0.2em]">
               <span className="bg-background px-4 text-muted-foreground">OR</span>
             </div>
           </div>
@@ -124,7 +145,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                   <Input 
                     id="name" 
                     placeholder="Enter your name" 
-                    className="pl-11 h-12 bg-muted/20 border-muted/50 focus:border-primary rounded-xl"
+                    className="pl-11 h-12 bg-muted/20 border-muted/50 rounded-xl"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
@@ -141,7 +162,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                   id="email" 
                   type="email" 
                   placeholder="name@example.com" 
-                  className="pl-11 h-12 bg-muted/20 border-muted/50 focus:border-primary rounded-xl"
+                  className="pl-11 h-12 bg-muted/20 border-muted/50 rounded-xl"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -157,7 +178,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                   id="password" 
                   type="password" 
                   placeholder="••••••••" 
-                  className="pl-11 h-12 bg-muted/20 border-muted/50 focus:border-primary rounded-xl"
+                  className="pl-11 h-12 bg-muted/20 border-muted/50 rounded-xl"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -165,8 +186,8 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
               </div>
             </div>
 
-            <Button type="submit" className="w-full h-14 text-xl bg-primary hover:bg-primary/90 rounded-xl shadow-lg shadow-primary/20" disabled={isLoading}>
-              {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-3" /> : null}
+            <Button type="submit" className="w-full h-14 text-lg bg-primary hover:bg-primary/90 rounded-xl shadow-lg shadow-primary/20" disabled={isLoading}>
+              {isLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               {isSignUp ? 'Create Account' : 'Sign In'}
             </Button>
 
@@ -174,10 +195,10 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
               {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
               <button 
                 type="button" 
-                className="text-primary font-bold hover:underline transition-all"
+                className="text-primary font-bold hover:underline"
                 onClick={() => setIsSignUp(!isSignUp)}
               >
-                {isSignUp ? 'Sign In Now' : 'Join for Free'}
+                {isSignUp ? 'Sign In' : 'Join for Free'}
               </button>
             </div>
           </form>

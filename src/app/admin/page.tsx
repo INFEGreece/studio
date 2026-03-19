@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -85,7 +85,7 @@ export default function AdminPage() {
   const copyUid = () => {
     if (user?.uid) {
       navigator.clipboard.writeText(user.uid);
-      toast({ title: "UID Copied", description: "Now add this as a Document ID in your roles_admin collection." });
+      toast({ title: "UID Copied", description: "You can now add this to roles_admin collection." });
     }
   };
 
@@ -106,23 +106,23 @@ export default function AdminPage() {
             <div className="bg-destructive/10 w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center mx-auto">
               <ShieldAlert className="h-8 w-8 md:h-10 md:w-10 text-destructive" />
             </div>
-            <h1 className="text-2xl md:text-3xl font-headline font-bold">Access Denied</h1>
+            <h1 className="text-2xl md:text-3xl font-headline font-bold text-foreground">Access Denied</h1>
             <p className="text-sm md:text-base text-muted-foreground">You need administrator privileges to manage the Eurovision database.</p>
             
             {user && (
               <div className="p-4 md:p-6 bg-muted/50 rounded-2xl text-left space-y-4">
                 <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground">Your Account UID:</p>
-                <div className="flex items-center gap-2 md:gap-3 bg-background border p-2 md:p-3 rounded-xl text-[10px] md:text-sm font-mono break-all group relative">
-                  <span className="flex-1">{user.uid}</span>
+                <div className="flex items-center gap-2 md:gap-3 bg-background border p-2 md:p-3 rounded-xl text-[10px] md:text-xs font-mono break-all group relative">
+                  <span className="flex-1 overflow-hidden truncate">{user.uid}</span>
                   <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 hover:bg-primary/10 hover:text-primary" onClick={copyUid}>
                     <Copy className="h-3.5 w-3.5 md:h-4 md:w-4" />
                   </Button>
                 </div>
                 <div className="space-y-2">
                   <p className="text-[10px] md:text-xs text-muted-foreground leading-relaxed italic">
-                    1. Copy this UID above.<br/>
-                    2. Go to Firebase Console and click Firestore Database.<br/>
-                    3. Add a collection named roles_admin.<br/>
+                    1. Copy the UID shown above.<br/>
+                    2. Go to your Firebase Console and find your Firestore Database.<br/>
+                    3. Create a collection named "roles_admin".<br/>
                     4. Create a document with the Document ID as your UID.
                   </p>
                 </div>
@@ -363,7 +363,7 @@ export default function AdminPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="flagUrl" className="flex items-center gap-2">
-                    <img src={formData.flagUrl || (formData.country ? getFlagUrl(formData.country) : '')} alt="" className="h-3 w-4.5 object-cover rounded-sm" />
+                    {formData.country && <img src={formData.flagUrl || getFlagUrl(formData.country)} alt="" className="h-3 w-4.5 object-cover rounded-sm" />}
                     Flag Override (Optional)
                   </Label>
                   <Input id="flagUrl" placeholder="Custom flag URL" value={formData.flagUrl} onChange={(e) => setFormData({ ...formData, flagUrl: e.target.value })} className="rounded-xl h-11" />
