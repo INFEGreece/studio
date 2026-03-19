@@ -102,10 +102,9 @@ export default function Home() {
       <Navbar />
       
       <main className="flex-1">
-        {/* Responsive Hero Section */}
         <section className="relative w-full py-16 md:py-32 lg:py-40 overflow-hidden bg-secondary/20">
           <div className="container relative z-10 px-4 flex flex-col items-center text-center">
-            <div className="mb-10 md:mb-20 w-full flex justify-center">
+            <div className="mb-12 md:mb-16 flex justify-center w-full">
               <div className="relative w-48 h-24 md:w-96 md:h-48">
                 <Image 
                   src="https://infegreece.com/wp-content/uploads/2023/04/Infe-Greece.jpg" 
@@ -117,14 +116,14 @@ export default function Home() {
               </div>
             </div>
             
-            <div className="space-y-8 md:space-y-10 max-w-4xl">
+            <div className="space-y-6 md:space-y-10 max-w-4xl relative z-20">
               <h1 className="text-4xl sm:text-6xl md:text-8xl font-headline font-extrabold tracking-tighter text-foreground leading-tight md:leading-none">
                 THE INFE GR <br/><span className="text-primary italic">Eurovision Poll</span>
               </h1>
               <p className="max-w-[700px] text-base md:text-2xl text-muted-foreground mx-auto font-medium px-4">
                 70 Years of Eurovision History. Your Voice. Your Vote. Our Community.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 pt-10 md:pt-12 justify-center w-full max-w-md mx-auto sm:max-w-none">
+              <div className="flex flex-col sm:flex-row gap-4 pt-8 md:pt-12 justify-center w-full max-w-md mx-auto sm:max-w-none">
                 <Button size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-lg md:text-xl px-8 md:px-12 h-14 md:h-16 rounded-full shadow-lg shadow-primary/20" onClick={() => {
                   const element = document.getElementById('browser-section');
                   element?.scrollIntoView({ behavior: 'smooth' });
@@ -139,7 +138,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Responsive Filter/Browser Section */}
         <section id="browser-section" className="container px-4 py-12 md:py-20">
           <div className="flex flex-col gap-8 md:gap-12 mb-12 md:mb-16">
             <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-8">
