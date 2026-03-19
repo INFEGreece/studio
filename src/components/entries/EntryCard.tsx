@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -8,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Mic2, MapPin, Play } from 'lucide-react';
 import { VoteDialog } from '@/components/voting/VoteDialog';
 import { getFlagUrl } from '@/lib/utils';
+import Link from 'next/link';
 
 interface EntryCardProps {
   entry: Entry;
@@ -34,7 +36,6 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints }: En
 
   return (
     <Card className="overflow-hidden group hover:shadow-2xl transition-all border-muted/50 rounded-2xl md:rounded-[1.5rem]">
-      {/* Aspect ratio preserved for responsive layout */}
       <div className="relative aspect-video bg-muted overflow-hidden">
         {showVideo ? (
           <iframe
@@ -61,7 +62,7 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints }: En
               </Button>
             </div>
             <div className="absolute top-2 right-2">
-              <Badge variant="secondary" className="bg-black/60 backdrop-blur-md text-[9px] md:text-[10px] py-0 border-white/10 text-white">
+              <Badge variant="secondary" className="bg-black/60 backdrop-blur-md text-[9px] md:text-[10px] py-0 border-white/10 text-white font-bold">
                 {entry.stage}
               </Badge>
             </div>
@@ -72,10 +73,12 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints }: En
       <CardHeader className="p-4 md:p-6 pb-2 md:pb-3">
         <div className="flex justify-between items-start gap-4">
           <div className="space-y-2 md:space-y-3 flex-1 min-w-0">
-            <Badge variant="outline" className="flex items-center gap-1 border-accent/50 text-accent bg-accent/5 w-fit text-[9px] md:text-[11px] truncate px-2">
-              <MapPin className="h-2.5 w-2.5 md:h-3 md:w-3 shrink-0" />
-              <span className="truncate">{entry.country}</span>
-            </Badge>
+            <Link href={`/country/${encodeURIComponent(entry.country)}`}>
+              <Badge variant="outline" className="flex items-center gap-1 border-accent/50 text-accent bg-accent/5 hover:bg-accent/10 transition-colors w-fit text-[9px] md:text-[11px] truncate px-2 cursor-pointer">
+                <MapPin className="h-2.5 w-2.5 md:h-3 md:w-3 shrink-0" />
+                <span className="truncate">{entry.country}</span>
+              </Badge>
+            </Link>
             
             <div className="space-y-0.5 md:space-y-1">
               <h3 className="text-lg md:text-xl font-headline font-bold leading-tight line-clamp-1 group-hover:text-primary transition-colors">
@@ -92,13 +95,13 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints }: En
             <Badge className="bg-primary text-primary-foreground font-bold text-[10px] md:text-xs px-2 py-0.5">
               {entry.year}
             </Badge>
-            <div className="h-10 w-14 md:h-12 md:w-16 bg-muted rounded border border-border/50 overflow-hidden shadow-sm">
+            <Link href={`/country/${encodeURIComponent(entry.country)}`} className="h-10 w-14 md:h-12 md:w-16 bg-muted rounded border border-border/50 overflow-hidden shadow-sm hover:opacity-80 transition-opacity cursor-pointer">
               <img 
                 src={flagUrl} 
                 alt={`${entry.country} flag`} 
                 className="w-full h-full object-cover" 
               />
-            </div>
+            </Link>
           </div>
         </div>
       </CardHeader>

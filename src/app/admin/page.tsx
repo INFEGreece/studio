@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -79,7 +80,7 @@ export default function AdminPage() {
       e.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
       e.songTitle.toLowerCase().includes(searchTerm.toLowerCase())
     )
-    .sort((a, b) => a.country.localeCompare(b.country));
+    .sort((a, b) => b.year - a.year || a.country.localeCompare(b.country));
 
   const copyUid = () => {
     if (user?.uid) {
@@ -267,8 +268,10 @@ export default function AdminPage() {
                 {filtered.map((entry) => (
                   <TableRow key={entry.id} className="group transition-colors">
                     <TableCell className="font-bold flex items-center gap-3 whitespace-nowrap">
-                      <img src={entry.flagUrl || getFlagUrl(entry.country)} alt="" className="h-4 w-6 md:h-5 md:w-8 object-cover rounded shadow-sm shrink-0" />
-                      {entry.country}
+                      <Link href={`/country/${encodeURIComponent(entry.country)}`} className="flex items-center gap-3 group/link hover:text-primary transition-colors underline-offset-4 hover:underline">
+                        <img src={entry.flagUrl || getFlagUrl(entry.country)} alt="" className="h-4 w-6 md:h-5 md:w-8 object-cover rounded shadow-sm shrink-0" />
+                        {entry.country}
+                      </Link>
                     </TableCell>
                     <TableCell className="text-muted-foreground italic font-medium whitespace-nowrap">{entry.songTitle}</TableCell>
                     <TableCell className="whitespace-nowrap">{entry.artist}</TableCell>
@@ -302,7 +305,6 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Responsive Edit/Add Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-[600px] rounded-[1.5rem] md:rounded-[2rem] overflow-y-auto max-h-[95vh] p-6 md:p-8">
             <DialogHeader>
@@ -374,7 +376,6 @@ export default function AdminPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Responsive Bulk Dialog */}
         <Dialog open={isBulkOpen} onOpenChange={setIsBulkOpen}>
           <DialogContent className="sm:max-w-[600px] rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-8">
             <DialogHeader>

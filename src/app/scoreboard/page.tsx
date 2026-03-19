@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo } from 'react';
@@ -26,6 +27,7 @@ import {
 } from 'recharts';
 import { Trophy, TrendingUp, Users, Loader2, ListOrdered } from 'lucide-react';
 import { getFlagUrl } from '@/lib/utils';
+import Link from 'next/link';
 
 export default function ScoreboardPage() {
   const db = useFirestore();
@@ -84,7 +86,6 @@ export default function ScoreboardPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start">
-            {/* Column 1: Visual Highlights - Stacks on Tablet/Mobile */}
             <div className="lg:col-span-5 space-y-8">
               <div className="space-y-4">
                 <h2 className="text-lg md:text-xl font-headline font-bold flex items-center gap-2">
@@ -103,10 +104,10 @@ export default function ScoreboardPage() {
                           {idx + 1}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                          <Link href={`/country/${encodeURIComponent(item.name)}`} className="flex items-center gap-2 group/link">
                             <img src={item.flagUrl} alt="" className="h-3 w-5 md:h-4 md:w-6 object-cover rounded shadow-sm shrink-0" />
-                            <h3 className="font-bold text-base md:text-lg truncate">{item.name}</h3>
-                          </div>
+                            <h3 className="font-bold text-base md:text-lg truncate group-hover/link:text-primary transition-colors underline-offset-4 group-hover/link:underline">{item.name}</h3>
+                          </Link>
                           <p className="text-[10px] md:text-xs text-muted-foreground truncate">{item.artist} — {item.title}</p>
                         </div>
                         <div className="text-right shrink-0">
@@ -162,7 +163,6 @@ export default function ScoreboardPage() {
               </div>
             </div>
 
-            {/* Column 2: Detailed Table */}
             <div className="lg:col-span-7">
               <div className="bg-card border rounded-2xl overflow-hidden shadow-sm">
                 <div className="p-4 md:p-6 border-b bg-muted/10">
@@ -191,13 +191,13 @@ export default function ScoreboardPage() {
                              `#${idx + 1}`}
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2 md:gap-3">
+                            <Link href={`/country/${encodeURIComponent(item.name)}`} className="flex items-center gap-2 md:gap-3 group">
                               <img src={item.flagUrl} alt="" className="h-3 w-5 md:h-4 md:w-6 object-cover rounded-sm flex-shrink-0" />
                               <div className="flex flex-col min-w-0 max-w-[120px] sm:max-w-none">
-                                <span className="font-bold text-foreground truncate text-xs md:text-sm">{item.name}</span>
+                                <span className="font-bold text-foreground truncate text-xs md:text-sm group-hover:text-primary transition-colors underline-offset-4 group-hover:underline">{item.name}</span>
                                 <span className="text-[9px] md:text-[10px] text-muted-foreground truncate">{item.artist}</span>
                               </div>
-                            </div>
+                            </Link>
                           </TableCell>
                           <TableCell className="font-bold text-primary text-xs md:text-sm">{item.score}</TableCell>
                           <TableCell className="text-right text-muted-foreground text-xs md:text-sm">{item.votes}</TableCell>
