@@ -18,7 +18,6 @@ import { History, Filter, Loader2, Layers } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import { Entry, Vote } from '@/lib/types';
-import { useAuth } from '@/firebase';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 
@@ -39,7 +38,6 @@ export default function Home() {
 
   const { data: rawEntries, isLoading } = useCollection<Entry>(entriesRef);
 
-  // Sort alphabetically by country name for easy browsing
   const filteredEntries = (rawEntries || [])
     .slice()
     .sort((a, b) => a.country.localeCompare(b.country));
@@ -103,36 +101,37 @@ export default function Home() {
       <Navbar />
       
       <main className="flex-1">
-        <section className="relative w-full py-20 md:py-32 overflow-hidden bg-secondary/20">
-          <div className="container relative z-10 px-4 flex flex-col items-center text-center space-y-8">
-            <div className="relative w-48 h-24 md:w-64 md:h-32 mb-4">
-              <Image 
-                src="https://infegreece.com/wp-content/uploads/2023/04/Infe-Greece.jpg" 
-                alt="INFE Greece" 
-                width={256}
-                height={128}
-                className="object-contain drop-shadow-2xl rounded-lg"
-                priority
-              />
+        <section className="relative w-full py-16 md:py-24 overflow-hidden bg-secondary/20">
+          <div className="container relative z-10 px-4 flex flex-col items-center text-center">
+            <div className="mb-10 w-full flex justify-center">
+              <div className="relative w-48 h-24 md:w-72 md:h-36">
+                <Image 
+                  src="https://infegreece.com/wp-content/uploads/2023/04/Infe-Greece.jpg" 
+                  alt="INFE Greece" 
+                  fill
+                  className="object-contain drop-shadow-2xl rounded-lg"
+                  priority
+                />
+              </div>
             </div>
-            <div className="space-y-4">
-              <h1 className="text-4xl md:text-7xl font-headline font-extrabold tracking-tighter text-foreground">
+            <div className="space-y-6 max-w-4xl">
+              <h1 className="text-4xl md:text-7xl font-headline font-extrabold tracking-tighter text-foreground leading-tight">
                 The INFE GR <br/><span className="text-primary">Eurovision Poll</span>
               </h1>
               <p className="max-w-[700px] text-lg md:text-xl text-muted-foreground mx-auto">
                 Celebrating 70 years of Eurovision. Vote for your favorite entries and see how the community ranks the best contest on Earth.
               </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-10 h-14" onClick={() => {
-                const element = document.getElementById('browser-section');
-                element?.scrollIntoView({ behavior: 'smooth' });
-              }}>
-                Start Voting
-              </Button>
-              <Button size="lg" variant="outline" className="text-lg px-10 h-14" asChild>
-                <a href="/scoreboard">View Scoreboard</a>
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-4 pt-6 justify-center">
+                <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-10 h-14" onClick={() => {
+                  const element = document.getElementById('browser-section');
+                  element?.scrollIntoView({ behavior: 'smooth' });
+                }}>
+                  Start Voting
+                </Button>
+                <Button size="lg" variant="outline" className="text-lg px-10 h-14" asChild>
+                  <a href="/scoreboard">View Scoreboard</a>
+                </Button>
+              </div>
             </div>
           </div>
         </section>
