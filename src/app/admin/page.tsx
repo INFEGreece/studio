@@ -200,7 +200,12 @@ export default function AdminPage() {
     }
 
     const stageSlug = formData.stage.toLowerCase().replace(/\s+/g, '-');
-    const id = currentId || `${formData.year}-${stageSlug}-${formData.country.toLowerCase().replace(/\s+/g, '-')}`;
+    const countrySlug = formData.country.toLowerCase().replace(/\s+/g, '-');
+    // Sanitize song title for ID: lowercase, replace non-alphanumeric with hyphen, trim hyphens
+    const songSlug = formData.songTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    
+    // Include songSlug in ID to allow multiple entries per country/year (e.g. 1956)
+    const id = currentId || `${formData.year}-${stageSlug}-${countrySlug}-${songSlug}`;
     const docRef = doc(db, 'eurovision_entries', id);
     
     setDocumentNonBlocking(docRef, {
@@ -221,7 +226,10 @@ export default function AdminPage() {
       if (parts.length >= 3) {
         const [country, artist, song, videoUrl] = parts;
         const stageSlug = bulkStage.toLowerCase().replace(/\s+/g, '-');
-        const id = `${bulkYear}-${stageSlug}-${country.toLowerCase().replace(/\s+/g, '-')}`;
+        const countrySlug = country.toLowerCase().replace(/\s+/g, '-');
+        const songSlug = song.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        
+        const id = `${bulkYear}-${stageSlug}-${countrySlug}-${songSlug}`;
         const docRef = doc(db, 'eurovision_entries', id);
         
         setDocumentNonBlocking(docRef, {
