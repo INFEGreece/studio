@@ -1,7 +1,7 @@
 
 import { CountryHistoryView } from '@/components/country/CountryHistoryView';
 
-// Static params for Eurovision countries to satisfy 'output: export' build requirement
+// List of all countries that have participated in Eurovision for static generation
 export async function generateStaticParams() {
   const countries = [
     "Albania", "Andorra", "Armenia", "Australia", "Austria", "Azerbaijan", "Belarus", "Belgium", 

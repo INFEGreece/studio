@@ -19,11 +19,10 @@ import {
   createUserWithEmailAndPassword, 
   updateProfile,
   GoogleAuthProvider,
-  signInWithPopup,
-  browserPopupBlockedHandler
+  signInWithPopup
 } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Mail, Lock, User, UserPlus, LogIn, Chrome, AlertTriangle } from 'lucide-react';
+import { Loader2, Mail, Lock, User, UserPlus, LogIn, Chrome, AlertCircle } from 'lucide-react';
 
 interface AuthDialogProps {
   open: boolean;
@@ -42,28 +41,24 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
-    // Hint for account selection
     provider.setCustomParameters({ prompt: 'select_account' });
 
     try {
-      if (!auth) throw new Error("Authentication service is not initialized.");
+      if (!auth) throw new Error("Auth service is not initialized.");
       
       const result = await signInWithPopup(auth, provider);
       if (result.user) {
-        toast({ title: "Welcome!", description: "Signed in successfully." });
+        toast({ title: "Welcome!", description: "Signed in successfully with Google." });
         onOpenChange(false);
       }
     } catch (error: any) {
-      console.error("Google Sign-In Error:", error);
+      console.error("Login Error:", error);
       
       let errorMessage = "Failed to sign in. Please try again.";
-      
-      if (error.code === 'auth/popup-blocked') {
-        errorMessage = "Sign-in popup was blocked. Please enable popups for this site or try a different browser.";
-      } else if (error.code === 'auth/unauthorized-domain') {
-        errorMessage = "This domain is not authorized for Google login. Admin needs to add this domain in Firebase Console.";
-      } else if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
-        errorMessage = "Sign-in was cancelled.";
+      if (error.code === 'auth/unauthorized-domain') {
+        errorMessage = "Error: This domain (infepoll.infegreece.com) is not authorized in Firebase Console > Auth > Settings.";
+      } else if (error.code === 'auth/popup-blocked') {
+        errorMessage = "Popup blocked! Please enable popups for this site.";
       }
 
       toast({
@@ -84,7 +79,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
       if (isSignUp) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(userCredential.user, { displayName: name });
-        toast({ title: "Account Created", description: "Welcome to the INFE GR Eurovision Poll!" });
+        toast({ title: "Account Created", description: "Welcome to the fan poll!" });
       } else {
         await signInWithEmailAndPassword(auth, email, password);
         toast({ title: "Welcome Back!", description: "Successfully signed in." });
@@ -93,7 +88,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
     } catch (error: any) {
       toast({
         title: "Authentication Error",
-        description: error.message || "Failed to sign in. Please check your credentials.",
+        description: error.message || "Invalid credentials.",
         variant: "destructive",
       });
     } finally {
@@ -103,27 +98,27 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px] rounded-[2rem] p-8 overflow-hidden">
+      <DialogContent className="sm:max-w-[420px] rounded-[2.5rem] p-10 overflow-hidden">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-headline font-bold text-center flex items-center justify-center gap-3">
-            {isSignUp ? <UserPlus className="h-6 w-6 text-primary" /> : <LogIn className="h-6 w-6 text-primary" />}
-            {isSignUp ? 'Join the Community' : 'Welcome Back'}
+          <DialogTitle className="text-3xl font-headline font-bold text-center flex items-center justify-center gap-4">
+            {isSignUp ? <UserPlus className="h-8 w-8 text-primary" /> : <LogIn className="h-8 w-8 text-primary" />}
+            {isSignUp ? 'Join In' : 'Sign In'}
           </DialogTitle>
-          <DialogDescription className="text-center">
+          <DialogDescription className="text-center text-base">
             {isSignUp 
-              ? 'Create an account to save your votes.' 
-              : 'Sign in to access your dashboard.'}
+              ? 'Save your Eurovision votes forever.' 
+              : 'Welcome back to the poll!'}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-8 py-4">
           <Button 
             variant="outline" 
-            className="w-full h-14 border-2 font-bold hover:bg-muted text-lg rounded-xl flex items-center justify-center gap-3" 
+            className="w-full h-16 border-2 font-bold hover:bg-muted text-lg rounded-2xl flex items-center justify-center gap-4" 
             onClick={handleGoogleSignIn}
             disabled={isLoading}
           >
-            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Chrome className="h-5 w-5 text-primary" />}
+            {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Chrome className="h-6 w-6 text-primary" />}
             Continue with Google
           </Button>
 
@@ -131,21 +126,21 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
             <div className="absolute inset-0 flex items-center">
               <Separator />
             </div>
-            <div className="relative flex justify-center text-[10px] uppercase tracking-[0.2em]">
-              <span className="bg-background px-4 text-muted-foreground">OR</span>
+            <div className="relative flex justify-center text-[10px] uppercase tracking-[0.3em]">
+              <span className="bg-background px-6 text-muted-foreground">Or email</span>
             </div>
           </div>
 
-          <form onSubmit={handleAuth} className="space-y-4">
+          <form onSubmit={handleAuth} className="space-y-5">
             {isSignUp && (
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider ml-1">Full Name</Label>
+                <Label htmlFor="name" className="text-xs font-bold uppercase tracking-widest ml-1">Name</Label>
                 <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <User className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input 
                     id="name" 
-                    placeholder="Enter your name" 
-                    className="pl-11 h-12 bg-muted/20 border-muted/50 rounded-xl"
+                    placeholder="Your name" 
+                    className="pl-12 h-14 bg-muted/20 border-muted/50 rounded-2xl"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
@@ -155,14 +150,14 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider ml-1">Email</Label>
+              <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest ml-1">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input 
                   id="email" 
                   type="email" 
-                  placeholder="name@example.com" 
-                  className="pl-11 h-12 bg-muted/20 border-muted/50 rounded-xl"
+                  placeholder="email@example.com" 
+                  className="pl-12 h-14 bg-muted/20 border-muted/50 rounded-2xl"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -171,14 +166,14 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider ml-1">Password</Label>
+              <Label htmlFor="password" className="text-xs font-bold uppercase tracking-widest ml-1">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input 
                   id="password" 
                   type="password" 
                   placeholder="••••••••" 
-                  className="pl-11 h-12 bg-muted/20 border-muted/50 rounded-xl"
+                  className="pl-12 h-14 bg-muted/20 border-muted/50 rounded-2xl"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -186,19 +181,19 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
               </div>
             </div>
 
-            <Button type="submit" className="w-full h-14 text-lg bg-primary hover:bg-primary/90 rounded-xl shadow-lg shadow-primary/20" disabled={isLoading}>
-              {isLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+            <Button type="submit" className="w-full h-16 text-xl bg-primary hover:bg-primary/90 rounded-2xl shadow-xl shadow-primary/20" disabled={isLoading}>
+              {isLoading && <Loader2 className="h-5 w-5 animate-spin mr-3" />}
               {isSignUp ? 'Create Account' : 'Sign In'}
             </Button>
 
             <div className="text-center text-sm text-muted-foreground pt-4">
-              {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+              {isSignUp ? 'Already a member?' : "New here?"}{' '}
               <button 
                 type="button" 
                 className="text-primary font-bold hover:underline"
                 onClick={() => setIsSignUp(!isSignUp)}
               >
-                {isSignUp ? 'Sign In' : 'Join for Free'}
+                {isSignUp ? 'Log in' : 'Join for free'}
               </button>
             </div>
           </form>
