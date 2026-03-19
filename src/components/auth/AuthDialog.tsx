@@ -47,7 +47,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
     } catch (error: any) {
       toast({
         title: "Google Sign-In Error",
-        description: error.message || "Failed to sign in with Google. Check if your domain is authorized.",
+        description: error.message || "Failed to sign in with Google. Check if your domain is authorized in Firebase Console.",
         variant: "destructive",
       });
     } finally {

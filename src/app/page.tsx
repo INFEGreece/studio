@@ -103,8 +103,9 @@ export default function Home() {
       <main className="flex-1">
         <section className="relative w-full py-16 md:py-24 overflow-hidden bg-secondary/20">
           <div className="container relative z-10 px-4 flex flex-col items-center text-center">
-            <div className="mb-10 w-full flex justify-center">
-              <div className="relative w-48 h-24 md:w-72 md:h-36">
+            {/* Logo Container with Margin to prevent overlap */}
+            <div className="mb-12 w-full flex justify-center">
+              <div className="relative w-56 h-28 md:w-80 md:h-40">
                 <Image 
                   src="https://infegreece.com/wp-content/uploads/2023/04/Infe-Greece.jpg" 
                   alt="INFE Greece" 
@@ -114,6 +115,7 @@ export default function Home() {
                 />
               </div>
             </div>
+            {/* Hero Text */}
             <div className="space-y-6 max-w-4xl">
               <h1 className="text-4xl md:text-7xl font-headline font-extrabold tracking-tighter text-foreground leading-tight">
                 The INFE GR <br/><span className="text-primary">Eurovision Poll</span>

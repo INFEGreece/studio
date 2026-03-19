@@ -14,9 +14,9 @@ If you see the error `Error: kill EPERM` on Plesk, it means your server is block
 1. **Push Changes**: Push your latest code to GitHub.
 2. **Go to GitHub**: Open your repository on GitHub.com.
 3. **Download Build**:
-   - Click the **"Actions"** tab.
+   - Click the **"Actions"** tab at the top of your repository.
    - Click on the latest run (usually called "Build Static Site").
-   - Scroll down to the **"Artifacts"** section.
+   - Scroll down to the **"Artifacts"** section at the bottom.
    - Click **"out-folder"** to download the zip file.
 4. **Upload to Plesk**: 
    - Extract that zip file.
