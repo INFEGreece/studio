@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, Loader2, ListPlus, ShieldAlert, Copy } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, ListPlus, ShieldAlert, Copy, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
@@ -120,7 +120,7 @@ export default function AdminPage() {
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground leading-relaxed italic">
                     1. Copy this UID above.<br/>
-                    2. Go to Firebase Console &rarr; Firestore Database.<br/>
+                    2. Go to Firebase Console and navigate to Firestore Database.<br/>
                     3. Add a collection named <strong>roles_admin</strong>.<br/>
                     4. Create a document with the <strong>Document ID</strong> as your UID.
                   </p>
@@ -302,13 +302,13 @@ export default function AdminPage() {
 
         {/* Edit/Add Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-[500px] rounded-3xl">
+          <DialogContent className="sm:max-w-[600px] rounded-3xl overflow-y-auto max-h-[90vh]">
             <DialogHeader>
               <DialogTitle className="text-2xl font-headline font-bold">
                 {isEditing ? "Edit Entry" : "New Entry"}
               </DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-6 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="country">Country</Label>
@@ -319,14 +319,18 @@ export default function AdminPage() {
                   <Input id="year" type="number" value={formData.year} onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })} className="rounded-xl" />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="artist">Artist</Label>
-                <Input id="artist" value={formData.artist} onChange={(e) => setFormData({ ...formData, artist: e.target.value })} className="rounded-xl" />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="artist">Artist</Label>
+                  <Input id="artist" value={formData.artist} onChange={(e) => setFormData({ ...formData, artist: e.target.value })} className="rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="songTitle">Song Title</Label>
+                  <Input id="songTitle" value={formData.songTitle} onChange={(e) => setFormData({ ...formData, songTitle: e.target.value })} className="rounded-xl" />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="songTitle">Song Title</Label>
-                <Input id="songTitle" value={formData.songTitle} onChange={(e) => setFormData({ ...formData, songTitle: e.target.value })} className="rounded-xl" />
-              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="stage">Stage</Label>
                 <Select value={formData.stage} onValueChange={(v) => setFormData({ ...formData, stage: v as ContestStage })}>
@@ -340,9 +344,26 @@ export default function AdminPage() {
                   </SelectContent>
                 </Select>
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="videoUrl">Video URL (YouTube)</Label>
-                <Input id="videoUrl" value={formData.videoUrl} onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })} className="rounded-xl" />
+                <Input id="videoUrl" placeholder="https://www.youtube.com/watch?v=..." value={formData.videoUrl} onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })} className="rounded-xl" />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="thumbnailUrl" className="flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4" /> Thumbnail URL (Artist Photo)
+                  </Label>
+                  <Input id="thumbnailUrl" placeholder="Custom image URL" value={formData.thumbnailUrl} onChange={(e) => setFormData({ ...formData, thumbnailUrl: e.target.value })} className="rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="flagUrl" className="flex items-center gap-2">
+                    <img src={formData.flagUrl || (formData.country ? getFlagUrl(formData.country) : '')} alt="" className="h-4 w-6 object-cover rounded-sm" />
+                    Flag URL (Optional override)
+                  </Label>
+                  <Input id="flagUrl" placeholder="Custom flag image URL" value={formData.flagUrl} onChange={(e) => setFormData({ ...formData, flagUrl: e.target.value })} className="rounded-xl" />
+                </div>
               </div>
             </div>
             <DialogFooter>
