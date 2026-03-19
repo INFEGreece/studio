@@ -101,34 +101,34 @@ export default function AdminPage() {
       <div className="flex flex-col min-h-screen">
         <Navbar />
         <main className="flex-1 container flex items-center justify-center p-4">
-          <div className="max-w-md w-full text-center space-y-8 bg-card border rounded-[2rem] p-10 shadow-2xl">
-            <div className="bg-destructive/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto">
-              <ShieldAlert className="h-10 w-10 text-destructive" />
+          <div className="max-w-md w-full text-center space-y-6 md:space-y-8 bg-card border rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-10 shadow-2xl">
+            <div className="bg-destructive/10 w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center mx-auto">
+              <ShieldAlert className="h-8 w-8 md:h-10 md:w-10 text-destructive" />
             </div>
-            <h1 className="text-3xl font-headline font-bold">Access Denied</h1>
-            <p className="text-muted-foreground">You need administrator privileges to manage the Eurovision database.</p>
+            <h1 className="text-2xl md:text-3xl font-headline font-bold">Access Denied</h1>
+            <p className="text-sm md:text-base text-muted-foreground">You need administrator privileges to manage the Eurovision database.</p>
             
             {user && (
-              <div className="p-6 bg-muted/50 rounded-2xl text-left space-y-4">
-                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Your Account UID:</p>
-                <div className="flex items-center gap-3 bg-background border p-3 rounded-xl text-sm font-mono break-all group relative">
-                  {user.uid}
+              <div className="p-4 md:p-6 bg-muted/50 rounded-2xl text-left space-y-4">
+                <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground">Your Account UID:</p>
+                <div className="flex items-center gap-2 md:gap-3 bg-background border p-2 md:p-3 rounded-xl text-[10px] md:text-sm font-mono break-all group relative">
+                  <span className="flex-1">{user.uid}</span>
                   <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 hover:bg-primary/10 hover:text-primary" onClick={copyUid}>
-                    <Copy className="h-4 w-4" />
+                    <Copy className="h-3.5 w-3.5 md:h-4 md:w-4" />
                   </Button>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground leading-relaxed italic">
+                  <p className="text-[10px] md:text-xs text-muted-foreground leading-relaxed italic">
                     1. Copy this UID above.<br/>
-                    2. Go to Firebase Console and navigate to Firestore Database.<br/>
-                    3. Add a collection named <strong>roles_admin</strong>.<br/>
-                    4. Create a document with the <strong>Document ID</strong> as your UID.
+                    2. Go to Firebase Console and click Firestore Database.<br/>
+                    3. Add a collection named roles_admin.<br/>
+                    4. Create a document with the Document ID as your UID.
                   </p>
                 </div>
               </div>
             )}
 
-            <Button variant="outline" className="w-full h-12 rounded-xl" asChild>
+            <Button variant="outline" className="w-full h-11 md:h-12 rounded-xl" asChild>
               <Link href="/">Return Home</Link>
             </Button>
           </div>
@@ -228,113 +228,115 @@ export default function AdminPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <main className="flex-1 container px-4 py-16">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+      <main className="flex-1 container px-4 py-8 md:py-16">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 md:mb-12">
           <div>
-            <h1 className="text-4xl font-headline font-bold text-primary">Contest Management</h1>
-            <p className="text-muted-foreground mt-1 text-lg">Manage entries for all Eurovision years and stages.</p>
+            <h1 className="text-3xl md:text-4xl font-headline font-bold text-primary">Contest Management</h1>
+            <p className="text-muted-foreground mt-1 text-base md:text-lg">Manage entries for all Eurovision years and stages.</p>
           </div>
-          <div className="flex gap-3">
-            <Button variant="outline" className="h-12 px-6 rounded-xl" onClick={() => setIsBulkOpen(true)}>
-              <ListPlus className="h-5 w-5 mr-2" /> Bulk Import
+          <div className="flex flex-wrap gap-2 md:gap-3 w-full md:w-auto">
+            <Button variant="outline" className="flex-1 md:flex-none h-11 md:h-12 px-4 md:px-6 rounded-xl" onClick={() => setIsBulkOpen(true)}>
+              <ListPlus className="h-5 w-5 mr-2" /> <span className="hidden sm:inline">Bulk</span> Import
             </Button>
-            <Button className="h-12 px-6 rounded-xl bg-primary hover:bg-primary/90" onClick={openAddDialog}>
+            <Button className="flex-1 md:flex-none h-11 md:h-12 px-4 md:px-6 rounded-xl bg-primary hover:bg-primary/90" onClick={openAddDialog}>
               <Plus className="h-5 w-5 mr-2" /> New Entry
             </Button>
           </div>
         </div>
 
         <div className="bg-card border rounded-2xl overflow-hidden shadow-sm">
-          <div className="p-6 border-b bg-muted/20">
+          <div className="p-4 md:p-6 border-b bg-muted/20">
             <div className="relative max-w-md">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input className="pl-11 h-12 rounded-xl bg-background border-muted/50" placeholder="Filter countries or artists..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
+              <Input className="pl-10 md:pl-11 h-11 md:h-12 rounded-xl bg-background border-muted/50" placeholder="Filter countries or artists..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="font-bold py-4">Country</TableHead>
-                <TableHead className="font-bold py-4">Song Title</TableHead>
-                <TableHead className="font-bold py-4">Artist</TableHead>
-                <TableHead className="font-bold py-4">Year</TableHead>
-                <TableHead className="font-bold py-4">Stage</TableHead>
-                <TableHead className="text-right font-bold py-4">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((entry) => (
-                <TableRow key={entry.id} className="group transition-colors">
-                  <TableCell className="font-bold flex items-center gap-3">
-                    <img src={entry.flagUrl || getFlagUrl(entry.country)} alt="" className="h-5 w-8 object-cover rounded shadow-sm" />
-                    {entry.country}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground italic font-medium">{entry.songTitle}</TableCell>
-                  <TableCell>{entry.artist}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="font-bold">{entry.year}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="text-[10px]">{entry.stage}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" className="hover:text-primary transition-colors" onClick={() => openEditDialog(entry)}>
-                        <Pencil className="h-5 w-5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="hover:text-destructive transition-colors" onClick={() => handleDelete(entry.id)}>
-                        <Trash2 className="h-5 w-5" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="font-bold py-4 whitespace-nowrap">Country</TableHead>
+                  <TableHead className="font-bold py-4 whitespace-nowrap">Song Title</TableHead>
+                  <TableHead className="font-bold py-4 whitespace-nowrap">Artist</TableHead>
+                  <TableHead className="font-bold py-4 whitespace-nowrap">Year</TableHead>
+                  <TableHead className="font-bold py-4 whitespace-nowrap">Stage</TableHead>
+                  <TableHead className="text-right font-bold py-4 whitespace-nowrap">Actions</TableHead>
                 </TableRow>
-              ))}
-              {filtered.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-40 text-center text-muted-foreground">
-                    No entries found matching your search.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((entry) => (
+                  <TableRow key={entry.id} className="group transition-colors">
+                    <TableCell className="font-bold flex items-center gap-3 whitespace-nowrap">
+                      <img src={entry.flagUrl || getFlagUrl(entry.country)} alt="" className="h-4 w-6 md:h-5 md:w-8 object-cover rounded shadow-sm shrink-0" />
+                      {entry.country}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground italic font-medium whitespace-nowrap">{entry.songTitle}</TableCell>
+                    <TableCell className="whitespace-nowrap">{entry.artist}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="font-bold">{entry.year}</Badge>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <Badge variant="secondary" className="text-[9px] md:text-[10px]">{entry.stage}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right whitespace-nowrap">
+                      <div className="flex justify-end gap-1 md:gap-2">
+                        <Button variant="ghost" size="icon" className="hover:text-primary transition-colors h-8 w-8" onClick={() => openEditDialog(entry)}>
+                          <Pencil className="h-4 w-4 md:h-5 md:w-5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="hover:text-destructive transition-colors h-8 w-8" onClick={() => handleDelete(entry.id)}>
+                          <Trash2 className="h-4 w-4 md:h-5 md:w-5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filtered.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-40 text-center text-muted-foreground">
+                      No entries found matching your search.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
 
-        {/* Edit/Add Dialog */}
+        {/* Responsive Edit/Add Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-[600px] rounded-3xl overflow-y-auto max-h-[90vh]">
+          <DialogContent className="sm:max-w-[600px] rounded-[1.5rem] md:rounded-[2rem] overflow-y-auto max-h-[95vh] p-6 md:p-8">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-headline font-bold">
+              <DialogTitle className="text-xl md:text-2xl font-headline font-bold">
                 {isEditing ? "Edit Entry" : "New Entry"}
               </DialogTitle>
             </DialogHeader>
-            <div className="grid gap-6 py-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 md:gap-6 py-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="country">Country</Label>
-                  <Input id="country" value={formData.country} onChange={(e) => setFormData({ ...formData, country: e.target.value })} className="rounded-xl" />
+                  <Input id="country" value={formData.country} onChange={(e) => setFormData({ ...formData, country: e.target.value })} className="rounded-xl h-11" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="year">Year</Label>
-                  <Input id="year" type="number" value={formData.year} onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })} className="rounded-xl" />
+                  <Input id="year" type="number" value={formData.year} onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })} className="rounded-xl h-11" />
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="artist">Artist</Label>
-                  <Input id="artist" value={formData.artist} onChange={(e) => setFormData({ ...formData, artist: e.target.value })} className="rounded-xl" />
+                  <Input id="artist" value={formData.artist} onChange={(e) => setFormData({ ...formData, artist: e.target.value })} className="rounded-xl h-11" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="songTitle">Song Title</Label>
-                  <Input id="songTitle" value={formData.songTitle} onChange={(e) => setFormData({ ...formData, songTitle: e.target.value })} className="rounded-xl" />
+                  <Input id="songTitle" value={formData.songTitle} onChange={(e) => setFormData({ ...formData, songTitle: e.target.value })} className="rounded-xl h-11" />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="stage">Stage</Label>
                 <Select value={formData.stage} onValueChange={(v) => setFormData({ ...formData, stage: v as ContestStage })}>
-                  <SelectTrigger className="rounded-xl">
+                  <SelectTrigger className="rounded-xl h-11">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -347,39 +349,39 @@ export default function AdminPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="videoUrl">Video URL (YouTube)</Label>
-                <Input id="videoUrl" placeholder="https://www.youtube.com/watch?v=..." value={formData.videoUrl} onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })} className="rounded-xl" />
+                <Input id="videoUrl" placeholder="https://www.youtube.com/watch?v=..." value={formData.videoUrl} onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })} className="rounded-xl h-11" />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="thumbnailUrl" className="flex items-center gap-2">
-                    <ImageIcon className="h-4 w-4" /> Thumbnail URL (Artist Photo)
+                    <ImageIcon className="h-4 w-4" /> Thumbnail (Artist Photo)
                   </Label>
-                  <Input id="thumbnailUrl" placeholder="Custom image URL" value={formData.thumbnailUrl} onChange={(e) => setFormData({ ...formData, thumbnailUrl: e.target.value })} className="rounded-xl" />
+                  <Input id="thumbnailUrl" placeholder="Custom image URL" value={formData.thumbnailUrl} onChange={(e) => setFormData({ ...formData, thumbnailUrl: e.target.value })} className="rounded-xl h-11" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="flagUrl" className="flex items-center gap-2">
-                    <img src={formData.flagUrl || (formData.country ? getFlagUrl(formData.country) : '')} alt="" className="h-4 w-6 object-cover rounded-sm" />
-                    Flag URL (Optional override)
+                    <img src={formData.flagUrl || (formData.country ? getFlagUrl(formData.country) : '')} alt="" className="h-3 w-4.5 object-cover rounded-sm" />
+                    Flag Override (Optional)
                   </Label>
-                  <Input id="flagUrl" placeholder="Custom flag image URL" value={formData.flagUrl} onChange={(e) => setFormData({ ...formData, flagUrl: e.target.value })} className="rounded-xl" />
+                  <Input id="flagUrl" placeholder="Custom flag URL" value={formData.flagUrl} onChange={(e) => setFormData({ ...formData, flagUrl: e.target.value })} className="rounded-xl h-11" />
                 </div>
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={handleSave} className="w-full h-12 rounded-xl text-lg">Save Changes</Button>
+              <Button onClick={handleSave} className="w-full h-12 md:h-14 rounded-xl text-lg font-bold">Save Entry</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        {/* Bulk Dialog */}
+        {/* Responsive Bulk Dialog */}
         <Dialog open={isBulkOpen} onOpenChange={setIsBulkOpen}>
-          <DialogContent className="sm:max-w-[600px] rounded-3xl">
+          <DialogContent className="sm:max-w-[600px] rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-8">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-headline font-bold">Bulk Import Entries</DialogTitle>
-              <p className="text-sm text-muted-foreground">Paste lines: <strong>Country; Artist; Song; VideoUrl</strong></p>
+              <DialogTitle className="text-xl md:text-2xl font-headline font-bold">Bulk Import Entries</DialogTitle>
+              <p className="text-xs md:text-sm text-muted-foreground mt-1">Paste lines: <strong>Country; Artist; Song; VideoUrl</strong></p>
             </DialogHeader>
-            <div className="space-y-6 py-6">
+            <div className="space-y-4 md:space-y-6 py-4 md:py-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Year</Label>
@@ -401,13 +403,13 @@ export default function AdminPage() {
               </div>
               <Textarea 
                 placeholder="Greece; Marina Satti; Zari; https://youtu.be/..."
-                className="min-h-[250px] font-mono text-xs rounded-xl p-4 bg-muted/20 border-muted/50"
+                className="min-h-[200px] md:min-h-[250px] font-mono text-[10px] md:text-xs rounded-xl p-3 md:p-4 bg-muted/20 border-muted/50"
                 value={bulkText}
                 onChange={(e) => setBulkText(e.target.value)}
               />
             </div>
             <DialogFooter>
-              <Button onClick={handleBulkImport} className="w-full h-12 rounded-xl text-lg">Import Entries</Button>
+              <Button onClick={handleBulkImport} className="w-full h-12 md:h-14 rounded-xl text-lg font-bold">Import Now</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
