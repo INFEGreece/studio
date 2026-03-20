@@ -17,12 +17,13 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { History, Filter, Loader2, Layers, Music, RotateCcw, Calendar } from 'lucide-react';
+import { History, Filter, Loader2, Layers, Music, RotateCcw, Calendar, Info, AlertTriangle } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import { Entry, Vote, ContestStage } from '@/lib/types';
 import { setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 export default function Home() {
   const db = useFirestore();
@@ -134,10 +135,13 @@ export default function Home() {
     { value: "Final", label: "Τελικός" },
     { value: "Semi-Final 1", label: "Ημιτ. 1" },
     { value: "Semi-Final 2", label: "Ημιτ. 2" },
+    { value: "Prequalification", label: "Προκριματικός" },
     { value: "Eurodromio", label: "Eurodromio" },
     { value: "Be.So.", label: "Be.So." },
     { value: "Mu.Si.Ka.", label: "Mu.Si.Ka." },
   ];
+
+  const regionalEvents = ["Eurodromio", "Be.So.", "Mu.Si.Ka."];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -192,25 +196,26 @@ export default function Home() {
               </div>
 
               <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-6 md:gap-10">
-                <div className="flex flex-col gap-2 w-full sm:w-auto">
+                <div className="flex flex-col gap-3 w-full sm:w-auto">
                   <span className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Δεκαετία</span>
-                  <Tabs value={currentDecadeLabel} className="w-full sm:w-auto">
-                    <TabsList className="bg-secondary/50 p-1.5 rounded-full w-full sm:w-auto overflow-x-auto">
-                      {DECADES.map(d => (
-                        <TabsTrigger 
-                          key={d.label} 
-                          value={d.label} 
-                          className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 md:px-8 h-10 md:h-12"
-                          onClick={() => {
-                            setSelectedYear(d.years[0]);
-                            setSelectedStage("All");
-                          }}
-                        >
-                          {d.label}
-                        </TabsTrigger>
-                      ))}
-                    </TabsList>
-                  </Tabs>
+                  <div className="flex flex-wrap gap-2">
+                    {DECADES.map(d => (
+                      <Button
+                        key={d.label}
+                        variant={currentDecadeLabel === d.label ? "default" : "secondary"}
+                        className={cn(
+                          "rounded-full px-6 h-10 md:h-12 font-bold transition-all",
+                          currentDecadeLabel === d.label ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105" : "hover:bg-primary/10 hover:text-primary"
+                        )}
+                        onClick={() => {
+                          setSelectedYear(d.years[0]);
+                          setSelectedStage("All");
+                        }}
+                      >
+                        {d.label}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-2 w-full sm:w-auto">
@@ -235,11 +240,25 @@ export default function Home() {
               </div>
             </div>
 
+            {selectedYear === 2020 && (
+              <div className="bg-destructive/10 border-2 border-destructive/20 rounded-[2rem] p-8 md:p-12 flex flex-col md:flex-row items-center gap-8 animate-in fade-in slide-in-from-top-4 duration-700">
+                <div className="bg-destructive/20 p-6 rounded-full">
+                  <AlertTriangle className="h-12 w-12 text-destructive" />
+                </div>
+                <div className="text-center md:text-left space-y-2">
+                  <h3 className="text-2xl md:text-3xl font-headline font-bold text-destructive">Eurovision 2020: Cancelled</h3>
+                  <p className="text-lg text-muted-foreground max-w-2xl">
+                    Ο διαγωνισμός του 2020 στο Ρότερνταμ ακυρώθηκε λόγω της πανδημίας COVID-19. Ωστόσο, μπορείτε ακόμα να δείτε και να ψηφίσετε τα τραγούδια που είχαν επιλεγεί!
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] bg-card border border-border/50 shadow-2xl space-y-8">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground">
                   <Layers className="h-6 w-6" />
-                  Φάση Διαγωνισμού / Event
+                  Φάση Διαγωνισμού / Events
                 </div>
                 
                 {user && userVotes && userVotes.length > 0 && (
@@ -254,19 +273,46 @@ export default function Home() {
                 )}
               </div>
               
-              <Tabs value={selectedStage} onValueChange={setSelectedStage} className="w-full">
-                <TabsList className="flex flex-wrap h-auto bg-muted/30 p-2 rounded-2xl gap-2 overflow-x-auto">
-                  {STAGE_OPTIONS.filter(opt => opt.value === "All" || populatedStages.has(opt.value) || isAdmin).map(opt => (
-                    <TabsTrigger 
-                      key={opt.value} 
-                      value={opt.value} 
-                      className="h-10 md:h-12 rounded-xl text-xs md:text-sm px-4 data-[state=active]:bg-primary data-[state=active]:text-white"
-                    >
-                      {opt.label}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
+              <div className="space-y-6">
+                <div className="flex flex-col gap-4">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Main Eurovision Contest</span>
+                  <Tabs value={selectedStage} onValueChange={setSelectedStage} className="w-full">
+                    <TabsList className="flex flex-wrap h-auto bg-muted/30 p-2 rounded-2xl gap-2 overflow-x-auto">
+                      {STAGE_OPTIONS.filter(opt => !regionalEvents.includes(opt.value) && (opt.value === "All" || populatedStages.has(opt.value) || isAdmin)).map(opt => (
+                        <TabsTrigger 
+                          key={opt.value} 
+                          value={opt.value} 
+                          className="h-10 md:h-12 rounded-xl text-xs md:text-sm px-4 data-[state=active]:bg-primary data-[state=active]:text-white"
+                        >
+                          {opt.label}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
+                </div>
+
+                {selectedYear >= 2000 && (
+                  <div className="flex flex-col gap-4 border-t pt-6">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary/70 ml-1">INFE Greece Regional Events</span>
+                    <div className="flex flex-wrap gap-2">
+                      {regionalEvents.filter(stage => populatedStages.has(stage) || isAdmin).map(stage => (
+                        <Button
+                          key={stage}
+                          variant={selectedStage === stage ? "default" : "outline"}
+                          size="sm"
+                          className={cn(
+                            "rounded-xl h-10 px-6 font-bold",
+                            selectedStage === stage ? "bg-primary shadow-lg shadow-primary/20" : "hover:border-primary hover:text-primary"
+                          )}
+                          onClick={() => setSelectedStage(stage)}
+                        >
+                          {stage}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {userVotes && userVotes.length > 0 && (
                 <div className="flex flex-wrap gap-2 pt-4">
@@ -333,9 +379,11 @@ export default function Home() {
             <p className="max-w-3xl mx-auto text-lg md:text-xl text-muted-foreground leading-relaxed px-6">
               Γιορτάζουμε 70 χρόνια μουσικής, πολιτισμού και ενότητας. Δημιουργήθηκε από fans, για fans, στο INFE Greece.
             </p>
-            <p className="text-sm font-medium text-primary/80">
-              App Creator: <span className="font-bold">Konstantinos Gkiokoglou</span>
-            </p>
+            <div className="pt-4 space-y-1">
+              <p className="text-sm font-medium text-primary/80">
+                App Creator: <span className="font-bold text-foreground">Konstantinos Gkiokoglou</span>
+              </p>
+            </div>
           </div>
           <div className="pt-12 border-t border-white/5">
             <p className="text-[10px] md:text-xs text-muted-foreground/40 tracking-[0.3em] uppercase">

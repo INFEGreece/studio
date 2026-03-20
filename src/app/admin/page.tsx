@@ -133,10 +133,10 @@ export default function AdminPage() {
                 </div>
                 <div className="space-y-2">
                   <p className="text-[10px] md:text-xs text-muted-foreground leading-relaxed italic">
-                    1. Αντιγράψτε το UID παραπάνω.<br/>
-                    2. Μεταβείτε στο Firebase Console &rarr; Firestore Database.<br/>
-                    3. Δημιουργήστε συλλογή <strong>roles_admin</strong>.<br/>
-                    4. Προσθέστε έγγραφο με <strong>Document ID</strong> το UID σας.
+                    1. Αντιγράψτε το UID παραπάνω.
+                    2. Μεταβείτε στο Firebase Console &rarr; Firestore Database.
+                    3. Δημιουργήστε συλλογή roles_admin.
+                    4. Προσθέστε έγγραφο με Document ID το UID σας.
                   </p>
                 </div>
               </div>
@@ -245,7 +245,7 @@ export default function AdminPage() {
     toast({ title: "Η μαζική εισαγωγή ολοκληρώθηκε" });
   };
 
-  const stages: ContestStage[] = ['Final', 'Semi-Final 1', 'Semi-Final 2', 'Eurodromio', 'Be.So.', 'Mu.Si.Ka.'];
+  const stages: ContestStage[] = ['Final', 'Semi-Final 1', 'Semi-Final 2', 'Prequalification', 'Eurodromio', 'Be.So.', 'Mu.Si.Ka.'];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -427,7 +427,7 @@ export default function AdminPage() {
           <DialogContent className="sm:max-w-[600px] rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-8">
             <DialogHeader>
               <DialogTitle className="text-xl md:text-2xl font-headline font-bold">Μαζική Εισαγωγή</DialogTitle>
-              <p className="text-xs md:text-sm text-muted-foreground mt-1">Επικολλήστε γραμμές: <strong>Χώρα; Καλλιτέχνης; Τραγούδι; VideoUrl</strong></p>
+              <p className="text-xs md:text-sm text-muted-foreground mt-1">Επικολλήστε γραμμές: Χώρα; Καλλιτέχνης; Τραγούδι; VideoUrl</p>
             </DialogHeader>
             <div className="space-y-4 md:space-y-6 py-4 md:py-6">
               <div className="grid grid-cols-2 gap-4">
