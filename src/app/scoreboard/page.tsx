@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, collectionGroup } from 'firebase/firestore';
@@ -30,10 +30,14 @@ import {
 import { Trophy, TrendingUp, Users, Loader2, ListOrdered, Calendar } from 'lucide-react';
 import { getFlagUrl, cn } from '@/lib/utils';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
-export default function ScoreboardPage() {
+function ScoreboardContent() {
+  const searchParams = useSearchParams();
   const db = useFirestore();
-  const [selectedYear, setSelectedYear] = useState(2026);
+  
+  const urlYear = searchParams.get('year');
+  const [selectedYear, setSelectedYear] = useState<number>(urlYear ? parseInt(urlYear) : 2026);
 
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
 
@@ -92,7 +96,7 @@ export default function ScoreboardPage() {
               <Trophy className="h-6 w-6 md:h-8 md:w-8 text-primary" />
             </div>
             <div>
-              <h1 className="text-3xl md:text-4xl font-headline font-extrabold tracking-tight">Eurovision Scoreboard</h1>
+              <h1 className="text-3xl md:text-4xl font-headline font-extrabold tracking-tight">Eurovision Scoreboard {selectedYear}</h1>
               <p className="text-sm md:text-base text-muted-foreground">Ζωντανή κατάταξη κοινότητας για το επιλεγμένο έτος</p>
             </div>
           </div>
@@ -287,5 +291,13 @@ export default function ScoreboardPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function ScoreboardPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
+      <ScoreboardContent />
+    </Suspense>
   );
 }

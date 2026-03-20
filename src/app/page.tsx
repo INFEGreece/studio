@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Navbar } from '@/components/layout/Navbar';
@@ -24,12 +24,16 @@ import { Entry, Vote, ContestStage } from '@/lib/types';
 import { setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useSearchParams } from 'next/navigation';
 
-export default function Home() {
+function HomeContent() {
+  const searchParams = useSearchParams();
   const db = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
-  const [selectedYear, setSelectedYear] = useState<number>(2026);
+  
+  const urlYear = searchParams.get('year');
+  const [selectedYear, setSelectedYear] = useState<number>(urlYear ? parseInt(urlYear) : 2026);
   const [selectedStage, setSelectedStage] = useState<string>("All");
   const [currentYear, setCurrentYear] = useState<number>(new Date().getFullYear());
 
@@ -174,7 +178,7 @@ export default function Home() {
                   <Music className="mr-2 h-6 w-6" /> Έναρξη Ψηφοφορίας
                 </Button>
                 <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg md:text-xl px-10 md:px-14 h-16 md:h-20 rounded-full border-2" asChild>
-                  <Link href="/scoreboard">Live Scoreboard</Link>
+                  <Link href={`/scoreboard?year=${selectedYear}`}>Live Scoreboard {selectedYear}</Link>
                 </Button>
               </div>
             </div>
@@ -396,5 +400,13 @@ export default function Home() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
+      <HomeContent />
+    </Suspense>
   );
 }
