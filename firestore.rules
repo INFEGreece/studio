@@ -34,18 +34,21 @@ service cloud.firestore {
 
     /**
      * @description Collection Group Rule for Votes.
-     * This is CRITICAL for the Scoreboard to function across all users.
+     * Crucial for the Scoreboard to function across all users.
+     * We allow public read for everyone to see the results.
      */
     match /{path=**}/votes/{voteId} {
       allow read: if true;
-      allow write: if isSignedIn() && request.auth.uid == request.resource.data.userId;
+      allow create, update: if isSignedIn() && request.auth.uid == request.resource.data.userId;
+      allow delete: if isSignedIn() && request.auth.uid == resource.data.userId;
     }
 
     /**
      * @description User profile documents.
      */
     match /users/{userId} {
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
+      allow read: if true;
+      allow write: if isSignedIn() && request.auth.uid == userId;
       
       /**
        * Sub-collection of votes (Direct access).

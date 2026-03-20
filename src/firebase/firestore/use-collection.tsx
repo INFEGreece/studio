@@ -65,8 +65,7 @@ export function useCollection<T = any>(
       (err: FirestoreError) => {
         let path: string = 'collection-query';
         try {
-          // Attempt to extract path if available
-          if ('path' in memoizedTargetRefOrQuery) {
+          if (memoizedTargetRefOrQuery && 'path' in memoizedTargetRefOrQuery) {
             path = (memoizedTargetRefOrQuery as any).path;
           }
         } catch (e) {
@@ -82,7 +81,6 @@ export function useCollection<T = any>(
         setData(null)
         setIsLoading(false)
 
-        // Emit for the global listener if it exists
         errorEmitter.emit('permission-error', contextualError);
       }
     );
