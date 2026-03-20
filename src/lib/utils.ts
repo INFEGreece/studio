@@ -12,7 +12,7 @@ export function cn(...inputs: ClassValue[]) {
 export function getFlagUrl(countryName: string): string {
   const name = countryName.toLowerCase().trim();
   
-  // Custom flag for Yugoslavia
+  // Custom flag for Yugoslavia as requested
   if (name === "yugoslavia") {
     return "https://infegreece.com/wp-content/uploads/2025/08/Yugoslavia.png";
   }
