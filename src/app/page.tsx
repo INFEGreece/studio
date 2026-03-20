@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { History, Filter, Loader2, Layers, Music, RotateCcw, Calendar, Info, AlertTriangle } from 'lucide-react';
+import { History, Filter, Loader2, Layers, Music, RotateCcw, Calendar, Info, AlertTriangle, Star } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import { Entry, Vote, ContestStage } from '@/lib/types';
@@ -130,18 +130,15 @@ export default function Home() {
     }
   };
 
-  const STAGE_OPTIONS = [
+  const regionalEvents: ContestStage[] = ["Eurodromio", "Be.So.", "Mu.Si.Ka."];
+
+  const mainStages = [
     { value: "All", label: "Όλα" },
     { value: "Final", label: "Τελικός" },
     { value: "Semi-Final 1", label: "Ημιτ. 1" },
     { value: "Semi-Final 2", label: "Ημιτ. 2" },
-    { value: "Prequalification", label: "Προκριματικός" },
-    { value: "Eurodromio", label: "Eurodromio" },
-    { value: "Be.So.", label: "Be.So." },
-    { value: "Mu.Si.Ka.", label: "Mu.Si.Ka." },
+    ...(selectedYear === 1993 ? [{ value: "Prequalification", label: "Προκριματικός" }] : []),
   ];
-
-  const regionalEvents = ["Eurodromio", "Be.So.", "Mu.Si.Ka."];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -275,10 +272,10 @@ export default function Home() {
               
               <div className="space-y-6">
                 <div className="flex flex-col gap-4">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Main Eurovision Contest</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Eurovision Contest</span>
                   <Tabs value={selectedStage} onValueChange={setSelectedStage} className="w-full">
                     <TabsList className="flex flex-wrap h-auto bg-muted/30 p-2 rounded-2xl gap-2 overflow-x-auto">
-                      {STAGE_OPTIONS.filter(opt => !regionalEvents.includes(opt.value) && (opt.value === "All" || populatedStages.has(opt.value) || isAdmin)).map(opt => (
+                      {mainStages.filter(opt => opt.value === "All" || populatedStages.has(opt.value) || isAdmin).map(opt => (
                         <TabsTrigger 
                           key={opt.value} 
                           value={opt.value} 
@@ -293,7 +290,9 @@ export default function Home() {
 
                 {selectedYear >= 2000 && (
                   <div className="flex flex-col gap-4 border-t pt-6">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary/70 ml-1">INFE Greece Regional Events</span>
+                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-primary/70 ml-1">
+                      <Star className="h-3 w-3" /> INFE GR Events
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       {regionalEvents.filter(stage => populatedStages.has(stage) || isAdmin).map(stage => (
                         <Button
@@ -395,3 +394,4 @@ export default function Home() {
     </div>
   );
 }
+
