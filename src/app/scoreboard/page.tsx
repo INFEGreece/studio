@@ -32,6 +32,9 @@ import { getFlagUrl, cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
+/**
+ * ScoreboardContent handles the actual logic of aggregating votes for a specific year.
+ */
 function ScoreboardContent() {
   const searchParams = useSearchParams();
   const db = useFirestore();
@@ -56,24 +59,27 @@ function ScoreboardContent() {
 
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
 
-  // Strictly fetch entries for the selected year
+  // Fetch entries strictly for the selected year
   const entriesQuery = useMemoFirebase(() => {
     return query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
   }, [db, selectedYear]);
 
   const { data: entries, isLoading: isEntriesLoading } = useCollection<Entry>(entriesQuery);
 
-  // Strictly fetch votes for the selected year using collectionGroup
+  // Fetch votes across all users strictly for the selected year
   const votesQuery = useMemoFirebase(() => {
     return query(collectionGroup(db, 'votes'), where('year', '==', selectedYear));
   }, [db, selectedYear]);
 
   const { data: allVotes, isLoading: isVotesLoading } = useCollection<Vote>(votesQuery);
 
+  /**
+   * Aggregates points while ensuring absolute isolation per year.
+   */
   const scoreboardData = useMemo(() => {
     if (!entries || entries.length === 0) return [];
     
-    // Create a set of valid entry IDs for the current year for double-validation
+    // Create a lookup for valid entry IDs of the current year for double-validation
     const validEntryIds = new Set(entries.map(e => e.id));
     
     const aggregation: Record<string, { totalPoints: number; voteCount: number }> = {};
@@ -82,8 +88,9 @@ function ScoreboardContent() {
     safeVotes.forEach(vote => {
       const entryId = vote.eurovisionEntryId;
       
-      // CRITICAL CHECK: Only aggregate if the vote belongs to an entry of the SELECTED year
-      // and double check the vote document's year field matches selectedYear.
+      // CRITICAL: Each year has its own isolated results.
+      // 1. Check if the entry ID belongs to the current year's entries.
+      // 2. Check if the vote's year field matches the selected year.
       if (validEntryIds.has(entryId) && vote.year === selectedYear) {
         if (!aggregation[entryId]) {
           aggregation[entryId] = { totalPoints: 0, voteCount: 0 };
