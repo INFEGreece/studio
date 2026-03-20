@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Navbar } from '@/components/layout/Navbar';
@@ -17,10 +17,10 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { History, Filter, Loader2, Layers, Music, RotateCcw } from 'lucide-react';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { History, Filter, Loader2, Layers, Music, RotateCcw, Calendar } from 'lucide-react';
+import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
-import { Entry, Vote } from '@/lib/types';
+import { Entry, Vote, ContestStage } from '@/lib/types';
 import { setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 
@@ -36,19 +36,36 @@ export default function Home() {
     setCurrentYear(new Date().getFullYear());
   }, []);
 
+  // Admin check logic
+  const adminDocRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return doc(db, 'roles_admin', user.uid);
+  }, [db, user]);
+  const { data: adminData } = useDoc(adminDocRef);
+  const isAdmin = !!adminData;
+
+  // We query all entries for the year to determine populated stages
   const entriesRef = useMemoFirebase(() => {
-    let baseQuery = query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
-    if (selectedStage !== "All") {
-      baseQuery = query(baseQuery, where('stage', '==', selectedStage));
+    return query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
+  }, [db, selectedYear]);
+
+  const { data: allYearEntries, isLoading } = useCollection<Entry>(entriesRef);
+
+  // Determine which stages have entries
+  const populatedStages = useMemo(() => {
+    const stages = new Set<string>();
+    if (allYearEntries) {
+      allYearEntries.forEach(e => stages.add(e.stage));
     }
-    return baseQuery;
-  }, [db, selectedYear, selectedStage]);
+    return stages;
+  }, [allYearEntries]);
 
-  const { data: rawEntries, isLoading } = useCollection<Entry>(entriesRef);
-
-  const filteredEntries = (rawEntries || [])
-    .slice()
-    .sort((a, b) => a.country.localeCompare(b.country));
+  const filteredEntries = useMemo(() => {
+    if (!allYearEntries) return [];
+    return allYearEntries
+      .filter(e => selectedStage === "All" || e.stage === selectedStage)
+      .sort((a, b) => a.country.localeCompare(b.country));
+  }, [allYearEntries, selectedStage]);
 
   const userVotesRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -111,6 +128,16 @@ export default function Home() {
       toast({ title: "Οι ψήφοι μηδενίστηκαν", description: `Ο πίνακας βαθμολογίας σας για το ${selectedYear} είναι πλέον κενός.` });
     }
   };
+
+  const STAGE_OPTIONS = [
+    { value: "All", label: "Όλα" },
+    { value: "Final", label: "Τελικός" },
+    { value: "Semi-Final 1", label: "Ημιτ. 1" },
+    { value: "Semi-Final 2", label: "Ημιτ. 2" },
+    { value: "Eurodromio", label: "Eurodromio" },
+    { value: "Be.So.", label: "Be.So." },
+    { value: "Mu.Si.Ka.", label: "Mu.Si.Ka." },
+  ];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -229,13 +256,15 @@ export default function Home() {
               
               <Tabs value={selectedStage} onValueChange={setSelectedStage} className="w-full">
                 <TabsList className="flex flex-wrap h-auto bg-muted/30 p-2 rounded-2xl gap-2 overflow-x-auto">
-                  <TabsTrigger value="All" className="h-10 md:h-12 rounded-xl text-xs md:text-sm px-4">Όλα</TabsTrigger>
-                  <TabsTrigger value="Final" className="h-10 md:h-12 rounded-xl text-xs md:text-sm px-4">Τελικός</TabsTrigger>
-                  <TabsTrigger value="Semi-Final 1" className="h-10 md:h-12 rounded-xl text-xs md:text-sm px-4">Ημιτ. 1</TabsTrigger>
-                  <TabsTrigger value="Semi-Final 2" className="h-10 md:h-12 rounded-xl text-xs md:text-sm px-4">Ημιτ. 2</TabsTrigger>
-                  <TabsTrigger value="Eurodromio" className="h-10 md:h-12 rounded-xl text-xs md:text-sm px-4">Eurodromio</TabsTrigger>
-                  <TabsTrigger value="Be.So." className="h-10 md:h-12 rounded-xl text-xs md:text-sm px-4">Be.So.</TabsTrigger>
-                  <TabsTrigger value="Mu.Si.Ka." className="h-10 md:h-12 rounded-xl text-xs md:text-sm px-4">Mu.Si.Ka.</TabsTrigger>
+                  {STAGE_OPTIONS.filter(opt => opt.value === "All" || populatedStages.has(opt.value) || isAdmin).map(opt => (
+                    <TabsTrigger 
+                      key={opt.value} 
+                      value={opt.value} 
+                      className="h-10 md:h-12 rounded-xl text-xs md:text-sm px-4 data-[state=active]:bg-primary data-[state=active]:text-white"
+                    >
+                      {opt.label}
+                    </TabsTrigger>
+                  ))}
                 </TabsList>
               </Tabs>
 
