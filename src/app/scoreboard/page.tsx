@@ -85,18 +85,17 @@ function ScoreboardContent() {
     const validEntryIds = new Set(entries.map(e => e.id));
     const aggregation: Record<string, { totalPoints: number; voteCount: number }> = {};
     
-    const safeVotes = (allVotes || []).filter(v => v && typeof v === 'object' && v.eurovisionEntryId);
-
-    safeVotes.forEach(vote => {
-      const entryId = vote.eurovisionEntryId;
-      // Double validation: Check both entry ownership and year match
-      if (validEntryIds.has(entryId) && vote.year === selectedYear) {
-        if (!aggregation[entryId]) {
-          aggregation[entryId] = { totalPoints: 0, voteCount: 0 };
+    // Process each vote and verify it belongs to an entry of the CURRENT year
+    (allVotes || []).forEach(vote => {
+      if (vote && vote.eurovisionEntryId && vote.year === selectedYear) {
+        if (validEntryIds.has(vote.eurovisionEntryId)) {
+          if (!aggregation[vote.eurovisionEntryId]) {
+            aggregation[vote.eurovisionEntryId] = { totalPoints: 0, voteCount: 0 };
+          }
+          const pts = Number(vote.points) || 0;
+          aggregation[vote.eurovisionEntryId].totalPoints += pts;
+          aggregation[vote.eurovisionEntryId].voteCount += 1;
         }
-        const pts = Number(vote.points) || 0;
-        aggregation[entryId].totalPoints += pts;
-        aggregation[entryId].voteCount += 1;
       }
     });
 

@@ -15,9 +15,6 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    /** 
-     * Checks if the user is an administrator. 
-     */
     function isAdmin() {
       return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
@@ -33,29 +30,16 @@ service cloud.firestore {
     }
 
     /**
-     * @description Collection Group Rule for Votes.
-     * Crucial for the Scoreboard to function across all users.
-     * We allow public read for everyone to see the results.
-     */
-    match /{path=**}/votes/{voteId} {
-      allow read: if true;
-      allow create, update: if isSignedIn() && request.auth.uid == request.resource.data.userId;
-      allow delete: if isSignedIn() && request.auth.uid == resource.data.userId;
-    }
-
-    /**
-     * @description User profile documents.
+     * @description User profile documents and their nested votes.
      */
     match /users/{userId} {
       allow read: if true;
       allow write: if isSignedIn() && request.auth.uid == userId;
       
-      /**
-       * Sub-collection of votes (Direct access).
-       */
       match /votes/{voteId} {
         allow read: if true;
-        allow write: if isSignedIn() && request.auth.uid == userId;
+        allow create, update: if isSignedIn() && request.auth.uid == userId && request.resource.data.userId == userId;
+        allow delete: if isSignedIn() && request.auth.uid == userId;
       }
     }
 
@@ -63,9 +47,18 @@ service cloud.firestore {
      * @description Global admin roles list.
      */
     match /roles_admin/{adminId} {
-      allow get: if isSignedIn();
+      allow get: if true;
       allow list: if isAdmin();
       allow write: if false; 
+    }
+
+    /**
+     * @description Collection Group Rule for Votes.
+     * CRITICAL: This allows the Scoreboard to query ALL votes across ALL users.
+     * Path pattern {path=**} is required for collectionGroup queries.
+     */
+    match /{path=**}/votes/{voteId} {
+      allow read: if true;
     }
   }
 }
