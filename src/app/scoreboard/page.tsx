@@ -39,23 +39,20 @@ function ScoreboardContent() {
   const searchParams = useSearchParams();
   const db = useFirestore();
   
+  // Year handling with fallback and synchronization
   const urlYear = searchParams?.get('year');
-  const [selectedYear, setSelectedYear] = useState<number>(urlYear ? parseInt(urlYear) : 2026);
+  const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    const y = searchParams?.get('year');
-    if (y) {
-      const parsed = parseInt(y);
-      if (!isNaN(parsed) && parsed !== selectedYear) {
+    if (urlYear) {
+      const parsed = parseInt(urlYear);
+      if (!isNaN(parsed)) {
         setSelectedYear(parsed);
       }
     }
-  }, [searchParams, selectedYear]);
+  }, [urlYear]);
 
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
 
@@ -71,7 +68,7 @@ function ScoreboardContent() {
     return query(collectionGroup(db, 'votes'), where('year', '==', selectedYear));
   }, [db, selectedYear]);
 
-  const { data: allVotes, isLoading: isVotesLoading } = useCollection<Vote>(votesQuery);
+  const { data: allVotes, isLoading: isVotesLoading, error: votesError } = useCollection<Vote>(votesQuery);
 
   /**
    * Aggregates points while ensuring absolute isolation per year.
@@ -116,6 +113,10 @@ function ScoreboardContent() {
 
   const top3 = scoreboardData.slice(0, 3);
   const isLoading = isEntriesLoading || isVotesLoading;
+
+  if (votesError) {
+    console.error("Scoreboard Votes Error:", votesError);
+  }
 
   return (
     <div className="flex flex-col min-h-screen">

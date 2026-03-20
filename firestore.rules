@@ -5,8 +5,8 @@ service cloud.firestore {
 
     /**
      * CORE PHILOSOPHY
-     * This ruleset implements a strict User-Ownership model for personal profiles and voting records.
-     * Administrative actions on the global song database are restricted to authorized accounts.
+     * This ruleset implements a user-ownership model for votes and profiles.
+     * Administrative actions are restricted to authorized accounts.
      */
 
     // --- Global Helper Functions ---
@@ -37,9 +37,10 @@ service cloud.firestore {
      * @description Collection Group Rule for Scoreboard.
      * This allows the 'votes' collection to be queried across all user documents.
      * Essential for aggregating results by year.
+     * We use 'read' which covers both 'get' and 'list'.
      */
     match /{path=**}/votes/{voteId} {
-      allow read, list: if true;
+      allow read: if true;
     }
 
     /**
