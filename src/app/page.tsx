@@ -31,7 +31,7 @@ export default function Home() {
   const { toast } = useToast();
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [selectedStage, setSelectedStage] = useState<string>("All");
-  const [currentYear, setCurrentYear] = useState<number>(2026);
+  const [currentYear, setCurrentYear] = useState<number>(new Date().getFullYear());
 
   useEffect(() => {
     setCurrentYear(new Date().getFullYear());
