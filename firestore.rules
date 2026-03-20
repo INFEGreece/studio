@@ -26,12 +26,18 @@ service cloud.firestore {
 
     /**
      * @description Public registry of Eurovision songs. 
-     * READ: Publicly accessible.
-     * WRITE: Only authorized administrators.
      */
     match /eurovision_entries/{entryId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    /**
+     * @description Collection Group Rule for Scoreboard.
+     * This allows the 'votes' collection to be queried across all user documents.
+     */
+    match /{path=**}/votes/{voteId} {
+      allow read: if true;
     }
 
     /**
@@ -41,22 +47,13 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
       
       match /votes/{voteId} {
-        allow read: if true; // Allow others to read votes for the scoreboard
+        allow read: if true; // Allow reading specific votes for direct access
         allow write: if isSignedIn() && request.auth.uid == userId;
       }
     }
 
     /**
-     * @description Allow collection group queries for the scoreboard to calculate totals.
-     */
-    match /{path=**}/votes/{voteId} {
-      allow read: if true;
-    }
-
-    /**
      * @description Global admin roles list.
-     * Allow any signed-in user to check if they (or anyone) is an admin by ID.
-     * Only existing admins can see the full list of other admins.
      */
     match /roles_admin/{adminId} {
       allow get: if isSignedIn();

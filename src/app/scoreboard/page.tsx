@@ -77,11 +77,13 @@ function ScoreboardContent() {
     const aggregation: Record<string, { totalPoints: number; voteCount: number }> = {};
     
     (allVotes || []).forEach(vote => {
-      if (!aggregation[vote.eurovisionEntryId]) {
-        aggregation[vote.eurovisionEntryId] = { totalPoints: 0, voteCount: 0 };
+      if (vote.eurovisionEntryId) {
+        if (!aggregation[vote.eurovisionEntryId]) {
+          aggregation[vote.eurovisionEntryId] = { totalPoints: 0, voteCount: 0 };
+        }
+        aggregation[vote.eurovisionEntryId].totalPoints += (vote.points || 0);
+        aggregation[vote.eurovisionEntryId].voteCount += 1;
       }
-      aggregation[vote.eurovisionEntryId].totalPoints += vote.points;
-      aggregation[vote.eurovisionEntryId].voteCount += 1;
     });
 
     return entries
