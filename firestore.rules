@@ -41,8 +41,16 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
       
       match /votes/{voteId} {
-        allow read, write: if isSignedIn() && request.auth.uid == userId;
+        allow read: if true; // Allow others to read votes for the scoreboard
+        allow write: if isSignedIn() && request.auth.uid == userId;
       }
+    }
+
+    /**
+     * @description Allow collection group queries for the scoreboard to calculate totals.
+     */
+    match /{path=**}/votes/{voteId} {
+      allow read: if true;
     }
 
     /**

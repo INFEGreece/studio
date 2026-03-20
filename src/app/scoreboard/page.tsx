@@ -4,8 +4,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
-import { Entry } from '@/lib/types';
+import { collection, query, where, collectionGroup } from 'firebase/firestore';
+import { Entry, Vote } from '@/lib/types';
 import { DECADES } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { 
@@ -17,7 +17,6 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   BarChart, 
   Bar, 
@@ -38,28 +37,49 @@ export default function ScoreboardPage() {
 
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
 
+  // Get all entries for the year
   const entriesQuery = useMemoFirebase(() => {
     return query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
   }, [db, selectedYear]);
 
-  const { data: entries, isLoading } = useCollection<Entry>(entriesQuery);
+  const { data: entries, isLoading: isEntriesLoading } = useCollection<Entry>(entriesQuery);
+
+  // Get ALL votes for this year across all users using a Collection Group Query
+  const votesQuery = useMemoFirebase(() => {
+    return query(collectionGroup(db, 'votes'), where('year', '==', selectedYear));
+  }, [db, selectedYear]);
+
+  const { data: allVotes, isLoading: isVotesLoading } = useCollection<Vote>(votesQuery);
 
   const scoreboardData = useMemo(() => {
     if (!entries) return [];
+    
+    // Map of entryId -> points aggregation
+    const aggregation: Record<string, { totalPoints: number; voteCount: number }> = {};
+    
+    (allVotes || []).forEach(vote => {
+      if (!aggregation[vote.eurovisionEntryId]) {
+        aggregation[vote.eurovisionEntryId] = { totalPoints: 0, voteCount: 0 };
+      }
+      aggregation[vote.eurovisionEntryId].totalPoints += vote.points;
+      aggregation[vote.eurovisionEntryId].voteCount += 1;
+    });
+
     return entries
       .map(e => ({
         id: e.id,
         name: e.country,
-        score: e.totalPoints || 0,
-        votes: e.voteCount || 0,
+        score: aggregation[e.id]?.totalPoints || 0,
+        votes: aggregation[e.id]?.voteCount || 0,
         artist: e.artist,
         title: e.songTitle,
         flagUrl: e.flagUrl || getFlagUrl(e.country)
       }))
       .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
-  }, [entries]);
+  }, [entries, allVotes]);
 
   const top3 = scoreboardData.slice(0, 3);
+  const isLoading = isEntriesLoading || isVotesLoading;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -73,7 +93,7 @@ export default function ScoreboardPage() {
             </div>
             <div>
               <h1 className="text-3xl md:text-4xl font-headline font-extrabold tracking-tight">Eurovision Scoreboard</h1>
-              <p className="text-sm md:text-base text-muted-foreground">Live community rankings for the selected season</p>
+              <p className="text-sm md:text-base text-muted-foreground">Ζωντανή κατάταξη κοινότητας για το επιλεγμένο έτος</p>
             </div>
           </div>
 
@@ -131,13 +151,13 @@ export default function ScoreboardPage() {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="h-10 w-10 md:h-12 md:w-12 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground font-medium">Calculating community results for {selectedYear}...</p>
+            <p className="text-muted-foreground font-medium">Υπολογισμός αποτελεσμάτων για το {selectedYear}...</p>
           </div>
         ) : scoreboardData.length === 0 ? (
           <div className="text-center py-20 md:py-32 bg-muted/20 rounded-[1.5rem] md:rounded-[2rem] border-2 border-dashed">
             <Users className="h-12 w-12 md:h-16 md:w-16 mx-auto text-muted-foreground/30 mb-4" />
-            <p className="text-lg md:text-xl font-headline font-bold text-muted-foreground">No data for {selectedYear} yet</p>
-            <p className="text-xs md:text-sm text-muted-foreground">Entries will appear here once users start voting for this season.</p>
+            <p className="text-lg md:text-xl font-headline font-bold text-muted-foreground">Δεν υπάρχουν δεδομένα για το {selectedYear}</p>
+            <p className="text-xs md:text-sm text-muted-foreground">Οι συμμετοχές θα εμφανιστούν μόλις οι χρήστες αρχίσουν να ψηφίζουν.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start">
@@ -145,7 +165,7 @@ export default function ScoreboardPage() {
               <div className="space-y-4">
                 <h2 className="text-lg md:text-xl font-headline font-bold flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-yellow-500" />
-                  Podium Finishers
+                  Πρώτες 3 Θέσεις
                 </h2>
                 <div className="grid grid-cols-1 gap-4">
                   {top3.map((item, idx) => (
@@ -178,7 +198,7 @@ export default function ScoreboardPage() {
               <div className="bg-card border rounded-2xl p-4 md:p-6 shadow-sm">
                 <h2 className="text-lg md:text-xl font-headline font-bold mb-6 flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
-                  Points Distribution
+                  Κατανομή Πόντων (Top 10)
                 </h2>
                 <div className="h-[250px] md:h-[300px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -200,7 +220,7 @@ export default function ScoreboardPage() {
                             return (
                               <div className="bg-popover border p-3 rounded-xl shadow-xl">
                                 <p className="font-bold text-primary text-xs md:text-sm">{data.name}</p>
-                                <p className="text-[10px] font-bold">{data.score} Points</p>
+                                <p className="text-[10px] font-bold">{data.score} Πόντοι</p>
                               </div>
                             );
                           }
@@ -223,26 +243,26 @@ export default function ScoreboardPage() {
                 <div className="p-4 md:p-6 border-b bg-muted/10">
                   <h2 className="text-lg md:text-xl font-headline font-bold flex items-center gap-2">
                     <ListOrdered className="h-5 w-5 text-primary" />
-                    Detailed Rankings
+                    Αναλυτική Κατάταξη
                   </h2>
                 </div>
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader className="bg-muted/30">
                       <TableRow>
-                        <TableHead className="w-[80px]">Rank</TableHead>
-                        <TableHead>Country & Artist</TableHead>
-                        <TableHead>Points</TableHead>
-                        <TableHead className="text-right">Votes</TableHead>
+                        <TableHead className="w-[80px]">Κατάταξη</TableHead>
+                        <TableHead>Χώρα & Καλλιτέχνης</TableHead>
+                        <TableHead>Πόντοι</TableHead>
+                        <TableHead className="text-right">Ψήφοι</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {scoreboardData.map((item, idx) => (
                         <TableRow key={item.id} className="hover:bg-muted/30 transition-colors">
                           <TableCell className="font-bold">
-                            {idx + 1 === 1 ? <Badge className="bg-yellow-500/20 text-yellow-600 border-yellow-500/30 px-1 md:px-2">1st</Badge> : 
-                             idx + 1 === 2 ? <Badge className="bg-slate-400/20 text-slate-500 border-slate-400/30 px-1 md:px-2">2nd</Badge> :
-                             idx + 1 === 3 ? <Badge className="bg-amber-600/20 text-amber-700 border-amber-600/30 px-1 md:px-2">3rd</Badge> : 
+                            {idx + 1 === 1 ? <Badge className="bg-yellow-500/20 text-yellow-600 border-yellow-500/30 px-1 md:px-2">1ος</Badge> : 
+                             idx + 1 === 2 ? <Badge className="bg-slate-400/20 text-slate-500 border-slate-400/30 px-1 md:px-2">2ος</Badge> :
+                             idx + 1 === 3 ? <Badge className="bg-amber-600/20 text-amber-700 border-amber-600/30 px-1 md:px-2">3ος</Badge> : 
                              `#${idx + 1}`}
                           </TableCell>
                           <TableCell>
