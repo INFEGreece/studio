@@ -5,8 +5,8 @@ service cloud.firestore {
 
     /**
      * CORE PHILOSOPHY
-     * This ruleset implements a user-ownership model for votes and profiles.
-     * Administrative actions are restricted to authorized accounts.
+     * Public read for entries and aggregated votes (scoreboard).
+     * Protected write for user-specific data and admin roles.
      */
 
     // --- Global Helper Functions ---
@@ -17,7 +17,6 @@ service cloud.firestore {
 
     /** 
      * Checks if the user is an administrator. 
-     * An admin is a user whose UID exists in the 'roles_admin' collection.
      */
     function isAdmin() {
       return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
@@ -34,11 +33,12 @@ service cloud.firestore {
     }
 
     /**
-     * @description Collection Group Rule for Scoreboard.
-     * Essential for aggregating results by year across all users.
+     * @description Collection Group Rule for Votes.
+     * This is CRITICAL for the Scoreboard to function across all users.
      */
     match /{path=**}/votes/{voteId} {
       allow read: if true;
+      allow write: if isSignedIn() && request.auth.uid == request.resource.data.userId;
     }
 
     /**
@@ -48,7 +48,7 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
       
       /**
-       * Sub-collection of votes. 
+       * Sub-collection of votes (Direct access).
        */
       match /votes/{voteId} {
         allow read: if true;

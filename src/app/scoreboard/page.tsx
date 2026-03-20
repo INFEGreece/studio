@@ -40,20 +40,20 @@ function ScoreboardContent() {
   const router = useRouter();
   const db = useFirestore();
   
-  // Year handling with fallback and synchronization
-  const urlYear = searchParams?.get('year');
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [mounted, setMounted] = useState(false);
 
+  // Sync year from URL on mount and param change
   useEffect(() => {
     setMounted(true);
+    const urlYear = searchParams?.get('year');
     if (urlYear) {
       const parsed = parseInt(urlYear);
       if (!isNaN(parsed)) {
         setSelectedYear(parsed);
       }
     }
-  }, [urlYear]);
+  }, [searchParams]);
 
   const updateYear = (year: number) => {
     setSelectedYear(year);
@@ -62,19 +62,19 @@ function ScoreboardContent() {
 
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
 
-  // Fetch entries strictly for the selected year
+  // Fetch entries for the selected year
   const entriesQuery = useMemoFirebase(() => {
     return query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
   }, [db, selectedYear]);
 
   const { data: entries, isLoading: isEntriesLoading } = useCollection<Entry>(entriesQuery);
 
-  // Fetch votes across all users strictly for the selected year
+  // Fetch ALL votes for the selected year across all users using Collection Group
   const votesQuery = useMemoFirebase(() => {
     return query(collectionGroup(db, 'votes'), where('year', '==', selectedYear));
   }, [db, selectedYear]);
 
-  const { data: allVotes, isLoading: isVotesLoading, error: votesError } = useCollection<Vote>(votesQuery);
+  const { data: allVotes, isLoading: isVotesLoading } = useCollection<Vote>(votesQuery);
 
   /**
    * Aggregates points while ensuring absolute isolation per year.
@@ -82,18 +82,14 @@ function ScoreboardContent() {
   const scoreboardData = useMemo(() => {
     if (!entries || entries.length === 0) return [];
     
-    // Create a lookup for valid entry IDs of the current year for double-validation
     const validEntryIds = new Set(entries.map(e => e.id));
-    
     const aggregation: Record<string, { totalPoints: number; voteCount: number }> = {};
+    
     const safeVotes = (allVotes || []).filter(v => v && typeof v === 'object' && v.eurovisionEntryId);
 
     safeVotes.forEach(vote => {
       const entryId = vote.eurovisionEntryId;
-      
-      // CRITICAL: Each year has its own isolated results.
-      // 1. Check if the entry ID belongs to the current year's entries.
-      // 2. Check if the vote's year field matches the selected year.
+      // Double validation: Check both entry ownership and year match
       if (validEntryIds.has(entryId) && vote.year === selectedYear) {
         if (!aggregation[entryId]) {
           aggregation[entryId] = { totalPoints: 0, voteCount: 0 };
@@ -120,10 +116,6 @@ function ScoreboardContent() {
   const top3 = scoreboardData.slice(0, 3);
   const isLoading = isEntriesLoading || isVotesLoading;
 
-  if (votesError) {
-    console.error("Scoreboard Votes Error:", votesError);
-  }
-
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -136,14 +128,14 @@ function ScoreboardContent() {
             </div>
             <div>
               <h1 className="text-3xl md:text-4xl font-headline font-extrabold tracking-tight">Eurovision Scoreboard {selectedYear}</h1>
-              <p className="text-sm md:text-base text-muted-foreground">Ζωντανή κατάταξη κοινότητας για το επιλεγμένο έτος</p>
+              <p className="text-sm md:text-base text-muted-foreground">Ζωντανή κατάταξη κοινότητας για το {selectedYear}</p>
             </div>
           </div>
 
           <div className="bg-card border rounded-[2rem] p-6 md:p-8 space-y-8 shadow-sm">
             <div className="space-y-4">
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2 flex items-center gap-2">
-                <Calendar className="h-3 w-3" /> Επιλογή Δεκαετίας
+                <Calendar className="h-3 w-3" /> Δεκαετίες
               </span>
               <div className="flex flex-wrap gap-2">
                 {DECADES.map(d => (
@@ -155,9 +147,7 @@ function ScoreboardContent() {
                       "rounded-full px-5 h-9 font-bold transition-all",
                       currentDecadeLabel === d.label ? "bg-primary text-primary-foreground shadow-lg" : ""
                     )}
-                    onClick={() => {
-                      updateYear(d.years[0]);
-                    }}
+                    onClick={() => updateYear(d.years[0])}
                   >
                     {d.label}
                   </Button>
@@ -179,9 +169,7 @@ function ScoreboardContent() {
                         ? "bg-accent text-accent-foreground border-accent shadow-lg shadow-accent/20" 
                         : "border-accent/30 text-accent hover:bg-accent/10"
                     )}
-                    onClick={() => {
-                      updateYear(y);
-                    }}
+                    onClick={() => updateYear(y)}
                   >
                     {y}
                   </Button>
@@ -194,13 +182,13 @@ function ScoreboardContent() {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="h-10 w-10 md:h-12 md:w-12 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground font-medium">Υπολογισμός αποτελεσμάτων για το {selectedYear}...</p>
+            <p className="text-muted-foreground font-medium text-sm md:text-base">Υπολογισμός αποτελεσμάτων για το {selectedYear}...</p>
           </div>
         ) : scoreboardData.length === 0 ? (
           <div className="text-center py-20 md:py-32 bg-muted/20 rounded-[1.5rem] md:rounded-[2rem] border-2 border-dashed">
             <Users className="h-12 w-12 md:h-16 md:w-16 mx-auto text-muted-foreground/30 mb-4" />
             <p className="text-lg md:text-xl font-headline font-bold text-muted-foreground">Δεν υπάρχουν δεδομένα για το {selectedYear}</p>
-            <p className="text-xs md:text-sm text-muted-foreground">Οι συμμετοχές θα εμφανιστούν μόλις οι χρήστες αρχίσουν να ψηφίζουν.</p>
+            <p className="text-xs md:text-sm text-muted-foreground">Μόλις ξεκινήσει η ψηφοφορία, τα αποτελέσματα θα εμφανιστούν εδώ.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start">
@@ -208,7 +196,7 @@ function ScoreboardContent() {
               <div className="space-y-4">
                 <h2 className="text-lg md:text-xl font-headline font-bold flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-yellow-500" />
-                  Πρώτες 3 Θέσεις
+                  Hall of Fame
                 </h2>
                 <div className="grid grid-cols-1 gap-4">
                   {top3.map((item, idx) => (
@@ -241,7 +229,7 @@ function ScoreboardContent() {
               <div className="bg-card border rounded-2xl p-4 md:p-6 shadow-sm">
                 <h2 className="text-lg md:text-xl font-headline font-bold mb-6 flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
-                  Κατανομή Πόντων (Top 10)
+                  Top 10 Chart
                 </h2>
                 <div className="h-[250px] md:h-[300px] w-full">
                   {mounted && (
@@ -288,15 +276,15 @@ function ScoreboardContent() {
                 <div className="p-4 md:p-6 border-b bg-muted/10">
                   <h2 className="text-lg md:text-xl font-headline font-bold flex items-center gap-2">
                     <ListOrdered className="h-5 w-5 text-primary" />
-                    Αναλυτική Κατάταξη
+                    Πλήρης Κατάταξη
                   </h2>
                 </div>
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader className="bg-muted/30">
                       <TableRow>
-                        <TableHead className="w-[80px]">Κατάταξη</TableHead>
-                        <TableHead>Χώρα & Καλλιτέχνης</TableHead>
+                        <TableHead className="w-[80px]">Θέση</TableHead>
+                        <TableHead>Συμμετοχή</TableHead>
                         <TableHead>Πόντοι</TableHead>
                         <TableHead className="text-right">Ψήφοι</TableHead>
                       </TableRow>
