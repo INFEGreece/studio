@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { History, Filter, Loader2, Layers, Music, RotateCcw, Calendar, Info, AlertTriangle, Star } from 'lucide-react';
+import { History, Filter, Loader2, Layers, Music, RotateCcw, Calendar, Info, AlertTriangle, Star, CheckCircle2 } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import { Entry, Vote, ContestStage } from '@/lib/types';
@@ -25,6 +25,7 @@ import { setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/no
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useSearchParams } from 'next/navigation';
+import { ShareResultsDialog } from '@/components/voting/ShareResultsDialog';
 
 function HomeContent() {
   const searchParams = useSearchParams();
@@ -41,7 +42,6 @@ function HomeContent() {
     setCurrentYear(new Date().getFullYear());
   }, []);
 
-  // Sync state with URL year if it changes
   useEffect(() => {
     const y = searchParams?.get('year');
     if (y) {
@@ -52,7 +52,6 @@ function HomeContent() {
     }
   }, [searchParams, selectedYear]);
 
-  // Admin check logic
   const adminDocRef = useMemoFirebase(() => {
     if (!user) return null;
     return doc(db, 'roles_admin', user.uid);
@@ -60,14 +59,12 @@ function HomeContent() {
   const { data: adminData } = useDoc(adminDocRef);
   const isAdmin = !!adminData;
 
-  // We query all entries for the year to determine populated stages
   const entriesRef = useMemoFirebase(() => {
     return query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
   }, [db, selectedYear]);
 
   const { data: allYearEntries, isLoading } = useCollection<Entry>(entriesRef);
 
-  // Determine which stages have entries
   const populatedStages = useMemo(() => {
     const stages = new Set<string>();
     if (allYearEntries) {
@@ -104,6 +101,8 @@ function HomeContent() {
     acc.add(vote.points);
     return acc;
   }, new Set<number>());
+
+  const isVotingComplete = usedPoints.size === 10;
 
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
 
@@ -267,6 +266,21 @@ function HomeContent() {
                     Ο διαγωνισμός του 2020 στο Ρότερνταμ ακυρώθηκε λόγω της πανδημίας COVID-19. Ωστόσο, μπορείτε ακόμα να δείτε και να ψηφίσετε τα τραγούδια που είχαν επιλεγεί!
                   </p>
                 </div>
+              </div>
+            )}
+
+            {isVotingComplete && userVotes && allYearEntries && (
+              <div className="bg-green-500/10 border-2 border-green-500/20 rounded-[2rem] p-8 flex flex-col md:flex-row items-center justify-between gap-6 animate-in zoom-in-95 duration-500">
+                <div className="flex items-center gap-4">
+                  <div className="bg-green-500/20 p-4 rounded-full">
+                    <CheckCircle2 className="h-8 w-8 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-headline font-bold text-green-700">Η ψηφοφορία σας ολοκληρώθηκε!</h3>
+                    <p className="text-sm text-muted-foreground">Έχετε δώσει και τους 10 βαθμούς για το {selectedYear}.</p>
+                  </div>
+                </div>
+                <ShareResultsDialog year={selectedYear} userVotes={userVotes} entries={allYearEntries} />
               </div>
             )}
 
