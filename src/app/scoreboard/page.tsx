@@ -27,14 +27,11 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
-import { Trophy, TrendingUp, Users, Loader2, ListOrdered, Calendar } from 'lucide-react';
+import { Trophy, TrendingUp, Users, Loader2, ListOrdered, Calendar, AlertCircle } from 'lucide-react';
 import { getFlagUrl, cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-/**
- * ScoreboardContent handles the actual logic of aggregating votes for a specific year.
- */
 function ScoreboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -61,12 +58,14 @@ function ScoreboardContent() {
 
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
 
+  // Query for entries of the selected year
   const entriesQuery = useMemoFirebase(() => {
     return query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
   }, [db, selectedYear]);
 
   const { data: entries, isLoading: isEntriesLoading, error: entriesError } = useCollection<Entry>(entriesQuery);
 
+  // Collection group query to get ALL votes for this year from ALL users
   const votesQuery = useMemoFirebase(() => {
     return query(collectionGroup(db, 'votes'), where('year', '==', selectedYear));
   }, [db, selectedYear]);
@@ -80,6 +79,7 @@ function ScoreboardContent() {
     const aggregation: Record<string, { totalPoints: number; voteCount: number }> = {};
     
     (allVotes || []).forEach(vote => {
+      // Ensure we only count votes that belong to the current year's entries
       if (vote && vote.eurovisionEntryId && Number(vote.year) === selectedYear) {
         if (validEntryIds.has(vote.eurovisionEntryId)) {
           if (!aggregation[vote.eurovisionEntryId]) {
@@ -109,18 +109,32 @@ function ScoreboardContent() {
   const isLoading = isEntriesLoading || isVotesLoading;
 
   if (votesError || entriesError) {
+    const isPermissionError = votesError?.message?.includes('permissions') || entriesError?.message?.includes('permissions');
+    
     return (
       <div className="flex flex-col min-h-screen">
         <Navbar />
         <main className="flex-1 container px-4 py-20 flex flex-col items-center justify-center text-center">
           <div className="bg-destructive/10 p-6 rounded-full mb-6">
-            <Trophy className="h-12 w-12 text-destructive" />
+            <AlertCircle className="h-12 w-12 text-destructive" />
           </div>
-          <h2 className="text-2xl font-headline font-bold mb-4">Σφάλμα Πρόσβασης στα Δεδομένα</h2>
-          <p className="text-muted-foreground max-w-md mb-8">
-            Δεν μπορέσαμε να φορτώσουμε τα αποτελέσματα. Αυτό συνήθως συμβαίνει αν δεν έχει δημιουργηθεί το απαραίτητο Index στο Firebase Console.
-          </p>
-          <Button onClick={() => window.location.reload()}>Δοκιμάστε Ξανά</Button>
+          <h2 className="text-2xl font-headline font-bold mb-4">
+            {isPermissionError ? "Σφάλμα Δικαιωμάτων ή Index" : "Σφάλμα Πρόσβασης στα Δεδομένα"}
+          </h2>
+          <div className="text-muted-foreground max-w-md mb-8 space-y-4">
+            <p>Δεν μπορέσαμε να φορτώσουμε τα αποτελέσματα.</p>
+            {isPermissionError && (
+              <div className="bg-muted p-4 rounded-xl text-xs text-left font-mono">
+                <p className="font-bold mb-2">Οδηγίες Διαχειριστή:</p>
+                <ol className="list-decimal pl-4 space-y-1">
+                  <li>Πηγαίνετε στο Firestore -> Indexes -> Single Field.</li>
+                  <li>Add exemption για τη συλλογή "votes" και το πεδίο "year".</li>
+                  <li>Επιλέξτε "Collection Group" scope και ενεργοποιήστε το.</li>
+                </ol>
+              </div>
+            )}
+          </div>
+          <Button onClick={() => window.location.reload()} className="h-12 rounded-xl px-8">Δοκιμάστε Ξανά</Button>
         </main>
       </div>
     );

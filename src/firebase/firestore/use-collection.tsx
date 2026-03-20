@@ -65,13 +65,16 @@ export function useCollection<T = any>(
       (err: FirestoreError) => {
         console.error("Firestore useCollection error:", err);
         
-        let path: string = 'collection-group-query';
+        let path: string = 'collection-query';
         try {
           if (memoizedTargetRefOrQuery && 'path' in memoizedTargetRefOrQuery) {
             path = (memoizedTargetRefOrQuery as any).path;
+          } else if (memoizedTargetRefOrQuery && '_query' in (memoizedTargetRefOrQuery as any)) {
+             // For complex queries/collectionGroups, path extraction is tricky
+             path = 'collection-group-query';
           }
         } catch (e) {
-          // Fallback if path extraction fails (common for collectionGroup queries)
+          // Fallback if extraction fails
         }
 
         const contextualError = new FirestorePermissionError({

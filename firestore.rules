@@ -57,10 +57,10 @@ service cloud.firestore {
 
     /**
      * @description Collection Group Rule for ALL 'votes' collections.
-     * This is required for the global scoreboard query.
+     * This allows the global scoreboard query to aggregate votes across all users.
      */
     match /{path=**}/votes/{voteId} {
-      allow read: if true;
+      allow read, list: if true;
     }
   }
 }
