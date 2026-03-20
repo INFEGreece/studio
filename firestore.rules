@@ -36,20 +36,24 @@ service cloud.firestore {
     /**
      * @description Collection Group Rule for Scoreboard.
      * This allows the 'votes' collection to be queried across all user documents.
-     * CRITICAL: This must match the name of the sub-collection 'votes'.
+     * We use read/list to ensure the Scoreboard can aggregate results.
      */
     match /{path=**}/votes/{voteId} {
-      allow read: if true;
+      allow read, list: if true;
     }
 
     /**
-     * @description User profile documents. Restricted to the specific user.
+     * @description User profile documents.
      */
     match /users/{userId} {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
       
+      /**
+       * Sub-collection of votes. 
+       * Note: The collection group rule above already allows public reading.
+       */
       match /votes/{voteId} {
-        allow read: if true; // Allow reading specific votes for direct access
+        allow read: if true;
         allow write: if isSignedIn() && request.auth.uid == userId;
       }
     }

@@ -56,14 +56,12 @@ function ScoreboardContent() {
 
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
 
-  // Get all entries for the year
   const entriesQuery = useMemoFirebase(() => {
     return query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
   }, [db, selectedYear]);
 
   const { data: entries, isLoading: isEntriesLoading } = useCollection<Entry>(entriesQuery);
 
-  // Get ALL votes for this year across all users using a Collection Group Query
   const votesQuery = useMemoFirebase(() => {
     return query(collectionGroup(db, 'votes'), where('year', '==', selectedYear));
   }, [db, selectedYear]);
@@ -73,10 +71,7 @@ function ScoreboardContent() {
   const scoreboardData = useMemo(() => {
     if (!entries) return [];
     
-    // Map of entryId -> points aggregation
     const aggregation: Record<string, { totalPoints: number; voteCount: number }> = {};
-    
-    // Safety check: ensure allVotes is an array and filter out corrupted data
     const safeVotes = (allVotes || []).filter(v => v && typeof v === 'object' && v.eurovisionEntryId);
 
     safeVotes.forEach(vote => {
@@ -84,8 +79,6 @@ function ScoreboardContent() {
       if (!aggregation[entryId]) {
         aggregation[entryId] = { totalPoints: 0, voteCount: 0 };
       }
-      
-      // Ensure points are treated as a number
       const pts = Number(vote.points) || 0;
       aggregation[entryId].totalPoints += pts;
       aggregation[entryId].voteCount += 1;
