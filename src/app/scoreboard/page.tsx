@@ -43,7 +43,6 @@ function ScoreboardContent() {
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [mounted, setMounted] = useState(false);
 
-  // Sync year from URL on mount and param change
   useEffect(() => {
     setMounted(true);
     const urlYear = searchParams?.get('year');
@@ -62,32 +61,26 @@ function ScoreboardContent() {
 
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
 
-  // Fetch entries for the selected year
   const entriesQuery = useMemoFirebase(() => {
     return query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
   }, [db, selectedYear]);
 
-  const { data: entries, isLoading: isEntriesLoading } = useCollection<Entry>(entriesQuery);
+  const { data: entries, isLoading: isEntriesLoading, error: entriesError } = useCollection<Entry>(entriesQuery);
 
-  // Fetch ALL votes for the selected year across all users using Collection Group
   const votesQuery = useMemoFirebase(() => {
     return query(collectionGroup(db, 'votes'), where('year', '==', selectedYear));
   }, [db, selectedYear]);
 
-  const { data: allVotes, isLoading: isVotesLoading } = useCollection<Vote>(votesQuery);
+  const { data: allVotes, isLoading: isVotesLoading, error: votesError } = useCollection<Vote>(votesQuery);
 
-  /**
-   * Aggregates points while ensuring absolute isolation per year.
-   */
   const scoreboardData = useMemo(() => {
     if (!entries || entries.length === 0) return [];
     
     const validEntryIds = new Set(entries.map(e => e.id));
     const aggregation: Record<string, { totalPoints: number; voteCount: number }> = {};
     
-    // Process each vote and verify it belongs to an entry of the CURRENT year
     (allVotes || []).forEach(vote => {
-      if (vote && vote.eurovisionEntryId && vote.year === selectedYear) {
+      if (vote && vote.eurovisionEntryId && Number(vote.year) === selectedYear) {
         if (validEntryIds.has(vote.eurovisionEntryId)) {
           if (!aggregation[vote.eurovisionEntryId]) {
             aggregation[vote.eurovisionEntryId] = { totalPoints: 0, voteCount: 0 };
@@ -114,6 +107,24 @@ function ScoreboardContent() {
 
   const top3 = scoreboardData.slice(0, 3);
   const isLoading = isEntriesLoading || isVotesLoading;
+
+  if (votesError || entriesError) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-1 container px-4 py-20 flex flex-col items-center justify-center text-center">
+          <div className="bg-destructive/10 p-6 rounded-full mb-6">
+            <Trophy className="h-12 w-12 text-destructive" />
+          </div>
+          <h2 className="text-2xl font-headline font-bold mb-4">Σφάλμα Πρόσβασης στα Δεδομένα</h2>
+          <p className="text-muted-foreground max-w-md mb-8">
+            Δεν μπορέσαμε να φορτώσουμε τα αποτελέσματα. Αυτό συνήθως συμβαίνει αν δεν έχει δημιουργηθεί το απαραίτητο Index στο Firebase Console.
+          </p>
+          <Button onClick={() => window.location.reload()}>Δοκιμάστε Ξανά</Button>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
