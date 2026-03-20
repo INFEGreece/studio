@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -31,7 +32,6 @@ export default function Home() {
   const [selectedStage, setSelectedStage] = useState<string>("All");
   const [currentYear, setCurrentYear] = useState<number>(2026);
 
-  // Fix hydration mismatch for dynamic dates
   useEffect(() => {
     setCurrentYear(new Date().getFullYear());
   }, []);
@@ -77,8 +77,8 @@ export default function Home() {
   const handleVote = (entry: Entry, score: number, feedback: string) => {
     if (!user) {
       toast({
-        title: "Sign in required",
-        description: "Please sign in to cast your vote.",
+        title: "Απαιτείται σύνδεση",
+        description: "Παρακαλώ συνδεθείτε για να ψηφίσετε.",
         variant: "destructive"
       });
       return;
@@ -98,23 +98,17 @@ export default function Home() {
     };
 
     setDocumentNonBlocking(voteRef, voteData, { merge: true });
-
-    const entryRef = doc(db, 'eurovision_entries', entry.id);
-    setDocumentNonBlocking(entryRef, {
-      totalPoints: (entry.totalPoints || 0) + score,
-      voteCount: (entry.voteCount || 0) + 1
-    }, { merge: true });
   };
 
   const handleResetVotes = () => {
     if (!user || !userVotes || userVotes.length === 0) return;
 
-    if (confirm(`Are you sure you want to clear all your votes for ${selectedYear}? This will reset your scores for this year only.`)) {
+    if (confirm(`Είστε σίγουροι ότι θέλετε να διαγράψετε όλες τις ψήφους σας για το έτος ${selectedYear};`)) {
       userVotes.forEach(vote => {
         const voteRef = doc(db, 'users', user.uid, 'votes', vote.id);
         deleteDocumentNonBlocking(voteRef);
       });
-      toast({ title: "Votes Reset", description: `Your leaderboard for ${selectedYear} is now empty.` });
+      toast({ title: "Οι ψήφοι μηδενίστηκαν", description: `Ο πίνακας βαθμολογίας σας για το ${selectedYear} είναι πλέον κενός.` });
     }
   };
 
@@ -142,14 +136,14 @@ export default function Home() {
                 THE INFE GR <br/><span className="text-primary italic">Eurovision Poll</span>
               </h1>
               <p className="max-w-[750px] text-base md:text-2xl text-muted-foreground mx-auto font-medium px-4">
-                70 Years of Eurovision History. Your Voice. Your Vote. Our Community.
+                70 Χρόνια Ιστορίας της Eurovision. Η φωνή σου. Η ψήφος σου. Η κοινότητά μας.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 pt-10 md:pt-16 justify-center w-full max-w-md mx-auto sm:max-w-none">
                 <Button size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-lg md:text-xl px-10 md:px-14 h-16 md:h-20 rounded-full shadow-lg shadow-primary/20" onClick={() => {
                   const element = document.getElementById('browser-section');
                   element?.scrollIntoView({ behavior: 'smooth' });
                 }}>
-                  <Music className="mr-2 h-6 w-6" /> Start Voting
+                  <Music className="mr-2 h-6 w-6" /> Έναρξη Ψηφοφορίας
                 </Button>
                 <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg md:text-xl px-10 md:px-14 h-16 md:h-20 rounded-full border-2" asChild>
                   <Link href="/scoreboard">Live Scoreboard</Link>
@@ -165,14 +159,14 @@ export default function Home() {
               <div className="space-y-4">
                 <h2 className="text-4xl md:text-6xl font-headline font-bold flex items-center gap-4">
                   <History className="h-10 w-10 md:h-14 md:w-14 text-accent" />
-                  Explore History
+                  Εξερευνήστε την Ιστορία
                 </h2>
-                <p className="text-muted-foreground text-xl md:text-2xl">Select a year to see entries and cast your 12 points.</p>
+                <p className="text-muted-foreground text-xl md:text-2xl">Επιλέξτε έτος για να δείτε τις συμμετοχές και να δώσετε το 12άρι σας.</p>
               </div>
 
               <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-6 md:gap-10">
                 <div className="flex flex-col gap-2 w-full sm:w-auto">
-                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Decade</span>
+                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Δεκαετία</span>
                   <Tabs value={currentDecadeLabel} className="w-full sm:w-auto">
                     <TabsList className="bg-secondary/50 p-1.5 rounded-full w-full sm:w-auto overflow-x-auto">
                       {DECADES.map(d => (
@@ -193,7 +187,7 @@ export default function Home() {
                 </div>
 
                 <div className="flex flex-col gap-2 w-full sm:w-auto">
-                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Year</span>
+                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Έτος</span>
                   <Select 
                     value={selectedYear.toString()} 
                     onValueChange={(v) => {
@@ -202,7 +196,7 @@ export default function Home() {
                     }}
                   >
                     <SelectTrigger className="w-full sm:w-[180px] bg-secondary/50 border-none h-12 md:h-14 font-bold rounded-full text-xl">
-                      <SelectValue placeholder="Year" />
+                      <SelectValue placeholder="Έτος" />
                     </SelectTrigger>
                     <SelectContent className="max-h-[300px] rounded-2xl">
                       {(DECADES.find(d => d.label === currentDecadeLabel)?.years || []).map(y => (
@@ -218,7 +212,7 @@ export default function Home() {
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground">
                   <Layers className="h-6 w-6" />
-                  Competition Phase
+                  Φάση Διαγωνισμού / Event
                 </div>
                 
                 {user && userVotes && userVotes.length > 0 && (
@@ -228,25 +222,28 @@ export default function Home() {
                     onClick={handleResetVotes}
                     className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full h-10 px-5 font-bold"
                   >
-                    <RotateCcw className="h-4 w-4 mr-2" /> Reset {selectedYear} Votes
+                    <RotateCcw className="h-4 w-4 mr-2" /> Μηδενισμός Ψήφων {selectedYear}
                   </Button>
                 )}
               </div>
               
               <Tabs value={selectedStage} onValueChange={setSelectedStage} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-muted/30 h-auto md:h-16 p-2 rounded-2xl gap-2">
-                  <TabsTrigger value="All" className="h-11 md:h-12 rounded-xl text-sm md:text-lg">All Entries</TabsTrigger>
-                  <TabsTrigger value="Final" className="h-11 md:h-12 rounded-xl text-sm md:text-lg">Grand Final</TabsTrigger>
-                  <TabsTrigger value="Semi-Final 1" className="h-11 md:h-12 rounded-xl text-sm md:text-lg">Semi 1</TabsTrigger>
-                  <TabsTrigger value="Semi-Final 2" className="h-11 md:h-12 rounded-xl text-sm md:text-lg">Semi 2</TabsTrigger>
+                <TabsList className="flex flex-wrap h-auto bg-muted/30 p-2 rounded-2xl gap-2 overflow-x-auto">
+                  <TabsTrigger value="All" className="h-10 md:h-12 rounded-xl text-xs md:text-sm px-4">Όλα</TabsTrigger>
+                  <TabsTrigger value="Final" className="h-10 md:h-12 rounded-xl text-xs md:text-sm px-4">Τελικός</TabsTrigger>
+                  <TabsTrigger value="Semi-Final 1" className="h-10 md:h-12 rounded-xl text-xs md:text-sm px-4">Ημιτ. 1</TabsTrigger>
+                  <TabsTrigger value="Semi-Final 2" className="h-10 md:h-12 rounded-xl text-xs md:text-sm px-4">Ημιτ. 2</TabsTrigger>
+                  <TabsTrigger value="Eurodromio" className="h-10 md:h-12 rounded-xl text-xs md:text-sm px-4">Eurodromio</TabsTrigger>
+                  <TabsTrigger value="Be.So." className="h-10 md:h-12 rounded-xl text-xs md:text-sm px-4">Be.So.</TabsTrigger>
+                  <TabsTrigger value="Mu.Si.Ka." className="h-10 md:h-12 rounded-xl text-xs md:text-sm px-4">Mu.Si.Ka.</TabsTrigger>
                 </TabsList>
               </Tabs>
 
               {userVotes && userVotes.length > 0 && (
                 <div className="flex flex-wrap gap-2 pt-4">
                   <div className="w-full flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Your assigned points for {selectedYear}:</span>
-                    <Badge variant="outline" className="text-[9px] h-5 bg-primary/10 border-primary/20 text-primary">Leaderboard Status</Badge>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Οι βαθμοί σας για το {selectedYear}:</span>
+                    <Badge variant="outline" className="text-[9px] h-5 bg-primary/10 border-primary/20 text-primary">Κατάσταση Πίνακα</Badge>
                   </div>
                   {[12, 10, 8, 7, 6, 5, 4, 3, 2, 1].map(p => (
                     <Badge 
@@ -265,7 +262,7 @@ export default function Home() {
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-32 md:py-48">
               <Loader2 className="h-20 w-20 md:h-28 md:w-28 animate-spin text-primary mb-10" />
-              <p className="text-2xl md:text-3xl font-headline font-bold text-muted-foreground animate-pulse">Loading Contest Data...</p>
+              <p className="text-2xl md:text-3xl font-headline font-bold text-muted-foreground animate-pulse">Φόρτωση Δεδομένων...</p>
             </div>
           ) : filteredEntries && filteredEntries.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 md:gap-14">
@@ -283,8 +280,8 @@ export default function Home() {
           ) : (
             <div className="flex flex-col items-center justify-center py-24 md:py-40 bg-secondary/5 rounded-[3rem] md:rounded-[4rem] border-4 border-dashed border-muted/20">
               <Filter className="h-20 w-20 md:h-32 md:w-32 text-muted-foreground/30 mb-10" />
-              <p className="text-3xl md:text-4xl font-headline font-bold text-muted-foreground text-center px-6">No records found for {selectedYear}</p>
-              <p className="text-muted-foreground mt-4 text-center px-6 text-lg">Try selecting a different year or competition stage.</p>
+              <p className="text-3xl md:text-4xl font-headline font-bold text-muted-foreground text-center px-6">Δεν βρέθηκαν συμμετοχές για το {selectedYear}</p>
+              <p className="text-muted-foreground mt-4 text-center px-6 text-lg">Δοκιμάστε να επιλέξετε διαφορετικό έτος ή φάση.</p>
             </div>
           )}
         </section>
@@ -303,9 +300,14 @@ export default function Home() {
             </Link>
             <span className="text-3xl md:text-4xl font-headline font-bold tracking-tight">INFE <span className="text-primary italic">GR Poll</span></span>
           </div>
-          <p className="max-w-3xl mx-auto text-lg md:text-xl text-muted-foreground leading-relaxed px-6">
-            Celebrating 70 years of music, culture, and unity. Created by fans, for fans, at INFE Greece.
-          </p>
+          <div className="space-y-4">
+            <p className="max-w-3xl mx-auto text-lg md:text-xl text-muted-foreground leading-relaxed px-6">
+              Γιορτάζουμε 70 χρόνια μουσικής, πολιτισμού και ενότητας. Δημιουργήθηκε από fans, για fans, στο INFE Greece.
+            </p>
+            <p className="text-sm font-medium text-primary/80">
+              App Creator: <span className="font-bold">Konstantinos Gkiokoglou</span>
+            </p>
+          </div>
           <div className="pt-12 border-t border-white/5">
             <p className="text-[10px] md:text-xs text-muted-foreground/40 tracking-[0.3em] uppercase">
               &copy; {currentYear} INFE GREECE OFFICIAL FAN POLL • PROUDLY SERVING EUROFANS

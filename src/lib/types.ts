@@ -1,5 +1,5 @@
 
-export type ContestStage = 'Final' | 'Semi-Final 1' | 'Semi-Final 2';
+export type ContestStage = 'Final' | 'Semi-Final 1' | 'Semi-Final 2' | 'Eurodromio' | 'Be.So.' | 'Mu.Si.Ka.';
 
 export interface Entry {
   id: string;
