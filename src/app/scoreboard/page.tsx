@@ -76,14 +76,19 @@ function ScoreboardContent() {
     // Map of entryId -> points aggregation
     const aggregation: Record<string, { totalPoints: number; voteCount: number }> = {};
     
-    (allVotes || []).forEach(vote => {
-      if (vote.eurovisionEntryId) {
-        if (!aggregation[vote.eurovisionEntryId]) {
-          aggregation[vote.eurovisionEntryId] = { totalPoints: 0, voteCount: 0 };
-        }
-        aggregation[vote.eurovisionEntryId].totalPoints += (vote.points || 0);
-        aggregation[vote.eurovisionEntryId].voteCount += 1;
+    // Safety check: ensure allVotes is an array and filter out corrupted data
+    const safeVotes = (allVotes || []).filter(v => v && typeof v === 'object' && v.eurovisionEntryId);
+
+    safeVotes.forEach(vote => {
+      const entryId = vote.eurovisionEntryId;
+      if (!aggregation[entryId]) {
+        aggregation[entryId] = { totalPoints: 0, voteCount: 0 };
       }
+      
+      // Ensure points are treated as a number
+      const pts = Number(vote.points) || 0;
+      aggregation[entryId].totalPoints += pts;
+      aggregation[entryId].voteCount += 1;
     });
 
     return entries

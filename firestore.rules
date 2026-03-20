@@ -36,6 +36,7 @@ service cloud.firestore {
     /**
      * @description Collection Group Rule for Scoreboard.
      * This allows the 'votes' collection to be queried across all user documents.
+     * CRITICAL: This must match the name of the sub-collection 'votes'.
      */
     match /{path=**}/votes/{voteId} {
       allow read: if true;
