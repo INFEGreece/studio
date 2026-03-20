@@ -32,7 +32,7 @@ function HomeContent() {
   const { user } = useUser();
   const { toast } = useToast();
   
-  const urlYear = searchParams.get('year');
+  const urlYear = searchParams?.get('year');
   const [selectedYear, setSelectedYear] = useState<number>(urlYear ? parseInt(urlYear) : 2026);
   const [selectedStage, setSelectedStage] = useState<string>("All");
   const [currentYear, setCurrentYear] = useState<number>(new Date().getFullYear());
@@ -40,6 +40,17 @@ function HomeContent() {
   useEffect(() => {
     setCurrentYear(new Date().getFullYear());
   }, []);
+
+  // Sync state with URL year if it changes
+  useEffect(() => {
+    const y = searchParams?.get('year');
+    if (y) {
+      const parsed = parseInt(y);
+      if (!isNaN(parsed) && parsed !== selectedYear) {
+        setSelectedYear(parsed);
+      }
+    }
+  }, [searchParams, selectedYear]);
 
   // Admin check logic
   const adminDocRef = useMemoFirebase(() => {

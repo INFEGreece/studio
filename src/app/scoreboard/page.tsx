@@ -36,8 +36,23 @@ function ScoreboardContent() {
   const searchParams = useSearchParams();
   const db = useFirestore();
   
-  const urlYear = searchParams.get('year');
+  const urlYear = searchParams?.get('year');
   const [selectedYear, setSelectedYear] = useState<number>(urlYear ? parseInt(urlYear) : 2026);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const y = searchParams?.get('year');
+    if (y) {
+      const parsed = parseInt(y);
+      if (!isNaN(parsed) && parsed !== selectedYear) {
+        setSelectedYear(parsed);
+      }
+    }
+  }, [searchParams, selectedYear]);
 
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
 
@@ -205,39 +220,41 @@ function ScoreboardContent() {
                   Κατανομή Πόντων (Top 10)
                 </h2>
                 <div className="h-[250px] md:h-[300px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={scoreboardData.slice(0, 10)} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="hsl(var(--border))" />
-                      <XAxis type="number" hide />
-                      <YAxis 
-                        dataKey="name" 
-                        type="category" 
-                        width={80} 
-                        stroke="hsl(var(--muted-foreground))" 
-                        fontSize={10} 
-                        tick={{ fontWeight: 'bold' }}
-                      />
-                      <RechartsTooltip 
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            return (
-                              <div className="bg-popover border p-3 rounded-xl shadow-xl">
-                                <p className="font-bold text-primary text-xs md:text-sm">{data.name}</p>
-                                <p className="text-[10px] font-bold">{data.score} Πόντοι</p>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Bar dataKey="score" radius={[0, 4, 4, 0]}>
-                        {scoreboardData.slice(0, 10).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={index === 0 ? 'hsl(var(--primary))' : 'hsl(var(--primary)/0.6)'} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {mounted && (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={scoreboardData.slice(0, 10)} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="hsl(var(--border))" />
+                        <XAxis type="number" hide />
+                        <YAxis 
+                          dataKey="name" 
+                          type="category" 
+                          width={80} 
+                          stroke="hsl(var(--muted-foreground))" 
+                          fontSize={10} 
+                          tick={{ fontWeight: 'bold' }}
+                        />
+                        <RechartsTooltip 
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0].payload;
+                              return (
+                                <div className="bg-popover border p-3 rounded-xl shadow-xl">
+                                  <p className="font-bold text-primary text-xs md:text-sm">{data.name}</p>
+                                  <p className="text-[10px] font-bold">{data.score} Πόντοι</p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Bar dataKey="score" radius={[0, 4, 4, 0]}>
+                          {scoreboardData.slice(0, 10).map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={index === 0 ? 'hsl(var(--primary))' : 'hsl(var(--primary)/0.6)'} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </div>
             </div>
