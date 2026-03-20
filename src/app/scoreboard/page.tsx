@@ -56,12 +56,14 @@ function ScoreboardContent() {
 
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
 
+  // Strictly fetch entries for the selected year
   const entriesQuery = useMemoFirebase(() => {
     return query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
   }, [db, selectedYear]);
 
   const { data: entries, isLoading: isEntriesLoading } = useCollection<Entry>(entriesQuery);
 
+  // Strictly fetch votes for the selected year using collectionGroup
   const votesQuery = useMemoFirebase(() => {
     return query(collectionGroup(db, 'votes'), where('year', '==', selectedYear));
   }, [db, selectedYear]);
@@ -69,19 +71,27 @@ function ScoreboardContent() {
   const { data: allVotes, isLoading: isVotesLoading } = useCollection<Vote>(votesQuery);
 
   const scoreboardData = useMemo(() => {
-    if (!entries) return [];
+    if (!entries || entries.length === 0) return [];
+    
+    // Create a set of valid entry IDs for the current year for double-validation
+    const validEntryIds = new Set(entries.map(e => e.id));
     
     const aggregation: Record<string, { totalPoints: number; voteCount: number }> = {};
     const safeVotes = (allVotes || []).filter(v => v && typeof v === 'object' && v.eurovisionEntryId);
 
     safeVotes.forEach(vote => {
       const entryId = vote.eurovisionEntryId;
-      if (!aggregation[entryId]) {
-        aggregation[entryId] = { totalPoints: 0, voteCount: 0 };
+      
+      // CRITICAL CHECK: Only aggregate if the vote belongs to an entry of the SELECTED year
+      // and double check the vote document's year field matches selectedYear.
+      if (validEntryIds.has(entryId) && vote.year === selectedYear) {
+        if (!aggregation[entryId]) {
+          aggregation[entryId] = { totalPoints: 0, voteCount: 0 };
+        }
+        const pts = Number(vote.points) || 0;
+        aggregation[entryId].totalPoints += pts;
+        aggregation[entryId].voteCount += 1;
       }
-      const pts = Number(vote.points) || 0;
-      aggregation[entryId].totalPoints += pts;
-      aggregation[entryId].voteCount += 1;
     });
 
     return entries
@@ -95,7 +105,7 @@ function ScoreboardContent() {
         flagUrl: e.flagUrl || getFlagUrl(e.country)
       }))
       .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
-  }, [entries, allVotes]);
+  }, [entries, allVotes, selectedYear]);
 
   const top3 = scoreboardData.slice(0, 3);
   const isLoading = isEntriesLoading || isVotesLoading;
