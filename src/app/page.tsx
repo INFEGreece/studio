@@ -188,7 +188,7 @@ function HomeContent() {
                   <Music className="mr-2 h-6 w-6" /> Έναρξη Ψηφοφορίας
                 </Button>
                 <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg md:text-xl px-10 md:px-14 h-16 md:h-20 rounded-full border-2" asChild>
-                  <Link href={`/scoreboard?year=${selectedYear}`}>Live Scoreboard {selectedYear}</Link>
+                  <Link href={`/scoreboard/?year=${selectedYear}`}>Live Scoreboard {selectedYear}</Link>
                 </Button>
               </div>
             </div>
@@ -397,14 +397,14 @@ function HomeContent() {
       <footer className="border-t bg-card/50 py-16 md:py-28 mt-20 md:mt-32">
         <div className="container px-4 text-center space-y-12 md:space-y-16">
           <div className="flex flex-col items-center gap-6 md:gap-8">
-            <Link href="/" className="relative h-12 w-20 md:h-16 md:w-28 opacity-90 transition-opacity hover:opacity-100">
+            <div className="relative h-12 w-20 md:h-16 md:w-28 opacity-90 transition-opacity hover:opacity-100">
               <Image 
                 src="https://infegreece.com/wp-content/uploads/2023/04/Infe-Greece.jpg" 
                 alt="INFE Greece Logo" 
                 fill
                 className="object-contain rounded-xl"
               />
-            </Link>
+            </div>
             <span className="text-3xl md:text-4xl font-headline font-bold tracking-tight">INFE <span className="text-primary italic">GR Poll</span></span>
           </div>
           <div className="space-y-4">

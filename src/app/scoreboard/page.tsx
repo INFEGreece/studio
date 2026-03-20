@@ -30,13 +30,14 @@ import {
 import { Trophy, TrendingUp, Users, Loader2, ListOrdered, Calendar } from 'lucide-react';
 import { getFlagUrl, cn } from '@/lib/utils';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 /**
  * ScoreboardContent handles the actual logic of aggregating votes for a specific year.
  */
 function ScoreboardContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const db = useFirestore();
   
   // Year handling with fallback and synchronization
@@ -53,6 +54,11 @@ function ScoreboardContent() {
       }
     }
   }, [urlYear]);
+
+  const updateYear = (year: number) => {
+    setSelectedYear(year);
+    router.push(`/scoreboard/?year=${year}`, { scroll: false });
+  };
 
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
 
@@ -150,7 +156,7 @@ function ScoreboardContent() {
                       currentDecadeLabel === d.label ? "bg-primary text-primary-foreground shadow-lg" : ""
                     )}
                     onClick={() => {
-                      setSelectedYear(d.years[0]);
+                      updateYear(d.years[0]);
                     }}
                   >
                     {d.label}
@@ -174,7 +180,7 @@ function ScoreboardContent() {
                         : "border-accent/30 text-accent hover:bg-accent/10"
                     )}
                     onClick={() => {
-                      setSelectedYear(y);
+                      updateYear(y);
                     }}
                   >
                     {y}
@@ -216,7 +222,7 @@ function ScoreboardContent() {
                           {idx + 1}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <Link href={`/country/${encodeURIComponent(item.name)}`} className="flex items-center gap-2 group/link">
+                          <Link href={`/country/${encodeURIComponent(item.name)}/`} className="flex items-center gap-2 group/link">
                             <img src={item.flagUrl} alt="" className="h-3 w-5 md:h-4 md:w-6 object-cover rounded shadow-sm shrink-0" />
                             <h3 className="font-bold text-base md:text-lg truncate group-hover/link:text-primary transition-colors underline-offset-4 group-hover/link:underline">{item.name}</h3>
                           </Link>
@@ -305,7 +311,7 @@ function ScoreboardContent() {
                              `#${idx + 1}`}
                           </TableCell>
                           <TableCell>
-                            <Link href={`/country/${encodeURIComponent(item.name)}`} className="flex items-center gap-2 md:gap-3 group">
+                            <Link href={`/country/${encodeURIComponent(item.name)}/`} className="flex items-center gap-2 md:gap-3 group">
                               <img src={item.flagUrl} alt="" className="h-3 w-5 md:h-4 md:w-6 object-cover rounded-sm flex-shrink-0" />
                               <div className="flex flex-col min-w-0 max-w-[120px] sm:max-w-none">
                                 <span className="font-bold text-foreground truncate text-xs md:text-sm group-hover:text-primary transition-colors underline-offset-4 group-hover:underline">{item.name}</span>

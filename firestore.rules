@@ -35,9 +35,7 @@ service cloud.firestore {
 
     /**
      * @description Collection Group Rule for Scoreboard.
-     * This allows the 'votes' collection to be queried across all user documents.
-     * Essential for aggregating results by year.
-     * We use 'read' which covers both 'get' and 'list'.
+     * Essential for aggregating results by year across all users.
      */
     match /{path=**}/votes/{voteId} {
       allow read: if true;
@@ -51,7 +49,6 @@ service cloud.firestore {
       
       /**
        * Sub-collection of votes. 
-       * Note: The collection group rule above already allows public reading.
        */
       match /votes/{voteId} {
         allow read: if true;
