@@ -7,6 +7,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { Entry } from '@/lib/types';
 import { DECADES } from '@/lib/data';
+import { Button } from '@/components/ui/button';
 import { 
   Table, 
   TableBody, 
@@ -16,13 +17,6 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   BarChart, 
@@ -35,7 +29,7 @@ import {
   Cell
 } from 'recharts';
 import { Trophy, TrendingUp, Users, Loader2, ListOrdered, Calendar } from 'lucide-react';
-import { getFlagUrl } from '@/lib/utils';
+import { getFlagUrl, cn } from '@/lib/utils';
 import Link from 'next/link';
 
 export default function ScoreboardPage() {
@@ -72,7 +66,7 @@ export default function ScoreboardPage() {
       <Navbar />
       
       <main className="flex-1 container px-4 py-8 md:py-12">
-        <header className="mb-8 md:mb-12 flex flex-col xl:flex-row xl:items-end justify-between gap-8">
+        <header className="mb-12 space-y-10">
           <div className="flex items-center gap-3">
             <div className="bg-primary/20 p-2 rounded-lg shrink-0">
               <Trophy className="h-6 w-6 md:h-8 md:w-8 text-primary" />
@@ -83,46 +77,53 @@ export default function ScoreboardPage() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-4 md:gap-6">
-            <div className="flex flex-col gap-1 w-full sm:w-auto">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-1">
-                <Calendar className="h-3 w-3" /> Decade
+          <div className="bg-card border rounded-[2rem] p-6 md:p-8 space-y-8 shadow-sm">
+            <div className="space-y-4">
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2 flex items-center gap-2">
+                <Calendar className="h-3 w-3" /> Επιλογή Δεκαετίας
               </span>
-              <Tabs value={currentDecadeLabel} className="w-full sm:w-auto">
-                <TabsList className="bg-secondary/50 p-1 rounded-full w-full sm:w-auto overflow-x-auto">
-                  {DECADES.map(d => (
-                    <TabsTrigger 
-                      key={d.label} 
-                      value={d.label} 
-                      className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs h-9"
-                      onClick={() => {
-                        setSelectedYear(d.years[0]);
-                      }}
-                    >
-                      {d.label}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
+              <div className="flex flex-wrap gap-2">
+                {DECADES.map(d => (
+                  <Button
+                    key={d.label}
+                    variant={currentDecadeLabel === d.label ? "default" : "secondary"}
+                    size="sm"
+                    className={cn(
+                      "rounded-full px-5 h-9 font-bold transition-all",
+                      currentDecadeLabel === d.label ? "bg-primary text-primary-foreground shadow-lg" : ""
+                    )}
+                    onClick={() => {
+                      setSelectedYear(d.years[0]);
+                    }}
+                  >
+                    {d.label}
+                  </Button>
+                ))}
+              </div>
             </div>
 
-            <div className="flex flex-col gap-1 w-full sm:w-auto">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Year</span>
-              <Select 
-                value={selectedYear.toString()} 
-                onValueChange={(v) => {
-                  setSelectedYear(parseInt(v));
-                }}
-              >
-                <SelectTrigger className="w-full sm:w-[140px] bg-secondary/50 border-none h-11 font-bold rounded-xl">
-                  <SelectValue placeholder="Year" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[300px] rounded-xl">
-                  {(DECADES.find(d => d.label === currentDecadeLabel)?.years || []).map(y => (
-                    <SelectItem key={y} value={y.toString()} className="font-bold">{y}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-4 pt-4 border-t border-border/50">
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent ml-2">Έτος</span>
+              <div className="flex flex-wrap gap-2">
+                {(DECADES.find(d => d.label === currentDecadeLabel)?.years || []).map(y => (
+                  <Button
+                    key={y}
+                    variant={selectedYear === y ? "default" : "outline"}
+                    size="sm"
+                    className={cn(
+                      "rounded-full px-4 h-9 font-bold transition-all min-w-[56px]",
+                      selectedYear === y 
+                        ? "bg-accent text-accent-foreground border-accent shadow-lg shadow-accent/20" 
+                        : "border-accent/30 text-accent hover:bg-accent/10"
+                    )}
+                    onClick={() => {
+                      setSelectedYear(y);
+                    }}
+                  >
+                    {y}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
         </header>

@@ -189,11 +189,11 @@ export default function Home() {
                   <History className="h-10 w-10 md:h-14 md:w-14 text-accent" />
                   Εξερευνήστε την Ιστορία
                 </h2>
-                <p className="text-muted-foreground text-xl md:text-2xl">Επιλέξτε έτος για να δείτε τις συμμετοχές και να δώσετε το 12άρι σας.</p>
+                <p className="text-muted-foreground text-xl md:text-2xl">Επιλέξτε δεκαετία και έτος για να δείτε τις συμμετοχές.</p>
               </div>
 
-              <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-6 md:gap-10">
-                <div className="flex flex-col gap-3 w-full sm:w-auto">
+              <div className="flex flex-col gap-8 w-full xl:max-w-3xl">
+                <div className="flex flex-col gap-3">
                   <span className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Δεκαετία</span>
                   <div className="flex flex-wrap gap-2">
                     {DECADES.map(d => (
@@ -215,24 +215,28 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2 w-full sm:w-auto">
-                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground ml-2">Έτος</span>
-                  <Select 
-                    value={selectedYear.toString()} 
-                    onValueChange={(v) => {
-                      setSelectedYear(parseInt(v));
-                      setSelectedStage("All");
-                    }}
-                  >
-                    <SelectTrigger className="w-full sm:w-[180px] bg-secondary/50 border-none h-12 md:h-14 font-bold rounded-full text-xl">
-                      <SelectValue placeholder="Έτος" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[300px] rounded-2xl">
-                      {(DECADES.find(d => d.label === currentDecadeLabel)?.years || []).map(y => (
-                        <SelectItem key={y} value={y.toString()} className="font-bold py-3">{y}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="flex flex-col gap-3">
+                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-accent ml-2">Έτος</span>
+                  <div className="flex flex-wrap gap-2">
+                    {(DECADES.find(d => d.label === currentDecadeLabel)?.years || []).map(y => (
+                      <Button
+                        key={y}
+                        variant={selectedYear === y ? "default" : "outline"}
+                        className={cn(
+                          "rounded-full px-5 h-10 font-bold transition-all min-w-[64px]",
+                          selectedYear === y 
+                            ? "bg-accent text-accent-foreground border-accent shadow-lg shadow-accent/20 scale-105" 
+                            : "border-accent/30 text-accent hover:bg-accent/10"
+                        )}
+                        onClick={() => {
+                          setSelectedYear(y);
+                          setSelectedStage("All");
+                        }}
+                      >
+                        {y}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -394,4 +398,3 @@ export default function Home() {
     </div>
   );
 }
-
