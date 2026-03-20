@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -136,7 +135,7 @@ export default function AdminPage() {
                 <div className="space-y-2">
                   <p className="text-[10px] md:text-xs text-muted-foreground leading-relaxed italic">
                     1. Copy this UID above.<br/>
-                    2. Go to Firebase Console {"->"} Firestore Database.<br/>
+                    2. Go to Firebase Console &rarr; Firestore Database.<br/>
                     3. Create a collection named <strong>roles_admin</strong>.<br/>
                     4. Add a document with the <strong>Document ID</strong> as your UID.
                   </p>
@@ -228,6 +227,7 @@ export default function AdminPage() {
         const countrySlug = country.toLowerCase().replace(/\s+/g, '-');
         const songSlug = song.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
         
+        // Include songSlug to support multiple entries per country per year
         const id = `${bulkYear}-${stageSlug}-${countrySlug}-${songSlug}`;
         const docRef = doc(db, 'eurovision_entries', id);
         

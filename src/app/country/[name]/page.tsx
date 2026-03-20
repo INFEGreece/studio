@@ -1,9 +1,8 @@
-
 import { CountryHistoryView } from '@/components/country/CountryHistoryView';
 
 /**
  * List of all countries that have participated in Eurovision (1956-today)
- * for static generation of history pages.
+ * based on the provided active, inactive, ineligible, and former lists.
  */
 export async function generateStaticParams() {
   const countries = [
