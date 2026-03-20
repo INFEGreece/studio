@@ -39,21 +39,18 @@ function HomeContent() {
   const [currentYear, setCurrentYear] = useState<number>(new Date().getFullYear());
   const [userCountry, setUserCountry] = useState<string | null>(null);
 
-  // Identify user location by IP
   useEffect(() => {
+    setCurrentYear(new Date().getFullYear());
+    
+    // IP detection to restrict local voting for 2026 entries
     fetch('https://ipapi.co/json/')
       .then(res => res.json())
       .then(data => {
         if (data.country_name) {
           setUserCountry(data.country_name);
-          console.log("Detected user country:", data.country_name);
         }
       })
-      .catch(err => console.error("Failed to detect location:", err));
-  }, []);
-
-  useEffect(() => {
-    setCurrentYear(new Date().getFullYear());
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -130,11 +127,11 @@ function HomeContent() {
       return;
     }
 
-    // Restriction check for 2026
+    // Eurovision Rule: Can't vote for your own country of residence
     if (selectedYear === 2026 && entry.country === userCountry) {
       toast({
         title: "Περιορισμός Ψηφοφορίας",
-        description: "Σύμφωνα με τους κανονισμούς, δεν μπορείτε να ψηφίσετε τη χώρα στην οποία βρίσκεστε.",
+        description: "Σύμφωνα με τους κανονισμούς της Eurovision, δεν μπορείτε να ψηφίσετε τη χώρα στην οποία βρίσκεστε.",
         variant: "destructive"
       });
       return;
@@ -220,7 +217,7 @@ function HomeContent() {
                   <Music className="mr-2 h-6 w-6" /> Έναρξη Ψηφοφορίας
                 </Button>
                 <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg md:text-xl px-10 md:px-14 h-16 md:h-20 rounded-full border-2" asChild>
-                  <Link href={`/scoreboard/?year=${selectedYear}`}>Live Scoreboard {selectedYear}</Link>
+                  <Link href={`/scoreboard/?year=${selectedYear}`} prefetch={false}>Live Scoreboard {selectedYear}</Link>
                 </Button>
               </div>
             </div>

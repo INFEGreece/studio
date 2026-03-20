@@ -27,7 +27,7 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
-import { Trophy, TrendingUp, Users, Loader2, ListOrdered, Calendar, AlertCircle } from 'lucide-react';
+import { Trophy, TrendingUp, Users, Loader2, ListOrdered, Calendar, AlertCircle, Info } from 'lucide-react';
 import { getFlagUrl, cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -58,14 +58,12 @@ function ScoreboardContent() {
 
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
 
-  // Query for entries of the selected year
   const entriesQuery = useMemoFirebase(() => {
     return query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
   }, [db, selectedYear]);
 
   const { data: entries, isLoading: isEntriesLoading, error: entriesError } = useCollection<Entry>(entriesQuery);
 
-  // Collection group query to get ALL votes for this year from ALL users
   const votesQuery = useMemoFirebase(() => {
     return query(collectionGroup(db, 'votes'), where('year', '==', selectedYear));
   }, [db, selectedYear]);
@@ -79,7 +77,6 @@ function ScoreboardContent() {
     const aggregation: Record<string, { totalPoints: number; voteCount: number }> = {};
     
     (allVotes || []).forEach(vote => {
-      // Robust filtering: ensure we only count votes for this year's valid entries
       if (vote && vote.eurovisionEntryId && Number(vote.year) === selectedYear) {
         if (validEntryIds.has(vote.eurovisionEntryId)) {
           if (!aggregation[vote.eurovisionEntryId]) {
@@ -119,22 +116,29 @@ function ScoreboardContent() {
             <AlertCircle className="h-12 w-12 text-destructive" />
           </div>
           <h2 className="text-2xl font-headline font-bold mb-4">
-            {isPermissionError ? "Σφάλμα Δικαιωμάτων ή Index" : "Σφάλμα Πρόσβασης στα Δεδομένα"}
+            Πρόβλημα Φόρτωσης Δεδομένων
           </h2>
           <div className="text-muted-foreground max-w-md mb-8 space-y-4">
-            <p>Δεν μπορέσαμε να φορτώσουμε τα αποτελέσματα.</p>
+            <p>Δεν μπορέσαμε να ανακτήσουμε τα αποτελέσματα για το {selectedYear}.</p>
             {isPermissionError && (
-              <div className="bg-muted p-4 rounded-xl text-xs text-left font-mono">
-                <p className="font-bold mb-2">Οδηγίες Διαχειριστή:</p>
-                <ol className="list-decimal pl-4 space-y-1">
-                  <li>Πηγαίνετε στο Firestore &rarr; Indexes &rarr; Single Field.</li>
-                  <li>Add exemption για τη συλλογή "votes" και το πεδίο "year".</li>
-                  <li>Επιλέξτε "Collection Group" scope και ενεργοποιήστε το.</li>
+              <div className="bg-card border p-6 rounded-[2rem] text-left space-y-4 shadow-xl">
+                <div className="flex items-center gap-2 text-primary font-bold">
+                  <Info className="h-5 w-5" /> Οδηγίες για τον Διαχειριστή:
+                </div>
+                <p className="text-xs leading-relaxed">
+                  Αυτό το σφάλμα οφείλεται συνήθως σε έλλειψη Index στο Firebase για τα Collection Groups.
+                </p>
+                <ol className="text-[10px] space-y-2 list-decimal pl-4">
+                  <li>Μεταβείτε στο Firebase Console &rarr; Firestore &rarr; Indexes.</li>
+                  <li>Επιλέξτε την καρτέλα <strong>Single Field</strong>.</li>
+                  <li>Πατήστε <strong>Add exemption</strong>.</li>
+                  <li>Collection ID: <code>votes</code> | Πεδίο: <code>year</code>.</li>
+                  <li>Query scope: <strong>Collection Group</strong> (Ενεργοποιήστε Asc/Desc).</li>
                 </ol>
               </div>
             )}
           </div>
-          <Button onClick={() => window.location.reload()} className="h-12 rounded-xl px-8">Δοκιμάστε Ξανά</Button>
+          <Button onClick={() => window.location.reload()} className="h-12 rounded-xl px-8 bg-primary">Δοκιμάστε Ξανά</Button>
         </main>
       </div>
     );
@@ -234,7 +238,7 @@ function ScoreboardContent() {
                           {idx + 1}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <Link href={`/country/${encodeURIComponent(item.name)}/`} className="flex items-center gap-2 group/link">
+                          <Link href={`/country/${encodeURIComponent(item.name)}/`} className="flex items-center gap-2 group/link" prefetch={false}>
                             <img src={item.flagUrl} alt="" className="h-3 w-5 md:h-4 md:w-6 object-cover rounded shadow-sm shrink-0" />
                             <h3 className="font-bold text-base md:text-lg truncate group-hover/link:text-primary transition-colors underline-offset-4 group-hover/link:underline">{item.name}</h3>
                           </Link>
@@ -323,7 +327,7 @@ function ScoreboardContent() {
                              `#${idx + 1}`}
                           </TableCell>
                           <TableCell>
-                            <Link href={`/country/${encodeURIComponent(item.name)}/`} className="flex items-center gap-2 md:gap-3 group">
+                            <Link href={`/country/${encodeURIComponent(item.name)}/`} className="flex items-center gap-2 md:gap-3 group" prefetch={false}>
                               <img src={item.flagUrl} alt="" className="h-3 w-5 md:h-4 md:w-6 object-cover rounded-sm flex-shrink-0" />
                               <div className="flex flex-col min-w-0 max-w-[120px] sm:max-w-none">
                                 <span className="font-bold text-foreground truncate text-xs md:text-sm group-hover:text-primary transition-colors underline-offset-4 group-hover:underline">{item.name}</span>

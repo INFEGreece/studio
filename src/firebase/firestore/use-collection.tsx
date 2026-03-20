@@ -63,29 +63,24 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (err: FirestoreError) => {
-        console.error("Firestore useCollection error:", err);
-        
+        // Safe path extraction for reporting
         let path: string = 'collection-query';
         try {
           if (memoizedTargetRefOrQuery && 'path' in memoizedTargetRefOrQuery) {
             path = (memoizedTargetRefOrQuery as any).path;
-          } else if (memoizedTargetRefOrQuery && '_query' in (memoizedTargetRefOrQuery as any)) {
-             // For complex queries/collectionGroups, path extraction is tricky
-             path = 'collection-group-query';
           }
-        } catch (e) {
-          // Fallback if extraction fails
-        }
+        } catch (e) {}
 
         const contextualError = new FirestorePermissionError({
           operation: 'list',
           path,
-        })
+        });
 
-        setError(contextualError)
-        setData(null)
-        setIsLoading(false)
+        setError(contextualError);
+        setData(null);
+        setIsLoading(false);
 
+        // Global emission for the listener to catch in layout
         errorEmitter.emit('permission-error', contextualError);
       }
     );
