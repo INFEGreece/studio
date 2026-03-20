@@ -279,7 +279,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-24 md:py-40 bg-secondary/5 rounded-[3rem] md:rounded-[4rem] border-4 border-dashed border-muted/20">
-              <Filter className="h-20 w-20 md:h-32 md:w-32 text-muted-foreground/30 mb-10" />
+              <History className="h-20 w-20 md:h-32 md:w-32 text-muted-foreground/30 mb-10" />
               <p className="text-3xl md:text-4xl font-headline font-bold text-muted-foreground text-center px-6">Δεν βρέθηκαν συμμετοχές για το {selectedYear}</p>
               <p className="text-muted-foreground mt-4 text-center px-6 text-lg">Δοκιμάστε να επιλέξετε διαφορετικό έτος ή φάση.</p>
             </div>
