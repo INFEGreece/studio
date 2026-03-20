@@ -79,7 +79,7 @@ function ScoreboardContent() {
     const aggregation: Record<string, { totalPoints: number; voteCount: number }> = {};
     
     (allVotes || []).forEach(vote => {
-      // Ensure we only count votes that belong to the current year's entries
+      // Robust filtering: ensure we only count votes for this year's valid entries
       if (vote && vote.eurovisionEntryId && Number(vote.year) === selectedYear) {
         if (validEntryIds.has(vote.eurovisionEntryId)) {
           if (!aggregation[vote.eurovisionEntryId]) {
@@ -127,7 +127,7 @@ function ScoreboardContent() {
               <div className="bg-muted p-4 rounded-xl text-xs text-left font-mono">
                 <p className="font-bold mb-2">Οδηγίες Διαχειριστή:</p>
                 <ol className="list-decimal pl-4 space-y-1">
-                  <li>Πηγαίνετε στο Firestore -> Indexes -> Single Field.</li>
+                  <li>Πηγαίνετε στο Firestore &rarr; Indexes &rarr; Single Field.</li>
                   <li>Add exemption για τη συλλογή "votes" και το πεδίο "year".</li>
                   <li>Επιλέξτε "Collection Group" scope και ενεργοποιήστε το.</li>
                 </ol>

@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { History, Filter, Loader2, Layers, Music, RotateCcw, Calendar, Info, AlertTriangle, Star, CheckCircle2 } from 'lucide-react';
+import { History, Filter, Loader2, Layers, Music, RotateCcw, Calendar, Info, AlertTriangle, Star, CheckCircle2, MapPin } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import { Entry, Vote, ContestStage } from '@/lib/types';
@@ -37,6 +37,20 @@ function HomeContent() {
   const [selectedYear, setSelectedYear] = useState<number>(urlYear ? parseInt(urlYear) : 2026);
   const [selectedStage, setSelectedStage] = useState<string>("All");
   const [currentYear, setCurrentYear] = useState<number>(new Date().getFullYear());
+  const [userCountry, setUserCountry] = useState<string | null>(null);
+
+  // Identify user location by IP
+  useEffect(() => {
+    fetch('https://ipapi.co/json/')
+      .then(res => res.json())
+      .then(data => {
+        if (data.country_name) {
+          setUserCountry(data.country_name);
+          console.log("Detected user country:", data.country_name);
+        }
+      })
+      .catch(err => console.error("Failed to detect location:", err));
+  }, []);
 
   useEffect(() => {
     setCurrentYear(new Date().getFullYear());
@@ -116,6 +130,16 @@ function HomeContent() {
       return;
     }
 
+    // Restriction check for 2026
+    if (selectedYear === 2026 && entry.country === userCountry) {
+      toast({
+        title: "Περιορισμός Ψηφοφορίας",
+        description: "Σύμφωνα με τους κανονισμούς, δεν μπορείτε να ψηφίσετε τη χώρα στην οποία βρίσκεστε.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const voteId = `${selectedYear}-${entry.id}`;
     const voteRef = doc(db, 'users', user.uid, 'votes', voteId);
     
@@ -180,6 +204,14 @@ function HomeContent() {
               <p className="max-w-[750px] text-base md:text-2xl text-muted-foreground mx-auto font-medium px-4">
                 70 Χρόνια Ιστορίας της Eurovision. Η φωνή σου. Η ψήφος σου. Η κοινότητά μας.
               </p>
+              
+              {userCountry && (
+                <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 px-4 py-2 rounded-full text-xs font-bold text-primary animate-pulse">
+                  <MapPin className="h-3 w-3" />
+                  Τοποθεσία: {userCountry}
+                </div>
+              )}
+
               <div className="flex flex-col sm:flex-row gap-4 pt-10 md:pt-16 justify-center w-full max-w-md mx-auto sm:max-w-none">
                 <Button size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-lg md:text-xl px-10 md:px-14 h-16 md:h-20 rounded-full shadow-lg shadow-primary/20" onClick={() => {
                   const element = document.getElementById('browser-section');
@@ -381,6 +413,7 @@ function HomeContent() {
                   hasVoted={!!userVotesMap[entry.id]}
                   userScore={userVotesMap[entry.id]}
                   usedPoints={usedPoints}
+                  isRestricted={selectedYear === 2026 && entry.country === userCountry}
                 />
               ))}
             </div>

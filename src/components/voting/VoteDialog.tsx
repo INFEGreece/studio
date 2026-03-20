@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from '@/components/ui/button';
-import { Star, CheckCircle2, Trophy } from 'lucide-react';
+import { Star, CheckCircle2, Trophy, ShieldAlert } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -31,9 +31,10 @@ interface VoteDialogProps {
   hasVoted?: boolean;
   userScore?: number;
   usedPoints?: Set<number>;
+  disabled?: boolean;
 }
 
-export function VoteDialog({ entry, onVote, hasVoted, userScore, usedPoints = new Set() }: VoteDialogProps) {
+export function VoteDialog({ entry, onVote, hasVoted, userScore, usedPoints = new Set(), disabled }: VoteDialogProps) {
   const [score, setScore] = useState<number>(userScore || 0);
   const [feedback, setFeedback] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -51,11 +52,24 @@ export function VoteDialog({ entry, onVote, hasVoted, userScore, usedPoints = ne
 
   const points = [1, 2, 3, 4, 5, 6, 7, 8, 10, 12];
 
+  if (disabled) {
+    return (
+      <Button 
+        className="w-full flex items-center gap-2 h-11 rounded-xl font-bold opacity-50 cursor-not-allowed bg-muted text-muted-foreground border-dashed border-2" 
+        variant="outline"
+        disabled
+      >
+        <ShieldAlert className="h-4 w-4" />
+        Μη Διαθέσιμο
+      </Button>
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button 
-          className="flex-1 flex items-center gap-2 h-11 rounded-xl font-bold transition-all hover:scale-[1.02]" 
+          className="flex-1 flex items-center gap-2 h-11 rounded-xl font-bold transition-all hover:scale-[1.02] w-full" 
           variant={hasVoted ? "secondary" : "default"}
         >
           {hasVoted ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <Star className="h-4 w-4" />}

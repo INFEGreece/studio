@@ -6,7 +6,7 @@ import { Entry } from '@/lib/types';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Mic2, MapPin, Play } from 'lucide-react';
+import { Mic2, MapPin, Play, AlertCircle } from 'lucide-react';
 import { VoteDialog } from '@/components/voting/VoteDialog';
 import { getFlagUrl } from '@/lib/utils';
 import Link from 'next/link';
@@ -17,6 +17,7 @@ interface EntryCardProps {
   hasVoted?: boolean;
   userScore?: number;
   usedPoints?: Set<number>;
+  isRestricted?: boolean;
 }
 
 function getEmbedUrl(url: string) {
@@ -29,13 +30,13 @@ function getEmbedUrl(url: string) {
   return url;
 }
 
-export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints }: EntryCardProps) {
+export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRestricted }: EntryCardProps) {
   const [showVideo, setShowVideo] = useState(false);
   const embedUrl = getEmbedUrl(entry.videoUrl);
   const flagUrl = entry.flagUrl || getFlagUrl(entry.country);
 
   return (
-    <Card className="overflow-hidden group hover:shadow-2xl transition-all border-muted/50 rounded-2xl md:rounded-[1.5rem]">
+    <Card className={`overflow-hidden group hover:shadow-2xl transition-all border-muted/50 rounded-2xl md:rounded-[1.5rem] ${isRestricted ? 'opacity-80 grayscale-[0.5]' : ''}`}>
       <div className="relative aspect-video bg-muted overflow-hidden">
         {showVideo ? (
           <iframe
@@ -66,6 +67,14 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints }: En
                 {entry.stage}
               </Badge>
             </div>
+            {isRestricted && (
+              <div className="absolute inset-0 flex items-center justify-center bg-destructive/10 backdrop-blur-[2px]">
+                <div className="bg-destructive text-destructive-foreground px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-xl">
+                  <AlertCircle className="h-4 w-4" />
+                  Περιορισμός Χώρας
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -113,6 +122,7 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints }: En
           hasVoted={hasVoted} 
           userScore={userScore}
           usedPoints={usedPoints}
+          disabled={isRestricted}
         />
       </CardContent>
     </Card>
