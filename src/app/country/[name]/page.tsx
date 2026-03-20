@@ -1,16 +1,25 @@
 
 import { CountryHistoryView } from '@/components/country/CountryHistoryView';
 
-// List of all countries that have participated in Eurovision for static generation
+/**
+ * List of all countries that have participated in Eurovision (1956-today)
+ * for static generation of history pages.
+ */
 export async function generateStaticParams() {
   const countries = [
-    "Albania", "Andorra", "Armenia", "Australia", "Austria", "Azerbaijan", "Belarus", "Belgium", 
-    "Bosnia and Herzegovina", "Bulgaria", "Croatia", "Cyprus", "Czechia", "Denmark", "Estonia", 
-    "Finland", "France", "Georgia", "Germany", "Greece", "Hungary", "Iceland", "Ireland", 
-    "Israel", "Italy", "Latvia", "Lithuania", "Luxembourg", "Malta", "Moldova", "Monaco", 
-    "Montenegro", "Morocco", "Netherlands", "North Macedonia", "Norway", "Poland", "Portugal", 
-    "Romania", "Russia", "San Marino", "Serbia", "Slovakia", "Slovenia", "Spain", "Sweden", 
-    "Switzerland", "Turkey", "Ukraine", "United Kingdom"
+    // Active
+    "Albania", "Armenia", "Australia", "Austria", "Azerbaijan", "Belgium", "Bulgaria", 
+    "Croatia", "Cyprus", "Czechia", "Denmark", "Estonia", "Finland", "France", 
+    "Georgia", "Germany", "Greece", "Israel", "Italy", "Latvia", "Lithuania", 
+    "Luxembourg", "Malta", "Moldova", "Montenegro", "Norway", "Poland", "Portugal", 
+    "Romania", "San Marino", "Serbia", "Sweden", "Switzerland", "Ukraine", "United Kingdom",
+    // Inactive
+    "Andorra", "Bosnia and Herzegovina", "Hungary", "Iceland", "Ireland", "Monaco", 
+    "Morocco", "Netherlands", "North Macedonia", "Slovakia", "Slovenia", "Spain", "Turkey",
+    // Ineligible
+    "Belarus", "Russia",
+    // Former
+    "Serbia and Montenegro", "Yugoslavia"
   ];
   return countries.map((name) => ({ name: encodeURIComponent(name) }));
 }

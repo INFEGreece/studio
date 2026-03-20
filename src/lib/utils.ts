@@ -1,3 +1,4 @@
+
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -7,6 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 
 /**
  * Maps Eurovision country names to their ISO 3166-1 alpha-2 codes for FlagCDN.
+ * Includes historical and modern participants.
  */
 export function getFlagUrl(countryName: string): string {
   const mapping: Record<string, string> = {
@@ -20,7 +22,8 @@ export function getFlagUrl(countryName: string): string {
     "netherlands": "nl", "north macedonia": "mk", "norway": "no", "poland": "pl",
     "portugal": "pt", "romania": "ro", "russia": "ru", "san marino": "sm", "serbia": "rs",
     "slovakia": "sk", "slovenia": "si", "spain": "es", "sweden": "se", "switzerland": "ch",
-    "turkey": "tr", "ukraine": "ua", "united kingdom": "gb", "uk": "gb"
+    "turkey": "tr", "ukraine": "ua", "united kingdom": "gb", "uk": "gb",
+    "serbia and montenegro": "cs", "yugoslavia": "yu"
   };
 
   const code = mapping[countryName.toLowerCase().trim()];

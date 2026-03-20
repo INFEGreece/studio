@@ -201,7 +201,6 @@ export default function AdminPage() {
 
     const stageSlug = formData.stage.toLowerCase().replace(/\s+/g, '-');
     const countrySlug = formData.country.toLowerCase().replace(/\s+/g, '-');
-    // Sanitize song title for ID: lowercase, replace non-alphanumeric with hyphen, trim hyphens
     const songSlug = formData.songTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     
     // Include songSlug in ID to allow multiple entries per country/year (e.g. 1956)
