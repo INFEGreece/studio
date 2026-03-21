@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, Loader2, ListPlus, ShieldAlert, BookOpen, RotateCcw, AlertTriangle, Lock, Unlock } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, ListPlus, ShieldAlert, BookOpen, RotateCcw, AlertTriangle, Lock, Unlock, ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc, query, collectionGroup, getDocs } from 'firebase/firestore';
@@ -46,9 +46,6 @@ export default function AdminPage() {
   const { toast } = useToast();
   
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterYear, setFilterYear] = useState<string>("All");
-  const [filterStage, setFilterStage] = useState<string>("All");
-
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [isYearInfoOpen, setIsYearInfoOpen] = useState(false);
@@ -64,12 +61,9 @@ export default function AdminPage() {
   const { data: adminData, isLoading: isAdminLoading } = useDoc(adminDocRef);
   const isAdmin = !!adminData;
 
-  const [bulkText, setBulkText] = useState("");
-  const [bulkYear, setBulkYear] = useState(2026);
-  const [bulkStage, setBulkStage] = useState<ContestStage>('Final');
-
   const [selectedYearMeta, setSelectedYearMeta] = useState("2026");
   const [yearDescription, setYearDescription] = useState("");
+  const [yearLogoUrl, setYearLogoUrl] = useState("");
   const [isVotingOpen, setIsVotingOpen] = useState(true);
 
   const [formData, setFormData] = useState({
@@ -93,9 +87,11 @@ export default function AdminPage() {
     if (currentYearMeta) {
       setYearDescription(currentYearMeta.description || "");
       setIsVotingOpen(currentYearMeta.isVotingOpen ?? true);
+      setYearLogoUrl(currentYearMeta.logoUrl || "");
     } else {
       setYearDescription("");
       setIsVotingOpen(true);
+      setYearLogoUrl("");
     }
   }, [currentYearMeta]);
 
@@ -106,7 +102,8 @@ export default function AdminPage() {
     setDocumentNonBlocking(docRef, {
       id: selectedYearMeta,
       description: yearDescription,
-      isVotingOpen: isVotingOpen
+      isVotingOpen: isVotingOpen,
+      logoUrl: yearLogoUrl
     }, { merge: true });
     toast({ title: "Πληροφορίες Έτους Αποθηκεύτηκαν" });
     setIsYearInfoOpen(false);
@@ -157,9 +154,6 @@ export default function AdminPage() {
             <Button variant="outline" className="h-12 rounded-xl" onClick={() => setIsYearInfoOpen(true)}>
               <BookOpen className="h-5 w-5 mr-2" /> Πληροφορίες & Voting
             </Button>
-            <Button variant="outline" className="h-12 rounded-xl" onClick={() => setIsBulkOpen(true)}>
-              <ListPlus className="h-5 w-5 mr-2" /> Μαζική
-            </Button>
             <Button className="h-12 rounded-xl" onClick={() => { setIsEditing(false); setFormData({ country: '', flagUrl: '', year: 2026, artist: '', songTitle: '', videoUrl: '', thumbnailUrl: '', stage: 'Final' }); setIsDialogOpen(true); }}>
               <Plus className="h-5 w-5 mr-2" /> Νέα Συμμετοχή
             </Button>
@@ -176,12 +170,11 @@ export default function AdminPage() {
           </Button>
         </div>
 
-        {/* Entries Table */}
         <div className="bg-card border rounded-2xl overflow-hidden shadow-sm">
-          <div className="p-6 border-b bg-muted/20 grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="relative md:col-span-2">
+          <div className="p-6 border-b bg-muted/20">
+            <div className="relative max-w-md">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input className="pl-12 h-12 rounded-xl" placeholder="Αναζήτηση..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <Input className="pl-12 h-12 rounded-xl" placeholder="Αναζήτηση χώρας..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -194,7 +187,7 @@ export default function AdminPage() {
                     <TableCell>{entry.songTitle}</TableCell>
                     <TableCell><Badge variant="outline">{entry.year}</Badge></TableCell>
                     <TableCell className="text-right">
-                      <Button variant="outline" size="sm" className="mr-2" onClick={() => { setIsEditing(true); setCurrentId(entry.id); setFormData(entry); setIsDialogOpen(true); }}>Επεξεργασία</Button>
+                      <Button variant="outline" size="sm" className="mr-2" onClick={() => { setIsEditing(true); setCurrentId(entry.id); setFormData(entry); setIsDialogOpen(true); }}><Pencil className="h-4 w-4 mr-2"/> Επεξεργασία</Button>
                       <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { if(confirm("Διαγραφή;")) deleteDocumentNonBlocking(doc(db, 'eurovision_entries', entry.id)); }}>Διαγραφή</Button>
                     </TableCell>
                   </TableRow>
@@ -204,10 +197,9 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Year Info & Voting Toggle Dialog */}
         <Dialog open={isYearInfoOpen} onOpenChange={setIsYearInfoOpen}>
           <DialogContent className="sm:max-w-[600px] rounded-[2rem] p-8">
-            <DialogHeader><DialogTitle className="text-2xl font-headline font-bold">Πληροφορίες & Κατάσταση Ψηφοφορίας</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle className="text-2xl font-headline font-bold">Πληροφορίες & Logo Έτους</DialogTitle></DialogHeader>
             <div className="space-y-6 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -226,6 +218,13 @@ export default function AdminPage() {
                   </div>
                 </div>
               </div>
+              
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2"><ImageIcon className="h-4 w-4"/> Logo URL (Custom)</Label>
+                <Input value={yearLogoUrl} onChange={(e) => setYearLogoUrl(e.target.value)} placeholder="https://example.com/logo.png" className="h-12 rounded-xl"/>
+                <p className="text-[10px] text-muted-foreground">Αν μείνει κενό, θα αναζητηθεί αυτόματα στον φάκελο /assets/logos/</p>
+              </div>
+
               <div className="space-y-2">
                 <Label>Περιγραφή Έτους</Label>
                 <Textarea className="min-h-[150px] rounded-xl" value={yearDescription} onChange={(e) => setYearDescription(e.target.value)} />
@@ -235,7 +234,6 @@ export default function AdminPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Entry Editor Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-[600px] rounded-[2rem] p-8">
             <DialogHeader><DialogTitle>{isEditing ? "Επεξεργασία" : "Νέα Συμμετοχή"}</DialogTitle></DialogHeader>

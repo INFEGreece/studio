@@ -100,7 +100,6 @@ function HomeContent() {
   }, [db, selectedYear]);
   const { data: allYearEntries, isLoading } = useCollection<Entry>(entriesRef);
 
-  // Dynamic Year Metadata
   const yearMetaRef = useMemoFirebase(() => doc(db, 'year_metadata', selectedYear.toString()), [db, selectedYear]);
   const { data: dynamicYearMeta } = useDoc<YearMetadata>(yearMetaRef);
 
@@ -141,17 +140,20 @@ function HomeContent() {
     return acc;
   }, new Set<number>());
 
-  const isVotingComplete = usedPoints.size === 10;
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
   
-  const yearLogoUrl = getEventLogo(selectedYear, 'Final');
+  // Custom Logo URL priority
+  const yearLogoUrl = dynamicYearMeta?.logoUrl || getEventLogo(selectedYear, 'Final');
   
-  // Dynamic Description Logic: Prefer Firestore, fallback to lib/data.ts
   const yearDescription = dynamicYearMeta?.description || YEAR_INFO[selectedYear] || `Εξερευνήστε τις συμμετοχές του διαγωνισμού για το έτος ${selectedYear}.`;
 
   const handleVote = (entry: Entry, score: number, feedback: string) => {
     if (!user) {
       toast({ title: "Απαιτείται σύνδεση", variant: "destructive" });
+      return;
+    }
+    if (dynamicYearMeta && dynamicYearMeta.isVotingOpen === false) {
+      toast({ title: "Η ψηφοφορία είναι κλειστή", variant: "destructive" });
       return;
     }
     if (selectedYear === 2026 && entry.country === userCountry) {
@@ -272,7 +274,6 @@ function HomeContent() {
               </div>
             </div>
 
-            {/* Year Highlights Section */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch mt-10">
               <div className="lg:col-span-5 bg-card border-2 rounded-[2.5rem] p-8 md:p-12 flex flex-col items-center justify-center text-center space-y-8 relative overflow-hidden group shadow-2xl">
                 <div className="relative z-10 w-full max-w-[280px] aspect-square flex items-center justify-center">
@@ -344,7 +345,7 @@ function HomeContent() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 md:gap-14">
               {filteredEntries.map((entry) => (
                 <div key={entry.id} className="relative group">
-                  <EntryCard entry={entry} onVote={(score, feedback) => handleVote(entry, score, feedback)} hasVoted={!!userVotesMap[entry.id]} userScore={userVotesMap[entry.id]} usedPoints={usedPoints} isRestricted={selectedYear === 2026 && entry.country === userCountry} />
+                  <EntryCard entry={entry} onVote={(score, feedback) => handleVote(entry, score, feedback)} hasVoted={!!userVotesMap[entry.id]} userScore={userVotesMap[entry.id]} usedPoints={usedPoints} isRestricted={(selectedYear === 2026 && entry.country === userCountry) || (dynamicYearMeta && dynamicYearMeta.isVotingOpen === false)} />
                   {isAdmin && (
                     <div className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
                       <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full shadow-lg bg-white/90" onClick={() => openEditDialog(entry)}><Pencil className="h-4 w-4 text-primary" /></Button>
@@ -359,7 +360,6 @@ function HomeContent() {
           )}
         </section>
 
-        {/* Admin Entry Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[600px] rounded-[2rem] overflow-y-auto max-h-[95vh] p-8">
             <DialogHeader><DialogTitle>Επεξεργασία Συμμετοχής</DialogTitle></DialogHeader>

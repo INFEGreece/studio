@@ -29,6 +29,7 @@ export interface YearMetadata {
   id: string; // The year as string
   description: string;
   isVotingOpen?: boolean; // Admin toggle
+  logoUrl?: string; // Custom logo override
 }
 
 export interface ScoreboardItem {

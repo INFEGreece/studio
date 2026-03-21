@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Navbar } from '@/components/layout/Navbar';
 import { EntryCard } from '@/components/entries/EntryCard';
@@ -10,13 +9,12 @@ import { YEAR_INFO } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { History, Music, Loader2, Layers, Info, CheckCircle2, MapPin, Sparkles, Lock, Trophy, ArrowLeft } from 'lucide-react';
+import { Music, Loader2, Layers, Info, CheckCircle2, Sparkles, Lock, Trophy, ArrowLeft } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import { Entry, Vote, ContestStage, YearMetadata } from '@/lib/types';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
-import { cn, getFlagUrl } from '@/lib/utils';
 import { getEventLogo } from '@/lib/logos';
 
 interface YearViewProps {
@@ -62,7 +60,9 @@ export function YearView({ year }: YearViewProps) {
   const yearDescription = dynamicYearMeta?.description || YEAR_INFO[selectedYear] || `Αρχείο συμμετοχών για το έτος ${selectedYear}.`;
   const isVotingOpen = dynamicYearMeta?.isVotingOpen ?? true;
   
-  const yearLogoUrl = getEventLogo(selectedYear, 'Final');
+  // Prioritize Custom Logo URL from DB, then fallback to automatic file path
+  const yearLogoUrl = dynamicYearMeta?.logoUrl || getEventLogo(selectedYear, 'Final');
+  
   const populatedStages = useMemo(() => {
     const stages = new Set<string>();
     if (allYearEntries) allYearEntries.forEach(e => stages.add(e.stage));
