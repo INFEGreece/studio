@@ -41,8 +41,8 @@ service cloud.firestore {
        */
       match /votes/{voteId} {
         allow read: if true;
-        allow create, update: if isSignedIn() && request.auth.uid == userId && request.resource.data.userId == userId;
-        allow delete: if isSignedIn() && request.auth.uid == userId;
+        allow create, update: if isSignedIn() && request.auth.uid == userId && (request.resource.data.userId == userId || isAdmin());
+        allow delete: if (isSignedIn() && request.auth.uid == userId) || isAdmin();
       }
     }
 
@@ -57,10 +57,11 @@ service cloud.firestore {
 
     /**
      * @description Collection Group Rule for ALL 'votes' collections.
-     * This is CRITICAL for the scoreboard.
+     * This is CRITICAL for the scoreboard and global maintenance.
      */
     match /{path=**}/votes/{voteId} {
       allow read, get, list: if true;
+      allow delete: if isAdmin();
     }
   }
 }

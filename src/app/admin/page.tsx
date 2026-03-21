@@ -29,10 +29,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, Loader2, ListPlus, ShieldAlert, Copy, Image as ImageIcon, Filter } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, ListPlus, ShieldAlert, Copy, Image as ImageIcon, Filter, RotateCcw, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, query, collectionGroup, getDocs } from 'firebase/firestore';
 import { Entry, ContestStage } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { getFlagUrl } from '@/lib/utils';
@@ -51,6 +51,7 @@ export default function AdminPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [currentId, setCurrentId] = useState<string | null>(null);
   
   const adminDocRef = useMemoFirebase(() => {
@@ -99,6 +100,42 @@ export default function AdminPage() {
     if (user?.uid) {
       navigator.clipboard.writeText(user.uid);
       toast({ title: "UID Αντιγράφηκε", description: "Μπορείτε τώρα να το προσθέσετε στη συλλογή roles_admin." });
+    }
+  };
+
+  const handleResetAllVotes = async () => {
+    if (!isAdmin) return;
+    
+    const confirmText = "ΠΡΟΣΟΧΗ: Αυτή η ενέργεια θα διαγράψει ΟΡΙΣΤΙΚΑ ΟΛΕΣ τις ψήφους όλων των χρηστών για όλα τα έτη. Είστε σίγουροι;";
+    if (!confirm(confirmText)) return;
+
+    setIsResetting(true);
+    try {
+      const votesQuery = query(collectionGroup(db, 'votes'));
+      const snapshot = await getDocs(votesQuery);
+      
+      if (snapshot.empty) {
+        toast({ title: "Δεν βρέθηκαν ψήφοι", description: "Η βάση δεδομένων είναι ήδη καθαρή." });
+        setIsResetting(false);
+        return;
+      }
+
+      snapshot.docs.forEach((vDoc) => {
+        deleteDocumentNonBlocking(vDoc.ref);
+      });
+
+      toast({ 
+        title: "Επιτυχής Μηδενισμός", 
+        description: `Διαγράφηκαν ${snapshot.size} εγγραφές ψήφων.` 
+      });
+    } catch (error: any) {
+      toast({ 
+        title: "Σφάλμα Μηδενισμού", 
+        description: error.message || "Δεν ήταν δυνατή η διαγραφή των ψήφων.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -254,7 +291,7 @@ export default function AdminPage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 md:mb-12">
           <div>
             <h1 className="text-3xl md:text-4xl font-headline font-bold text-primary">Διαχείριση Διαγωνισμού</h1>
-            <p className="text-muted-foreground mt-1 text-base md:text-lg">Διαχειριστείτε συμμετοχές για όλα τα έτη και τις εκδηλώσεις.</p>
+            <p className="text-muted-foreground mt-1 text-base md:text-lg">Διαχειριστείτε συμμετοχές και συντηρήστε τη βάση δεδομένων.</p>
           </div>
           <div className="flex flex-wrap gap-2 md:gap-3 w-full md:w-auto">
             <Button variant="outline" className="flex-1 md:flex-none h-11 md:h-12 px-4 md:px-6 rounded-xl" onClick={() => setIsBulkOpen(true)}>
@@ -264,6 +301,31 @@ export default function AdminPage() {
               <Plus className="h-5 w-5 mr-2" /> Νέα Συμμετοχή
             </Button>
           </div>
+        </div>
+
+        {/* Maintenance / Danger Zone */}
+        <div className="mb-12 p-6 md:p-8 rounded-2xl bg-destructive/5 border-2 border-dashed border-destructive/20 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-4 text-center md:text-left">
+            <div className="bg-destructive/10 p-4 rounded-full">
+              <AlertTriangle className="h-8 w-8 text-destructive" />
+            </div>
+            <div>
+              <h2 className="text-xl font-headline font-bold text-destructive">Danger Zone: Μηδενισμός Ψήφων</h2>
+              <p className="text-sm text-muted-foreground">Αυτή η ενέργεια διαγράφει όλες τις ψήφους όλων των χρηστών. Χρησιμοποιήστε το μόνο για καθαρισμό δοκιμαστικών δεδομένων.</p>
+            </div>
+          </div>
+          <Button 
+            variant="destructive" 
+            className="w-full md:w-auto h-12 px-8 rounded-xl font-bold shadow-lg shadow-destructive/20" 
+            onClick={handleResetAllVotes}
+            disabled={isResetting}
+          >
+            {isResetting ? (
+              <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> Μηδενισμός...</>
+            ) : (
+              <><RotateCcw className="h-5 w-5 mr-2" /> Ολικός Μηδενισμός Ψήφων</>
+            )}
+          </Button>
         </div>
 
         <div className="bg-card border rounded-2xl overflow-hidden shadow-sm">
