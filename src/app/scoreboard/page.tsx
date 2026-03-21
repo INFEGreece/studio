@@ -53,6 +53,7 @@ function ScoreboardContent() {
   }, [searchParams]);
 
   useEffect(() => {
+    // Reset logo error state when year changes to try loading new logo
     setLogoError(false);
   }, [selectedYear]);
 
@@ -139,8 +140,8 @@ function ScoreboardContent() {
                   <li>Μεταβείτε στο Firebase Console &rarr; Firestore &rarr; Indexes.</li>
                   <li>Επιλέξτε την καρτέλα <strong>Single Field</strong>.</li>
                   <li>Πατήστε <strong>Add exemption</strong>.</li>
-                  <li>Collection ID: <code>votes</code> | Πεδίο: <code>year</code>.</li>
-                  <li>Query scope: <strong>Collection Group</strong> (Ενεργοποιήστε Asc/Desc).</li>
+                  <li>Collection ID: <code>votes</code> | Field: <code>year</code>.</li>
+                  <li>Query scope: <strong>Collection Group</strong> (Enable Asc/Desc).</li>
                 </ol>
               </div>
             )}

@@ -16,11 +16,11 @@ export function getEventLogo(year: number, stage: ContestStage): string {
   const yearStr = year.toString();
   const suffix = yearStr.slice(-2);
 
-  // Other events use .png
+  // Other events use .png as requested
   if (stage === 'Eurodromio') return `/assets/logos/ED${suffix}.png`;
   if (stage === 'Be.So.') return `/assets/logos/BE${suffix}.png`;
   if (stage === 'Mu.Si.Ka.') return `/assets/logos/MU${suffix}.png`;
   
-  // Eurovision (Final, Semis, Prequalification) use .jpg
+  // Eurovision (Final, Semis, Prequalification) use .jpg as requested
   return `/assets/logos/${yearStr}.jpg`;
 }

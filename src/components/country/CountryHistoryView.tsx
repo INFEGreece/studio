@@ -1,7 +1,6 @@
-
 "use client";
 
-import { Suspense, useState, useMemo } from 'react';
+import { Suspense, useState, useMemo, useEffect } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { EntryCard } from '@/components/entries/EntryCard';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
@@ -9,6 +8,7 @@ import { collection, query, where, doc, collectionGroup } from 'firebase/firesto
 import { Entry, Vote, ContestStage } from '@/lib/types';
 import { Loader2, History, ArrowLeft, Trophy, Pencil, Trash2, Image as ImageIcon, Star, TrendingUp, Music } from 'lucide-react';
 import { getFlagUrl } from '@/lib/utils';
+import { getEventLogo } from '@/lib/logos';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -30,7 +30,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 
 /**
  * Inner component to handle data fetching and interaction
@@ -40,6 +39,8 @@ function CountryContent({ name }: { name: string }) {
   const db = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
+
+  const [logoError, setLogoError] = useState(false);
 
   // Admin Check
   const adminDocRef = useMemoFirebase(() => {
@@ -78,6 +79,12 @@ function CountryContent({ name }: { name: string }) {
   }, [db]);
   const { data: allVotes, isLoading: isVotesLoading } = useCollection<Vote>(allVotesRef);
 
+  const sortedEntries = useMemo(() => {
+    return (countryEntries || [])
+      .slice()
+      .sort((a, b) => b.year - a.year);
+  }, [countryEntries]);
+
   const stats = useMemo(() => {
     if (!countryEntries) return { totalPoints: 0, participations: 0, bestScore: 0, avgPoints: 0 };
     
@@ -88,7 +95,6 @@ function CountryContent({ name }: { name: string }) {
     const participations = countryEntries.length;
     const avgPoints = participations > 0 ? (totalPoints / participations).toFixed(1) : 0;
 
-    // Best year score calculation
     const pointsPerYear: Record<number, number> = {};
     countryVotes.forEach(v => {
       pointsPerYear[v.year] = (pointsPerYear[v.year] || 0) + v.points;
@@ -97,10 +103,6 @@ function CountryContent({ name }: { name: string }) {
 
     return { totalPoints, participations, bestScore, avgPoints };
   }, [countryEntries, allVotes]);
-
-  const sortedEntries = (countryEntries || [])
-    .slice()
-    .sort((a, b) => b.year - a.year);
 
   const userVotesRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -177,6 +179,10 @@ function CountryContent({ name }: { name: string }) {
 
   const flagUrl = sortedEntries[0]?.flagUrl || getFlagUrl(countryName);
   const stages: ContestStage[] = ['Final', 'Semi-Final 1', 'Semi-Final 2', 'Prequalification', 'Eurodromio', 'Be.So.', 'Mu.Si.Ka.'];
+  
+  // Get logo for the most recent year
+  const latestEntry = sortedEntries[0];
+  const eventLogo = latestEntry ? getEventLogo(latestEntry.year, latestEntry.stage) : null;
 
   return (
     <main className="flex-1 container px-4 py-8 md:py-16">
@@ -187,7 +193,6 @@ function CountryContent({ name }: { name: string }) {
           </Link>
         </Button>
         
-        {/* Dynamic Country Header */}
         <div className="relative rounded-[2rem] md:rounded-[3rem] overflow-hidden border-2 shadow-2xl bg-card">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/5" />
           <div className="absolute top-0 right-0 w-1/2 h-full opacity-10 blur-3xl bg-primary pointer-events-none" />
@@ -195,6 +200,16 @@ function CountryContent({ name }: { name: string }) {
           <div className="relative p-8 md:p-14 flex flex-col lg:flex-row items-center gap-10">
             <div className="relative h-40 w-60 md:h-56 md:w-80 rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white/10 shrink-0 group">
               <img src={flagUrl} alt={countryName} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+              {eventLogo && !logoError && (
+                <div className="absolute top-4 left-4 h-12 w-20 z-10 drop-shadow-lg">
+                  <img 
+                    src={eventLogo} 
+                    alt="Event Logo" 
+                    className="w-full h-full object-contain"
+                    onError={() => setLogoError(true)}
+                  />
+                </div>
+              )}
             </div>
             
             <div className="text-center lg:text-left space-y-6 flex-1">
