@@ -16,6 +16,7 @@ export function getEventLogo(year: number, stage: ContestStage): string {
   const yearStr = year.toString();
   const suffix = yearStr.slice(-2);
 
+  // Normalizing paths for static assets in the public folder
   if (stage === 'Eurodromio') return `/assets/logos/ED${suffix}.png`;
   if (stage === 'Be.So.') return `/assets/logos/BE${suffix}.png`;
   if (stage === 'Mu.Si.Ka.') return `/assets/logos/MU${suffix}.png`;
