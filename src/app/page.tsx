@@ -17,15 +17,24 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { History, Filter, Loader2, Layers, Music, RotateCcw, Calendar, Info, AlertTriangle, Star, CheckCircle2, MapPin } from 'lucide-react';
+import { History, Filter, Loader2, Layers, Music, RotateCcw, Calendar, Info, AlertTriangle, Star, CheckCircle2, MapPin, Pencil, Trash2, Image as ImageIcon } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import { Entry, Vote, ContestStage } from '@/lib/types';
 import { setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { cn, getFlagUrl } from '@/lib/utils';
 import { useSearchParams } from 'next/navigation';
 import { ShareResultsDialog } from '@/components/voting/ShareResultsDialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 function HomeContent() {
   const searchParams = useSearchParams();
@@ -38,6 +47,20 @@ function HomeContent() {
   const [selectedStage, setSelectedStage] = useState<string>("All");
   const [currentYear, setCurrentYear] = useState<number>(new Date().getFullYear());
   const [userCountry, setUserCountry] = useState<string | null>(null);
+
+  // Admin Edit State
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [currentEntryForEdit, setCurrentEntryForEdit] = useState<Entry | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    country: '',
+    flagUrl: '',
+    year: 2026,
+    artist: '',
+    songTitle: '',
+    videoUrl: '',
+    thumbnailUrl: '',
+    stage: 'Final' as ContestStage
+  });
 
   useEffect(() => {
     setCurrentYear(new Date().getFullYear());
@@ -127,7 +150,6 @@ function HomeContent() {
       return;
     }
 
-    // Eurovision Rule: Can't vote for your own country of residence
     if (selectedYear === 2026 && entry.country === userCountry) {
       toast({
         title: "Περιορισμός Ψηφοφορίας",
@@ -165,7 +187,42 @@ function HomeContent() {
     }
   };
 
+  const openEditDialog = (entry: Entry) => {
+    setCurrentEntryForEdit(entry);
+    setEditFormData({
+      country: entry.country,
+      flagUrl: entry.flagUrl || '',
+      year: entry.year,
+      artist: entry.artist,
+      songTitle: entry.songTitle,
+      videoUrl: entry.videoUrl,
+      thumbnailUrl: entry.thumbnailUrl || '',
+      stage: entry.stage
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (!currentEntryForEdit) return;
+    const entryRef = doc(db, 'eurovision_entries', currentEntryForEdit.id);
+    setDocumentNonBlocking(entryRef, {
+      ...editFormData,
+      id: currentEntryForEdit.id,
+      flagUrl: editFormData.flagUrl || getFlagUrl(editFormData.country)
+    }, { merge: true });
+    setIsEditDialogOpen(false);
+    toast({ title: "Η συμμετοχή ενημερώθηκε!" });
+  };
+
+  const handleDeleteEntry = (entryId: string) => {
+    if (confirm("Οριστική διαγραφή αυτής της συμμετοχής;")) {
+      deleteDocumentNonBlocking(doc(db, 'eurovision_entries', entryId));
+      toast({ title: "Η συμμετοχή διαγράφηκε", variant: "destructive" });
+    }
+  };
+
   const regionalEvents: ContestStage[] = ["Eurodromio", "Be.So.", "Mu.Si.Ka."];
+  const stages: ContestStage[] = ['Final', 'Semi-Final 1', 'Semi-Final 2', 'Prequalification', 'Eurodromio', 'Be.So.', 'Mu.Si.Ka.'];
 
   const mainStages = [
     { value: "All", label: "Όλα" },
@@ -217,7 +274,7 @@ function HomeContent() {
                   <Music className="mr-2 h-6 w-6" /> Έναρξη Ψηφοφορίας
                 </Button>
                 <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg md:text-xl px-10 md:px-14 h-16 md:h-20 rounded-full border-2" asChild>
-                  <Link href={`/scoreboard/?year=${selectedYear}`} prefetch={false}>Live Scoreboard {selectedYear}</Link>
+                  <Link href={`/scoreboard/?year=${selectedYear}`}>Live Scoreboard {selectedYear}</Link>
                 </Button>
               </div>
             </div>
@@ -403,15 +460,26 @@ function HomeContent() {
           ) : filteredEntries && filteredEntries.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 md:gap-14">
               {filteredEntries.map((entry) => (
-                <EntryCard 
-                  key={entry.id} 
-                  entry={entry} 
-                  onVote={(score, feedback) => handleVote(entry, score, feedback)}
-                  hasVoted={!!userVotesMap[entry.id]}
-                  userScore={userVotesMap[entry.id]}
-                  usedPoints={usedPoints}
-                  isRestricted={selectedYear === 2026 && entry.country === userCountry}
-                />
+                <div key={entry.id} className="relative group">
+                  <EntryCard 
+                    entry={entry} 
+                    onVote={(score, feedback) => handleVote(entry, score, feedback)}
+                    hasVoted={!!userVotesMap[entry.id]}
+                    userScore={userVotesMap[entry.id]}
+                    usedPoints={usedPoints}
+                    isRestricted={selectedYear === 2026 && entry.country === userCountry}
+                  />
+                  {isAdmin && (
+                    <div className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                      <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full shadow-lg bg-white/90" onClick={() => openEditDialog(entry)}>
+                        <Pencil className="h-4 w-4 text-primary" />
+                      </Button>
+                      <Button size="icon" variant="destructive" className="h-8 w-8 rounded-full shadow-lg bg-destructive/90" onClick={() => handleDeleteEntry(entry.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           ) : (
@@ -422,6 +490,77 @@ function HomeContent() {
             </div>
           )}
         </section>
+
+        {/* Admin Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[600px] rounded-[1.5rem] md:rounded-[2rem] overflow-y-auto max-h-[95vh] p-6 md:p-8">
+            <DialogHeader>
+              <DialogTitle className="text-xl md:text-2xl font-headline font-bold">
+                Επεξεργασία Συμμετοχής
+              </DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 md:gap-6 py-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="country">Χώρα</Label>
+                  <Input id="country" value={editFormData.country} onChange={(e) => setEditFormData({ ...editFormData, country: e.target.value })} className="rounded-xl h-11" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="year">Έτος</Label>
+                  <Input id="year" type="number" value={editFormData.year} onChange={(e) => setEditFormData({ ...editFormData, year: parseInt(e.target.value) })} className="rounded-xl h-11" />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="artist">Καλλιτέχνης</Label>
+                  <Input id="artist" value={editFormData.artist} onChange={(e) => setEditFormData({ ...editFormData, artist: e.target.value })} className="rounded-xl h-11" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="songTitle">Τίτλος Τραγουδιού</Label>
+                  <Input id="songTitle" value={editFormData.songTitle} onChange={(e) => setEditFormData({ ...editFormData, songTitle: e.target.value })} className="rounded-xl h-11" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="stage">Φάση / Event</Label>
+                <Select value={editFormData.stage} onValueChange={(v) => setEditFormData({ ...editFormData, stage: v as ContestStage })}>
+                  <SelectTrigger className="rounded-xl h-11">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stages.map(s => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="videoUrl">Video URL (YouTube)</Label>
+                <Input id="videoUrl" placeholder="https://www.youtube.com/watch?v=..." value={editFormData.videoUrl} onChange={(e) => setEditFormData({ ...editFormData, videoUrl: e.target.value })} className="rounded-xl h-11" />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="thumbnailUrl" className="flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4" /> Φωτογραφία Καλλιτέχνη
+                  </Label>
+                  <Input id="thumbnailUrl" placeholder="URL εικόνας" value={editFormData.thumbnailUrl} onChange={(e) => setEditFormData({ ...editFormData, thumbnailUrl: e.target.value })} className="rounded-xl h-11" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="flagUrl" className="flex items-center gap-2">
+                    Σημαία (Προαιρετικά)
+                  </Label>
+                  <Input id="flagUrl" placeholder="Custom URL σημαίας" value={editFormData.flagUrl} onChange={(e) => setEditFormData({ ...editFormData, flagUrl: e.target.value })} className="rounded-xl h-11" />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleSaveEdit} className="w-full h-12 md:h-14 rounded-xl text-lg font-bold">Αποθήκευση Αλλαγών</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
 
       <footer className="border-t bg-card/50 py-16 md:py-28 mt-20 md:mt-32">

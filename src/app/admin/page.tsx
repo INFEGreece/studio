@@ -399,12 +399,12 @@ export default function AdminPage() {
                       <Badge variant="secondary" className="text-[9px] md:text-[10px]">{entry.stage}</Badge>
                     </TableCell>
                     <TableCell className="text-right whitespace-nowrap">
-                      <div className="flex justify-end gap-1 md:gap-2">
-                        <Button variant="ghost" size="icon" className="hover:text-primary transition-colors h-8 w-8" onClick={() => openEditDialog(entry)}>
-                          <Pencil className="h-4 w-4 md:h-5 md:w-5" />
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" size="sm" className="h-9 px-3 rounded-lg flex items-center gap-1.5 border-primary/30 text-primary hover:bg-primary/10" onClick={() => openEditDialog(entry)}>
+                          <Pencil className="h-4 w-4" /> Επεξεργασία
                         </Button>
-                        <Button variant="ghost" size="icon" className="hover:text-destructive transition-colors h-8 w-8" onClick={() => handleDelete(entry.id)}>
-                          <Trash2 className="h-4 w-4 md:h-5 md:w-5" />
+                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(entry.id)}>
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
@@ -419,7 +419,7 @@ export default function AdminPage() {
           <DialogContent className="sm:max-w-[600px] rounded-[1.5rem] md:rounded-[2rem] overflow-y-auto max-h-[95vh] p-6 md:p-8">
             <DialogHeader>
               <DialogTitle className="text-xl md:text-2xl font-headline font-bold">
-                {isEditing ? "Επεξεργασία" : "Νέα Συμμετοχή"}
+                {isEditing ? "Επεξεργασία Συμμετοχής" : "Νέα Συμμετοχή"}
               </DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 md:gap-6 py-4">
