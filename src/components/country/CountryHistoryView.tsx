@@ -1,13 +1,13 @@
 
 "use client";
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useMemo } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { EntryCard } from '@/components/entries/EntryCard';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
-import { collection, query, where, doc } from 'firebase/firestore';
+import { collection, query, where, doc, collectionGroup } from 'firebase/firestore';
 import { Entry, Vote, ContestStage } from '@/lib/types';
-import { Loader2, History, ArrowLeft, Trophy, Pencil, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Loader2, History, ArrowLeft, Trophy, Pencil, Trash2, Image as ImageIcon, Star, TrendingUp, Music } from 'lucide-react';
 import { getFlagUrl } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -29,6 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 
 /**
  * Inner component to handle data fetching and interaction
@@ -61,14 +63,40 @@ function CountryContent({ name }: { name: string }) {
     stage: 'Final' as ContestStage
   });
 
+  // Fetch all entries for this country
   const entriesRef = useMemoFirebase(() => {
     return query(
       collection(db, 'eurovision_entries'),
       where('country', '==', countryName)
     );
   }, [db, countryName]);
+  const { data: countryEntries, isLoading: isEntriesLoading } = useCollection<Entry>(entriesRef);
 
-  const { data: countryEntries, isLoading } = useCollection<Entry>(entriesRef);
+  // Fetch all votes globally to calculate stats for this country
+  const allVotesRef = useMemoFirebase(() => {
+    return query(collectionGroup(db, 'votes'));
+  }, [db]);
+  const { data: allVotes, isLoading: isVotesLoading } = useCollection<Vote>(allVotesRef);
+
+  const stats = useMemo(() => {
+    if (!countryEntries) return { totalPoints: 0, participations: 0, bestScore: 0, avgPoints: 0 };
+    
+    const entryIds = new Set(countryEntries.map(e => e.id));
+    const countryVotes = (allVotes || []).filter(v => entryIds.has(v.eurovisionEntryId));
+    
+    const totalPoints = countryVotes.reduce((sum, v) => sum + (Number(v.points) || 0), 0);
+    const participations = countryEntries.length;
+    const avgPoints = participations > 0 ? (totalPoints / participations).toFixed(1) : 0;
+
+    // Best year score calculation
+    const pointsPerYear: Record<number, number> = {};
+    countryVotes.forEach(v => {
+      pointsPerYear[v.year] = (pointsPerYear[v.year] || 0) + v.points;
+    });
+    const bestScore = Object.values(pointsPerYear).length > 0 ? Math.max(...Object.values(pointsPerYear)) : 0;
+
+    return { totalPoints, participations, bestScore, avgPoints };
+  }, [countryEntries, allVotes]);
 
   const sortedEntries = (countryEntries || [])
     .slice()
@@ -88,7 +116,7 @@ function CountryContent({ name }: { name: string }) {
 
   const handleVote = (entry: Entry, score: number, feedback: string) => {
     if (!user) {
-      toast({ title: "Sign in required", description: "Log in to save your history!", variant: "destructive" });
+      toast({ title: "Σύνδεση Απαραίτητη", description: "Συνδεθείτε για να ψηφίσετε!", variant: "destructive" });
       return;
     }
     const voteId = `${entry.year}-${entry.id}`;
@@ -102,7 +130,7 @@ function CountryContent({ name }: { name: string }) {
       votedAt: new Date().toISOString(),
       feedback: feedback
     }, { merge: true });
-    toast({ title: "Vote Saved", description: `You gave ${score} pts to ${entry.year}!` });
+    toast({ title: "Η ψήφος καταχωρήθηκε", description: `Δώσατε ${score} πόντους στη συμμετοχή του ${entry.year}!` });
   };
 
   const handleDeleteEntry = (entryId: string) => {
@@ -139,7 +167,7 @@ function CountryContent({ name }: { name: string }) {
     toast({ title: "Η συμμετοχή ενημερώθηκε επιτυχώς!" });
   };
 
-  if (isLoading) {
+  if (isEntriesLoading) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-[60vh]">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -151,41 +179,71 @@ function CountryContent({ name }: { name: string }) {
   const stages: ContestStage[] = ['Final', 'Semi-Final 1', 'Semi-Final 2', 'Prequalification', 'Eurodromio', 'Be.So.', 'Mu.Si.Ka.'];
 
   return (
-    <main className="flex-1 container px-4 py-12 md:py-20">
-      <div className="mb-12 md:mb-16">
-        <Button variant="ghost" asChild className="mb-8 -ml-2 text-muted-foreground hover:text-primary h-12 rounded-xl">
+    <main className="flex-1 container px-4 py-8 md:py-16">
+      <div className="mb-12">
+        <Button variant="ghost" asChild className="mb-6 -ml-2 text-muted-foreground hover:text-primary h-10 rounded-xl font-bold">
           <Link href="/">
-            <ArrowLeft className="h-5 w-5 mr-2" /> Back to entries
+            <ArrowLeft className="h-4 w-4 mr-2" /> Πίσω στην Αρχική
           </Link>
         </Button>
         
-        <div className="flex flex-col md:flex-row items-center gap-10 md:gap-14 bg-card border rounded-[2.5rem] md:rounded-[3.5rem] p-10 md:p-16 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
+        {/* Dynamic Country Header */}
+        <div className="relative rounded-[2rem] md:rounded-[3rem] overflow-hidden border-2 shadow-2xl bg-card">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/5" />
+          <div className="absolute top-0 right-0 w-1/2 h-full opacity-10 blur-3xl bg-primary pointer-events-none" />
           
-          <div className="relative h-32 w-48 md:h-44 md:w-64 rounded-3xl overflow-hidden shadow-2xl border-4 border-white/10 shrink-0">
-            <img src={flagUrl} alt={countryName} className="w-full h-full object-cover" />
-          </div>
-          
-          <div className="text-center md:text-left space-y-4 relative z-10">
-            <h1 className="text-5xl md:text-7xl font-headline font-extrabold tracking-tight">
-              {countryName}
-            </h1>
-            <div className="flex flex-wrap justify-center md:justify-start gap-6 text-muted-foreground">
-              <span className="flex items-center gap-3 text-lg md:text-xl font-medium">
-                <History className="h-6 w-6 text-accent" />
-                {sortedEntries.length} Participations
-              </span>
-              <span className="flex items-center gap-3 text-lg md:text-xl font-medium">
-                <Trophy className="h-6 w-6 text-yellow-500" />
-                {sortedEntries.reduce((sum, e) => sum + (e.totalPoints || 0), 0)} Total Points
-              </span>
+          <div className="relative p-8 md:p-14 flex flex-col lg:flex-row items-center gap-10">
+            <div className="relative h-40 w-60 md:h-56 md:w-80 rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white/10 shrink-0 group">
+              <img src={flagUrl} alt={countryName} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+            </div>
+            
+            <div className="text-center lg:text-left space-y-6 flex-1">
+              <div className="space-y-2">
+                <Badge className="bg-primary/20 text-primary border-primary/30 font-bold px-4 py-1 rounded-full uppercase tracking-widest text-[10px]">
+                  Country Profile
+                </Badge>
+                <h1 className="text-5xl md:text-8xl font-headline font-extrabold tracking-tighter">
+                  {countryName}
+                </h1>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6">
+                <div className="bg-background/50 backdrop-blur-md border p-4 rounded-2xl text-center lg:text-left">
+                  <div className="text-primary mb-1"><History className="h-5 w-5" /></div>
+                  <p className="text-2xl font-bold">{stats.participations}</p>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Συμμετοχές</p>
+                </div>
+                <div className="bg-background/50 backdrop-blur-md border p-4 rounded-2xl text-center lg:text-left">
+                  <div className="text-yellow-500 mb-1"><Trophy className="h-5 w-5" /></div>
+                  <p className="text-2xl font-bold">{stats.totalPoints}</p>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Συν. Πόντοι</p>
+                </div>
+                <div className="bg-background/50 backdrop-blur-md border p-4 rounded-2xl text-center lg:text-left">
+                  <div className="text-accent mb-1"><Star className="h-5 w-5" /></div>
+                  <p className="text-2xl font-bold">{stats.bestScore}</p>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Top Year Score</p>
+                </div>
+                <div className="bg-background/50 backdrop-blur-md border p-4 rounded-2xl text-center lg:text-left">
+                  <div className="text-green-500 mb-1"><TrendingUp className="h-5 w-5" /></div>
+                  <p className="text-2xl font-bold">{stats.avgPoints}</p>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Μ.Ο. Πόντων</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
+      <div className="mb-10 flex items-center justify-between">
+        <h2 className="text-2xl md:text-3xl font-headline font-bold flex items-center gap-3">
+          <Music className="h-8 w-8 text-primary" />
+          Ιστορικό Συμμετοχών
+        </h2>
+        <Badge variant="secondary" className="font-bold">{sortedEntries.length} Εγγραφές</Badge>
+      </div>
+
       {sortedEntries.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 md:gap-14">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 md:gap-12">
           {sortedEntries.map((entry) => (
             <div key={entry.id} className="relative group">
               <EntryCard 
@@ -195,11 +253,11 @@ function CountryContent({ name }: { name: string }) {
                 userScore={userVotesMap[entry.id]}
               />
               {isAdmin && (
-                <div className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                  <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full shadow-lg" onClick={() => openEditDialog(entry)}>
-                    <Pencil className="h-4 w-4" />
+                <div className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                  <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full shadow-lg bg-white/90" onClick={() => openEditDialog(entry)}>
+                    <Pencil className="h-4 w-4 text-primary" />
                   </Button>
-                  <Button size="icon" variant="destructive" className="h-8 w-8 rounded-full shadow-lg" onClick={() => handleDeleteEntry(entry.id)}>
+                  <Button size="icon" variant="destructive" className="h-8 w-8 rounded-full shadow-lg bg-destructive/90" onClick={() => handleDeleteEntry(entry.id)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -209,7 +267,8 @@ function CountryContent({ name }: { name: string }) {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-32 bg-secondary/5 rounded-[3rem] border-4 border-dashed border-muted/20">
-          <p className="text-3xl font-headline font-bold text-muted-foreground">No records found for {countryName}</p>
+          <History className="h-20 w-20 text-muted-foreground/20 mb-6" />
+          <p className="text-2xl font-headline font-bold text-muted-foreground">Δεν βρέθηκαν συμμετοχές για: {countryName}</p>
         </div>
       )}
 
