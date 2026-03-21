@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
@@ -6,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Navbar } from '@/components/layout/Navbar';
 import { EntryCard } from '@/components/entries/EntryCard';
-import { DECADES } from '@/lib/data';
+import { DECADES, YEAR_INFO } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { 
   Select, 
@@ -17,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { History, Filter, Loader2, Layers, Music, RotateCcw, Calendar, Info, AlertTriangle, Star, CheckCircle2, MapPin, Pencil, Trash2, Image as ImageIcon } from 'lucide-react';
+import { History, Filter, Loader2, Layers, Music, RotateCcw, Calendar, Info, AlertTriangle, Star, CheckCircle2, MapPin, Pencil, Trash2, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import { Entry, Vote, ContestStage } from '@/lib/types';
@@ -26,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn, getFlagUrl } from '@/lib/utils';
 import { useSearchParams } from 'next/navigation';
 import { ShareResultsDialog } from '@/components/voting/ShareResultsDialog';
+import { getEventLogo } from '@/lib/logos';
 import {
   Dialog,
   DialogContent,
@@ -47,6 +47,7 @@ function HomeContent() {
   const [selectedStage, setSelectedStage] = useState<string>("All");
   const [currentYear, setCurrentYear] = useState<number>(new Date().getFullYear());
   const [userCountry, setUserCountry] = useState<string | null>(null);
+  const [logoError, setLogoError] = useState(false);
 
   // Admin Edit State
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -64,8 +65,8 @@ function HomeContent() {
 
   useEffect(() => {
     setCurrentYear(new Date().getFullYear());
+    setLogoError(false); // Reset logo error when year changes
     
-    // IP detection to restrict local voting for 2026 entries
     fetch('https://ipapi.co/json/')
       .then(res => res.json())
       .then(data => {
@@ -74,7 +75,7 @@ function HomeContent() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [selectedYear]);
 
   useEffect(() => {
     const y = searchParams?.get('year');
@@ -137,8 +138,11 @@ function HomeContent() {
   }, new Set<number>());
 
   const isVotingComplete = usedPoints.size === 10;
-
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
+  
+  // Use "Final" as representative stage for the main year logo
+  const yearLogoUrl = getEventLogo(selectedYear, 'Final');
+  const yearDescription = YEAR_INFO[selectedYear] || `Εξερευνήστε τις συμμετοχές του διαγωνισμού για το έτος ${selectedYear}. Μουσική, φωνές και μοναδικές στιγμές από όλη την Ευρώπη.`;
 
   const handleVote = (entry: Entry, score: number, feedback: string) => {
     if (!user) {
@@ -336,6 +340,72 @@ function HomeContent() {
                         {y}
                       </Button>
                     ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Year Highlights Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch mt-10">
+              <div className="lg:col-span-5 bg-card border-2 rounded-[2.5rem] p-8 md:p-12 flex flex-col items-center justify-center text-center space-y-8 relative overflow-hidden group shadow-2xl">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-50" />
+                <div className="relative z-10 w-full max-w-[280px] aspect-square flex items-center justify-center">
+                  {!logoError ? (
+                    <img 
+                      src={yearLogoUrl} 
+                      alt={`Eurovision ${selectedYear} Logo`}
+                      className="w-full h-full object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.3)] group-hover:scale-110 transition-transform duration-700"
+                      onError={() => setLogoError(true)}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-muted/20 rounded-full border-4 border-dashed border-muted/50">
+                      <Music className="h-20 w-20 text-muted-foreground/20" />
+                    </div>
+                  )}
+                </div>
+                <div className="relative z-10">
+                  <span className="text-7xl md:text-9xl font-black text-foreground/5 absolute -top-16 md:-top-24 left-1/2 -translate-x-1/2 select-none tracking-tighter">
+                    {selectedYear}
+                  </span>
+                  <h3 className="text-4xl md:text-5xl font-headline font-black tracking-tight text-primary">
+                    EUROVISION {selectedYear}
+                  </h3>
+                  <Badge variant="outline" className="mt-4 border-primary/30 text-primary px-4 py-1 rounded-full font-bold uppercase tracking-widest text-[10px]">
+                    Official Event Year
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="lg:col-span-7 bg-primary/5 border-2 border-primary/10 rounded-[2.5rem] p-8 md:p-14 flex flex-col justify-center space-y-8 shadow-inner relative">
+                <div className="absolute top-8 right-8">
+                  <Sparkles className="h-10 w-10 text-primary/20" />
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.3em] text-primary/70">
+                    <Info className="h-4 w-4" /> Πληροφορίες Έτους
+                  </div>
+                  <h4 className="text-2xl md:text-4xl font-headline font-bold leading-tight">
+                    Μια ματιά στην ιστορία του {selectedYear}
+                  </h4>
+                  <p className="text-lg md:text-xl text-muted-foreground leading-relaxed italic">
+                    "{yearDescription}"
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 pt-4">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Συμμετοχές</p>
+                    <p className="text-2xl font-black">{allYearEntries?.length || 0}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Φάσεις</p>
+                    <p className="text-2xl font-black">{populatedStages.size}</p>
+                  </div>
+                  <div className="space-y-1 hidden md:block">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Status</p>
+                    <p className="text-2xl font-black text-green-500 flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5" /> Active
+                    </p>
                   </div>
                 </div>
               </div>

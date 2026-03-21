@@ -22,5 +22,6 @@ export function getEventLogo(year: number, stage: ContestStage): string {
   if (stage === 'Mu.Si.Ka.') return `/assets/logos/MU${suffix}.png`;
   
   // Eurovision (Final, Semis, Prequalification) use .jpg as requested
+  // Note: Ensure your files on the server are named exactly like this (e.g. 2024.jpg)
   return `/assets/logos/${yearStr}.jpg`;
 }
