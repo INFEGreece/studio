@@ -28,6 +28,7 @@ export interface Vote {
 export interface YearMetadata {
   id: string; // The year as string
   description: string;
+  isVotingOpen?: boolean; // Admin toggle
 }
 
 export interface ScoreboardItem {
