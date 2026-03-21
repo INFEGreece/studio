@@ -25,6 +25,11 @@ export interface Vote {
   feedback?: string;
 }
 
+export interface YearMetadata {
+  id: string; // The year as string
+  description: string;
+}
+
 export interface ScoreboardItem {
   entryId: string;
   entry: Entry;
