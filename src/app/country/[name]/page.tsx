@@ -3,6 +3,7 @@ import { CountryHistoryView } from '@/components/country/CountryHistoryView';
 /**
  * List of all countries that have participated in Eurovision (1956-today)
  * updated with active, inactive, ineligible, and former lists.
+ * We return raw names as Next.js handles encoding of segments.
  */
 export async function generateStaticParams() {
   const countries = [
@@ -20,10 +21,11 @@ export async function generateStaticParams() {
     // Former
     "Serbia and Montenegro", "Yugoslavia"
   ];
-  return countries.map((name) => ({ name: encodeURIComponent(name) }));
+  return countries.map((name) => ({ name }));
 }
 
 export default async function CountryPage({ params }: { params: Promise<{ name: string }> }) {
   const { name } = await params;
+  // name is already decoded by Next.js from the URL segment
   return <CountryHistoryView name={name} />;
 }
