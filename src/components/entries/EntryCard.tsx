@@ -6,51 +6,61 @@ import { Entry } from '@/lib/types';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Mic2, MapPin, Play, AlertCircle, Image as ImageIcon, ExternalLink, User, Music } from 'lucide-react';
+import { Mic2, MapPin, Play, AlertCircle, ExternalLink, User, Music } from 'lucide-react';
 import { VoteDialog } from '@/components/voting/VoteDialog';
 import { getFlagUrl } from '@/lib/utils';
 import { getEventLogo } from '@/lib/logos';
 import Link from 'next/link';
-import Image from 'next/image';
-
-interface EntryCardProps {
-  entry: Entry;
-  onVote?: (score: number, feedback: string) => void;
-  hasVoted?: boolean;
-  userScore?: number;
-  usedPoints?: Set<number>;
-  isRestricted?: boolean;
-}
 
 function getEmbedUrl(url: string) {
   if (!url) return '';
-  if (url.includes('/embed/')) return url;
-  const watchMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/\s]+)/);
-  if (watchMatch && watchMatch[1]) {
-    return `https://www.youtube.com/embed/${watchMatch[1]}?autoplay=1`;
+  
+  // YouTube Detection
+  if (url.includes('youtube.com') || url.includes('youtu.be')) {
+    if (url.includes('/embed/')) return url;
+    const watchMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/\s]+)/);
+    if (watchMatch && watchMatch[1]) {
+      return `https://www.youtube.com/embed/${watchMatch[1]}?autoplay=1`;
+    }
   }
+
+  // Spotify Detection
+  if (url.includes('spotify.com')) {
+    if (url.includes('/embed/')) return url;
+    const trackMatch = url.match(/track\/([^&?/\s]+)/);
+    if (trackMatch && trackMatch[1]) {
+      return `https://open.spotify.com/embed/track/${trackMatch[1]}?utm_source=generator&theme=0`;
+    }
+    const albumMatch = url.match(/album\/([^&?/\s]+)/);
+    if (albumMatch && albumMatch[1]) {
+      return `https://open.spotify.com/embed/album/${albumMatch[1]}?utm_source=generator&theme=0`;
+    }
+  }
+
   return url;
 }
 
 export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRestricted }: EntryCardProps) {
-  const [showVideo, setShowVideo] = useState(false);
+  const [showPlayer, setShowPlayer] = useState(false);
   const [logoError, setLogoError] = useState(false);
-  const embedUrl = getEmbedUrl(entry.videoUrl);
+  
+  const hasVideo = !!entry.videoUrl && entry.videoUrl.length > 5;
+  const hasSpotify = !!entry.spotifyUrl && entry.spotifyUrl.length > 5;
+  
+  const embedUrl = hasVideo ? getEmbedUrl(entry.videoUrl) : (hasSpotify ? getEmbedUrl(entry.spotifyUrl!) : '');
   const flagUrl = entry.flagUrl || getFlagUrl(entry.country);
   const eventLogo = getEventLogo(entry.year, entry.stage);
-
-  const hasVideo = !!entry.videoUrl && entry.videoUrl.length > 5;
-  const spotifyLink = entry.spotifyUrl || `https://open.spotify.com/search/${encodeURIComponent(entry.artist + " " + entry.songTitle)}`;
 
   return (
     <Card className={`overflow-hidden group hover:shadow-2xl transition-all border-muted/50 rounded-2xl md:rounded-[1.5rem] bg-card/50 backdrop-blur-sm ${isRestricted ? 'opacity-80 grayscale-[0.5]' : ''}`}>
       <div className="relative aspect-video bg-muted overflow-hidden">
-        {showVideo && hasVideo ? (
+        {showPlayer && embedUrl ? (
           <iframe
             src={embedUrl}
             className="w-full h-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
+            loading="lazy"
           ></iframe>
         ) : (
           <>
@@ -60,25 +70,14 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRe
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              {hasVideo ? (
+              {(hasVideo || hasSpotify) && (
                 <Button 
-                  onClick={() => setShowVideo(true)} 
+                  onClick={() => setShowPlayer(true)} 
                   variant="secondary" 
                   size="icon" 
-                  className="h-14 w-14 md:h-16 md:w-16 rounded-full bg-primary/90 text-white"
+                  className={`h-14 w-14 md:h-16 md:w-16 rounded-full text-white ${hasVideo ? 'bg-primary/90' : 'bg-green-500/90'}`}
                 >
-                  <Play className="h-6 w-6 md:h-8 md:w-8 fill-current" />
-                </Button>
-              ) : (
-                <Button 
-                  variant="secondary" 
-                  size="icon" 
-                  className="h-14 w-14 md:h-16 md:w-16 rounded-full bg-green-500 text-white"
-                  asChild
-                >
-                  <a href={spotifyLink} target="_blank" rel="noopener noreferrer">
-                    <Music className="h-6 w-6 md:h-8 md:w-8" />
-                  </a>
+                  {hasVideo ? <Play className="h-6 w-6 md:h-8 md:w-8 fill-current" /> : <Music className="h-6 w-6 md:h-8 md:w-8" />}
                 </Button>
               )}
             </div>
@@ -106,14 +105,6 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRe
                   <AlertCircle className="h-4 w-4" />
                   Περιορισμός Χώρας
                 </div>
-              </div>
-            )}
-            
-            {!hasVideo && (
-              <div className="absolute bottom-2 left-2">
-                <Badge className="bg-green-500/80 backdrop-blur-sm text-[8px] font-bold flex items-center gap-1 border-none">
-                  <Music className="h-2 w-2" /> Spotify Only
-                </Badge>
               </div>
             )}
           </>
@@ -165,11 +156,9 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRe
               </a>
             </Button>
           )}
-          {entry.spotifyUrl && (
-            <Button variant="outline" size="sm" className="flex-1 h-9 rounded-xl text-[9px] font-bold uppercase tracking-widest border-green-500/30 text-green-500 hover:bg-green-500 hover:text-white transition-all" asChild>
-              <a href={entry.spotifyUrl} target="_blank" rel="noopener noreferrer">
-                <Music className="h-3 w-3 mr-1.5" /> Spotify <ExternalLink className="h-2.5 w-2.5 ml-1" />
-              </a>
+          {hasSpotify && (
+            <Button variant="outline" size="sm" className="flex-1 h-9 rounded-xl text-[9px] font-bold uppercase tracking-widest border-green-500/30 text-green-500 hover:bg-green-500 hover:text-white transition-all" onClick={() => setShowPlayer(true)}>
+              <Music className="h-3 w-3 mr-1.5" /> Play <Music className="h-2.5 w-2.5 ml-1" />
             </Button>
           )}
         </div>
@@ -184,4 +173,13 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRe
       </CardContent>
     </Card>
   );
+}
+
+interface EntryCardProps {
+  entry: Entry;
+  onVote?: (score: number, feedback: string) => void;
+  hasVoted?: boolean;
+  userScore?: number;
+  usedPoints?: Set<number>;
+  isRestricted?: boolean;
 }
