@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from '@/components/ui/button';
-import { Star, CheckCircle2, Trophy, ShieldAlert, Lock } from 'lucide-react';
+import { Star, CheckCircle2, Trophy, ShieldAlert, Lock, AlertTriangle } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -51,12 +51,12 @@ export function VoteDialog({ entry, onVote, hasVoted, userScore, usedPoints = ne
   if (disabled) {
     return (
       <Button 
-        className="w-full flex items-center gap-2 h-11 rounded-xl font-bold opacity-50 cursor-not-allowed bg-muted text-muted-foreground border-dashed border-2" 
+        className="w-full flex items-center gap-2 h-11 rounded-xl font-bold opacity-70 cursor-not-allowed bg-muted text-muted-foreground border-dashed border-2 hover:bg-muted" 
         variant="outline"
         disabled
       >
         <Lock className="h-4 w-4" />
-        Voting Closed
+        {hasVoted ? `Ψηφίσατε (${userScore} π.)` : "Η ψηφοφορία έκλεισε"}
       </Button>
     );
   }

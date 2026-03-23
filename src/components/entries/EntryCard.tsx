@@ -52,7 +52,7 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRe
   const eventLogo = getEventLogo(entry.year, entry.stage);
 
   return (
-    <Card className={`overflow-hidden group hover:shadow-2xl transition-all border-muted/50 rounded-2xl md:rounded-[1.5rem] bg-card/50 backdrop-blur-sm ${isRestricted ? 'opacity-80 grayscale-[0.5]' : ''}`}>
+    <Card className={`overflow-hidden group hover:shadow-2xl transition-all border-muted/50 rounded-2xl md:rounded-[1.5rem] bg-card/50 backdrop-blur-sm ${isRestricted ? 'border-destructive/20' : ''}`}>
       <div className="relative aspect-video bg-muted overflow-hidden">
         {showPlayer && embedUrl ? (
           <iframe
@@ -67,7 +67,7 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRe
             <img
               src={entry.thumbnailUrl || flagUrl}
               alt={entry.songTitle}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${isRestricted ? 'opacity-80' : ''}`}
             />
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
               {(hasVideo || hasSpotify) && (
@@ -98,15 +98,6 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRe
                 {entry.stage}
               </Badge>
             </div>
-            
-            {isRestricted && (
-              <div className="absolute inset-0 flex items-center justify-center bg-destructive/10 backdrop-blur-[2px]">
-                <div className="bg-destructive text-destructive-foreground px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-xl">
-                  <AlertCircle className="h-4 w-4" />
-                  Περιορισμός Χώρας
-                </div>
-              </div>
-            )}
           </>
         )}
       </div>
@@ -125,10 +116,23 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRe
               <h3 className="text-lg md:text-xl font-headline font-bold leading-tight line-clamp-1 group-hover:text-primary transition-colors">
                 {entry.songTitle}
               </h3>
-              <p className="text-xs md:text-sm text-muted-foreground flex items-center gap-1.5 truncate">
-                <Mic2 className="h-3 w-3 md:h-3.5 md:w-3.5 text-primary/70 shrink-0" />
-                <span className="truncate">{entry.artist}</span>
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs md:text-sm text-muted-foreground flex items-center gap-1.5 truncate">
+                  <Mic2 className="h-3 w-3 md:h-3.5 md:w-3.5 text-primary/70 shrink-0" />
+                  <span className="truncate">{entry.artist}</span>
+                </p>
+                {entry.bioUrl && (
+                  <a 
+                    href={entry.bioUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="flex items-center gap-1 text-[10px] font-bold text-primary hover:text-accent transition-colors shrink-0"
+                    title="Artist Bio"
+                  >
+                    <User className="h-3 w-3" /> Bio
+                  </a>
+                )}
+              </div>
             </div>
           </div>
 
@@ -150,15 +154,25 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRe
       <CardContent className="p-4 md:p-6 pt-0 space-y-4">
         <div className="flex gap-2">
           {entry.bioUrl && (
-            <Button variant="outline" size="sm" className="flex-1 h-9 rounded-xl text-[9px] font-bold uppercase tracking-widest border-primary/30 text-primary hover:bg-primary hover:text-white transition-all" asChild>
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              className="flex-1 h-10 rounded-xl text-[10px] font-bold uppercase tracking-widest bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white transition-all" 
+              asChild
+            >
               <a href={entry.bioUrl} target="_blank" rel="noopener noreferrer">
-                <User className="h-3 w-3 mr-1.5" /> Bio <ExternalLink className="h-2.5 w-2.5 ml-1" />
+                <User className="h-3.5 w-3.5 mr-2" /> Βιογραφικό <ExternalLink className="h-2.5 w-2.5 ml-1" />
               </a>
             </Button>
           )}
           {hasSpotify && (
-            <Button variant="outline" size="sm" className="flex-1 h-9 rounded-xl text-[9px] font-bold uppercase tracking-widest border-green-500/30 text-green-500 hover:bg-green-500 hover:text-white transition-all" onClick={() => setShowPlayer(true)}>
-              <Music className="h-3 w-3 mr-1.5" /> Play <Music className="h-2.5 w-2.5 ml-1" />
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex-1 h-10 rounded-xl text-[10px] font-bold uppercase tracking-widest border-green-500/30 text-green-500 hover:bg-green-500 hover:text-white transition-all" 
+              onClick={() => setShowPlayer(true)}
+            >
+              <Music className="h-3.5 w-3.5 mr-2" /> Spotify <Music className="h-2.5 w-2.5 ml-1" />
             </Button>
           )}
         </div>
@@ -170,6 +184,11 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRe
           usedPoints={usedPoints}
           disabled={isRestricted}
         />
+        {isRestricted && (
+          <p className="text-[10px] text-center text-destructive font-bold uppercase tracking-widest flex items-center justify-center gap-1">
+            <AlertCircle className="h-3 w-3" /> Η ψηφοφορία είναι κλειστή
+          </p>
+        )}
       </CardContent>
     </Card>
   );
