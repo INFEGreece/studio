@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, Loader2, ListPlus, ShieldAlert, BookOpen, RotateCcw, AlertTriangle, Lock, Unlock, ImageIcon, User, Layers, Star } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, ListPlus, ShieldAlert, BookOpen, RotateCcw, AlertTriangle, Lock, Unlock, ImageIcon, User, Layers, Star, Music, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc, query, collectionGroup, getDocs } from 'firebase/firestore';
@@ -39,6 +39,7 @@ import { Badge } from '@/components/ui/badge';
 import { getFlagUrl } from '@/lib/utils';
 import { DECADES } from '@/lib/data';
 import Link from 'next/link';
+import { identifySpotifyLink } from '@/ai/flows/spotify-linker-flow';
 
 export default function AdminPage() {
   const db = useFirestore();
@@ -51,6 +52,7 @@ export default function AdminPage() {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isIdentifying, setIsIdentifying] = useState(false);
   const [currentId, setCurrentId] = useState<string | null>(null);
   
   const adminDocRef = useMemoFirebase(() => {
@@ -86,6 +88,7 @@ export default function AdminPage() {
     artist: '',
     songTitle: '',
     videoUrl: '',
+    spotifyUrl: '',
     thumbnailUrl: '',
     bioUrl: '',
     stage: 'Final' as ContestStage
@@ -144,6 +147,27 @@ export default function AdminPage() {
     }
   };
 
+  const handleAutoIdentifySpotify = async () => {
+    if (!formData.artist || !formData.songTitle) {
+      toast({ title: "Συμπληρώστε Καλλιτέχνη & Τίτλο", variant: "destructive" });
+      return;
+    }
+    setIsIdentifying(true);
+    try {
+      const result = await identifySpotifyLink({
+        artist: formData.artist,
+        songTitle: formData.songTitle,
+        year: formData.year
+      });
+      setFormData(prev => ({ ...prev, spotifyUrl: result.spotifyUrl }));
+      toast({ title: "Spotify Link Εντοπίστηκε!", description: result.explanation });
+    } catch (error: any) {
+      toast({ title: "Σφάλμα AI", description: "Δεν ήταν δυνατός ο εντοπισμός.", variant: "destructive" });
+    } finally {
+      setIsIdentifying(false);
+    }
+  };
+
   if (isUserLoading || isAdminLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
 
   if (!user || !isAdmin) return (
@@ -177,7 +201,7 @@ export default function AdminPage() {
             <Button variant="outline" className="h-12 rounded-xl" onClick={() => setIsYearInfoOpen(true)}>
               <BookOpen className="h-5 w-5 mr-2" /> Πληροφορίες & Voting
             </Button>
-            <Button className="h-12 rounded-xl" onClick={() => { setIsEditing(false); setFormData({ country: '', flagUrl: '', year: 2026, artist: '', songTitle: '', videoUrl: '', thumbnailUrl: '', bioUrl: '', stage: 'Final' }); setIsDialogOpen(true); }}>
+            <Button className="h-12 rounded-xl" onClick={() => { setIsEditing(false); setFormData({ country: '', flagUrl: '', year: 2026, artist: '', songTitle: '', videoUrl: '', spotifyUrl: '', thumbnailUrl: '', bioUrl: '', stage: 'Final' }); setIsDialogOpen(true); }}>
               <Plus className="h-5 w-5 mr-2" /> Νέα Συμμετοχή
             </Button>
           </div>
@@ -210,7 +234,7 @@ export default function AdminPage() {
                     <TableCell>{entry.songTitle}</TableCell>
                     <TableCell><Badge variant="outline">{entry.year}</Badge></TableCell>
                     <TableCell className="text-right">
-                      <Button variant="outline" size="sm" className="mr-2" onClick={() => { setIsEditing(true); setCurrentId(entry.id); setFormData({ ...entry, bioUrl: entry.bioUrl || '' }); setIsDialogOpen(true); }}><Pencil className="h-4 w-4 mr-2"/> Επεξεργασία</Button>
+                      <Button variant="outline" size="sm" className="mr-2" onClick={() => { setIsEditing(true); setCurrentId(entry.id); setFormData({ ...entry, bioUrl: entry.bioUrl || '', spotifyUrl: entry.spotifyUrl || '' }); setIsDialogOpen(true); }}><Pencil className="h-4 w-4 mr-2"/> Επεξεργασία</Button>
                       <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { if(confirm("Διαγραφή;")) deleteDocumentNonBlocking(doc(db, 'eurovision_entries', entry.id)); }}>Διαγραφή</Button>
                     </TableCell>
                   </TableRow>
@@ -299,6 +323,15 @@ export default function AdminPage() {
                 <div className="space-y-2"><Label>Τίτλος</Label><Input value={formData.songTitle} onChange={(e) => setFormData({ ...formData, songTitle: e.target.value })} className="rounded-xl h-11" /></div>
               </div>
               <div className="space-y-2"><Label>Video URL</Label><Input value={formData.videoUrl} onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })} className="rounded-xl h-11" /></div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2"><Music className="h-4 w-4 text-green-500" /> Spotify URL</Label>
+                  <Button variant="ghost" size="sm" onClick={handleAutoIdentifySpotify} disabled={isIdentifying} className="text-[10px] font-bold h-7 rounded-lg">
+                    {isIdentifying ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3 mr-1" />} AI Εντοπισμός
+                  </Button>
+                </div>
+                <Input value={formData.spotifyUrl} onChange={(e) => setFormData({ ...formData, spotifyUrl: e.target.value })} placeholder="https://open.spotify.com/..." className="rounded-xl h-11" />
+              </div>
               <div className="space-y-2"><Label className="flex items-center gap-2"><User className="h-4 w-4" /> Artist Bio URL (infegreece.com)</Label><Input value={formData.bioUrl} onChange={(e) => setFormData({ ...formData, bioUrl: e.target.value })} placeholder="https://infegreece.com/bio-slug" className="rounded-xl h-11" /></div>
               <div className="space-y-2"><Label>Φάση</Label>
                 <Select value={formData.stage} onValueChange={(v) => setFormData({ ...formData, stage: v as ContestStage })}>

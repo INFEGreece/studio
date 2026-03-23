@@ -6,7 +6,7 @@ import { Entry } from '@/lib/types';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Mic2, MapPin, Play, AlertCircle, Image as ImageIcon, ExternalLink, User } from 'lucide-react';
+import { Mic2, MapPin, Play, AlertCircle, Image as ImageIcon, ExternalLink, User, Music } from 'lucide-react';
 import { VoteDialog } from '@/components/voting/VoteDialog';
 import { getFlagUrl } from '@/lib/utils';
 import { getEventLogo } from '@/lib/logos';
@@ -39,10 +39,13 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRe
   const flagUrl = entry.flagUrl || getFlagUrl(entry.country);
   const eventLogo = getEventLogo(entry.year, entry.stage);
 
+  const hasVideo = !!entry.videoUrl && entry.videoUrl.length > 5;
+  const spotifyLink = entry.spotifyUrl || `https://open.spotify.com/search/${encodeURIComponent(entry.artist + " " + entry.songTitle)}`;
+
   return (
     <Card className={`overflow-hidden group hover:shadow-2xl transition-all border-muted/50 rounded-2xl md:rounded-[1.5rem] bg-card/50 backdrop-blur-sm ${isRestricted ? 'opacity-80 grayscale-[0.5]' : ''}`}>
       <div className="relative aspect-video bg-muted overflow-hidden">
-        {showVideo ? (
+        {showVideo && hasVideo ? (
           <iframe
             src={embedUrl}
             className="w-full h-full"
@@ -57,14 +60,27 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRe
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button 
-                onClick={() => setShowVideo(true)} 
-                variant="secondary" 
-                size="icon" 
-                className="h-14 w-14 md:h-16 md:w-16 rounded-full bg-primary/90 text-white"
-              >
-                <Play className="h-6 w-6 md:h-8 md:w-8 fill-current" />
-              </Button>
+              {hasVideo ? (
+                <Button 
+                  onClick={() => setShowVideo(true)} 
+                  variant="secondary" 
+                  size="icon" 
+                  className="h-14 w-14 md:h-16 md:w-16 rounded-full bg-primary/90 text-white"
+                >
+                  <Play className="h-6 w-6 md:h-8 md:w-8 fill-current" />
+                </Button>
+              ) : (
+                <Button 
+                  variant="secondary" 
+                  size="icon" 
+                  className="h-14 w-14 md:h-16 md:w-16 rounded-full bg-green-500 text-white"
+                  asChild
+                >
+                  <a href={spotifyLink} target="_blank" rel="noopener noreferrer">
+                    <Music className="h-6 w-6 md:h-8 md:w-8" />
+                  </a>
+                </Button>
+              )}
             </div>
             
             {!logoError && (
@@ -90,6 +106,14 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRe
                   <AlertCircle className="h-4 w-4" />
                   Περιορισμός Χώρας
                 </div>
+              </div>
+            )}
+            
+            {!hasVideo && (
+              <div className="absolute bottom-2 left-2">
+                <Badge className="bg-green-500/80 backdrop-blur-sm text-[8px] font-bold flex items-center gap-1 border-none">
+                  <Music className="h-2 w-2" /> Spotify Only
+                </Badge>
               </div>
             )}
           </>
@@ -133,13 +157,22 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRe
       </CardHeader>
 
       <CardContent className="p-4 md:p-6 pt-0 space-y-4">
-        {entry.bioUrl && (
-          <Button variant="outline" size="sm" className="w-full h-9 rounded-xl text-[10px] font-bold uppercase tracking-widest border-primary/30 text-primary hover:bg-primary hover:text-white transition-all" asChild>
-            <a href={entry.bioUrl} target="_blank" rel="noopener noreferrer">
-              <User className="h-3 w-3 mr-2" /> Artist Bio (infegreece.com) <ExternalLink className="h-3 w-3 ml-2" />
-            </a>
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {entry.bioUrl && (
+            <Button variant="outline" size="sm" className="flex-1 h-9 rounded-xl text-[9px] font-bold uppercase tracking-widest border-primary/30 text-primary hover:bg-primary hover:text-white transition-all" asChild>
+              <a href={entry.bioUrl} target="_blank" rel="noopener noreferrer">
+                <User className="h-3 w-3 mr-1.5" /> Bio <ExternalLink className="h-2.5 w-2.5 ml-1" />
+              </a>
+            </Button>
+          )}
+          {entry.spotifyUrl && (
+            <Button variant="outline" size="sm" className="flex-1 h-9 rounded-xl text-[9px] font-bold uppercase tracking-widest border-green-500/30 text-green-500 hover:bg-green-500 hover:text-white transition-all" asChild>
+              <a href={entry.spotifyUrl} target="_blank" rel="noopener noreferrer">
+                <Music className="h-3 w-3 mr-1.5" /> Spotify <ExternalLink className="h-2.5 w-2.5 ml-1" />
+              </a>
+            </Button>
+          )}
+        </div>
         <VoteDialog 
           entry={entry} 
           onVote={onVote} 

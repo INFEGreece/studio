@@ -37,6 +37,11 @@
           "description": "The URL for the embedded performance video.",
           "format": "uri"
         },
+        "spotifyUrl": {
+          "type": "string",
+          "description": "The URL for the song on Spotify.",
+          "format": "uri"
+        },
         "thumbnailUrl": {
           "type": "string",
           "description": "An optional URL for a custom artist or performance photo.",
@@ -44,12 +49,17 @@
         },
         "stage": {
           "type": "string",
-          "enum": ["Final", "Semi-Final 1", "Semi-Final 2"],
+          "enum": ["Final", "Semi-Final 1", "Semi-Final 2", "Prequalification", "Eurodromio", "Be.So.", "Mu.Si.Ka."],
           "description": "The stage of the contest the entry participated in."
         },
         "description": {
           "type": "string",
           "description": "An optional description or background information about the entry."
+        },
+        "bioUrl": {
+          "type": "string",
+          "description": "Link to the artist's bio on infegreece.com",
+          "format": "uri"
         }
       },
       "required": [
@@ -112,6 +122,10 @@
           "type": "string",
           "description": "Timestamp.",
           "format": "date-time"
+        },
+        "feedback": {
+          "type": "string",
+          "description": "Optional user feedback for the vote."
         }
       },
       "required": [
@@ -127,7 +141,7 @@
   "auth": {
     "providers": [
       "password",
-      "anonymous"
+      "google"
     ]
   },
   "firestore": {
@@ -161,8 +175,45 @@
           },
           "description": "Records a user's vote."
         }
+      },
+      {
+        "path": "/year_metadata/{yearId}",
+        "definition": {
+          "entityName": "YearMetadata",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "description": { "type": "string" },
+              "isVotingOpen": { "type": "boolean" },
+              "logoUrl": { "type": "string" }
+            }
+          },
+          "description": "Metadata for each Eurovision year."
+        }
+      },
+      {
+        "path": "/settings/menu_config",
+        "definition": {
+          "entityName": "MenuConfig",
+          "schema": {
+             "type": "object",
+             "properties": {
+               "highLevelStages": { "type": "array", "items": { "type": "string" } }
+             }
+          },
+          "description": "Configuration for the application menu."
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "AdminRole",
+          "schema": { "type": "object" },
+          "description": "Identifies administrative users."
+        }
       }
     ],
-    "reasoning": "Standard Eurovision poll structure with stage categorization and flag support added."
+    "reasoning": "Comprehensive Eurovision poll structure with admin controls, metadata, and dynamic menus."
   }
 }
