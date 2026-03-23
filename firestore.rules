@@ -30,9 +30,17 @@ service cloud.firestore {
     }
 
     /**
-     * @description Dynamic descriptions for each year.
+     * @description Dynamic descriptions and voting status for each year.
      */
     match /year_metadata/{yearId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    /**
+     * @description Global application settings (e.g., menu configuration).
+     */
+    match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
     }
