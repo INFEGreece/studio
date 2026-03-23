@@ -107,7 +107,7 @@ export default function AdminPage() {
       setIsVotingOpen(true);
       setYearLogoUrl("");
     }
-  }, [currentYearMeta]);
+  }, [currentYearMeta, selectedYearMeta]);
 
   const allYears = DECADES.flatMap(d => d.years).sort((a, b) => b - a);
 
@@ -119,7 +119,7 @@ export default function AdminPage() {
       isVotingOpen: isVotingOpen,
       logoUrl: yearLogoUrl
     }, { merge: true });
-    toast({ title: "Πληροφορίες Έτους Αποθηκεύτηκαν" });
+    toast({ title: `Πληροφορίες ${selectedYearMeta} Αποθηκεύτηκαν` });
     setIsYearInfoOpen(false);
   };
 
@@ -153,6 +153,7 @@ export default function AdminPage() {
         <div className="max-w-md space-y-6 bg-card border rounded-[2rem] p-10 shadow-xl">
           <ShieldAlert className="h-16 w-16 mx-auto text-destructive" />
           <h1 className="text-2xl font-headline font-bold">Άρνηση Πρόσβασης</h1>
+          <p className="text-muted-foreground text-sm">Πρέπει να έχετε δικαιώματα διαχειριστή για να δείτε αυτή τη σελίδα.</p>
           <Button variant="outline" className="w-full" asChild><Link href="/">Επιστροφή</Link></Button>
         </div>
       </main>
@@ -210,7 +211,7 @@ export default function AdminPage() {
                     <TableCell>{entry.songTitle}</TableCell>
                     <TableCell><Badge variant="outline">{entry.year}</Badge></TableCell>
                     <TableCell className="text-right">
-                      <Button variant="outline" size="sm" className="mr-2" onClick={() => { setIsEditing(true); setCurrentId(entry.id); setFormData({ ...entry, bioUrl: entry.bioUrl || '', spotifyUrl: entry.spotifyUrl || '', videoUrl: entry.videoUrl || '' }); setIsDialogOpen(true); }}><Pencil className="h-4 w-4 mr-2"/> Επεξεργασία</Button>
+                      <Button variant="outline" size="sm" className="mr-2" onClick={() => { setIsEditing(true); setCurrentId(entry.id); setFormData({ ...entry, bioUrl: entry.bioUrl || '', spotifyUrl: entry.spotifyUrl || '', videoUrl: entry.videoUrl || '', thumbnailUrl: entry.thumbnailUrl || '' }); setIsDialogOpen(true); }}><Pencil className="h-4 w-4 mr-2"/> Επεξεργασία</Button>
                       <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { if(confirm("Διαγραφή;")) deleteDocumentNonBlocking(doc(db, 'eurovision_entries', entry.id)); }}>Διαγραφή</Button>
                     </TableCell>
                   </TableRow>
