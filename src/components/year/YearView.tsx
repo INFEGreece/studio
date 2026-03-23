@@ -9,7 +9,7 @@ import { YEAR_INFO } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Music, Loader2, Layers, Info, CheckCircle2, Sparkles, Lock, Trophy, ArrowLeft, Pencil, Trash2 } from 'lucide-react';
+import { Music, Loader2, Layers, Info, CheckCircle2, Sparkles, Lock, Trophy, ArrowLeft, Pencil, Trash2, Youtube, User } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import { Entry, Vote, ContestStage, YearMetadata } from '@/lib/types';
@@ -58,8 +58,9 @@ export function YearView({ year }: YearViewProps) {
     artist: '',
     songTitle: '',
     videoUrl: '',
-    thumbnailUrl: '',
+    spotifyUrl: '',
     bioUrl: '',
+    thumbnailUrl: '',
     stage: 'Final' as ContestStage
   });
 
@@ -138,7 +139,18 @@ export function YearView({ year }: YearViewProps) {
 
   const openEditDialog = (entry: Entry) => {
     setCurrentEntryForEdit(entry);
-    setEditFormData({ ...entry, bioUrl: entry.bioUrl || '', flagUrl: entry.flagUrl || '', thumbnailUrl: entry.thumbnailUrl || '' });
+    setEditFormData({ 
+      country: entry.country, 
+      flagUrl: entry.flagUrl || '', 
+      year: entry.year, 
+      artist: entry.artist, 
+      songTitle: entry.songTitle, 
+      videoUrl: entry.videoUrl || '', 
+      spotifyUrl: entry.spotifyUrl || '',
+      bioUrl: entry.bioUrl || '', 
+      thumbnailUrl: entry.thumbnailUrl || '', 
+      stage: entry.stage 
+    });
     setIsEditDialogOpen(true);
   };
 
@@ -276,13 +288,23 @@ export function YearView({ year }: YearViewProps) {
                 <div className="space-y-2"><Label>Καλλιτέχνης</Label><Input value={editFormData.artist} onChange={(e) => setEditFormData({ ...editFormData, artist: e.target.value })} className="rounded-xl h-11" /></div>
                 <div className="space-y-2"><Label>Τίτλος</Label><Input value={editFormData.songTitle} onChange={(e) => setEditFormData({ ...editFormData, songTitle: e.target.value })} className="rounded-xl h-11" /></div>
               </div>
-              <div className="space-y-2"><Label>Video URL</Label><Input value={editFormData.videoUrl} onChange={(e) => setEditFormData({ ...editFormData, videoUrl: e.target.value })} className="rounded-xl h-11" /></div>
-              <div className="space-y-2"><Label>Artist Bio URL</Label><Input value={editFormData.bioUrl} onChange={(e) => setEditFormData({ ...editFormData, bioUrl: e.target.value })} className="rounded-xl h-11" /></div>
               <div className="space-y-2"><Label>Φάση</Label>
                 <Select value={editFormData.stage} onValueChange={(v) => setEditFormData({ ...editFormData, stage: v as ContestStage })}>
                   <SelectTrigger className="rounded-xl h-11"><SelectValue /></SelectTrigger>
                   <SelectContent>{stages.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2"><Youtube className="h-4 w-4 text-red-500" /> Video URL</Label>
+                <Input value={editFormData.videoUrl} onChange={(e) => setEditFormData({ ...editFormData, videoUrl: e.target.value })} className="rounded-xl h-11" />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2"><Music className="h-4 w-4 text-green-500" /> Spotify URL</Label>
+                <Input value={editFormData.spotifyUrl} onChange={(e) => setEditFormData({ ...editFormData, spotifyUrl: e.target.value })} className="rounded-xl h-11" />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2"><User className="h-4 w-4" /> Artist Bio URL (infegreece.com)</Label>
+                <Input value={editFormData.bioUrl} onChange={(e) => setEditFormData({ ...editFormData, bioUrl: e.target.value })} className="rounded-xl h-11" />
               </div>
             </div>
             <DialogFooter><Button onClick={handleSaveEdit} className="w-full h-12 rounded-xl font-bold">Αποθήκευση</Button></DialogFooter>

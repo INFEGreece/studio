@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { History, Filter, Loader2, Layers, Music, RotateCcw, Calendar, Info, AlertTriangle, Star, CheckCircle2, MapPin, Pencil, Trash2, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { History, Filter, Loader2, Layers, Music, RotateCcw, Calendar, Info, AlertTriangle, Star, CheckCircle2, MapPin, Pencil, Trash2, Image as ImageIcon, Sparkles, User, Youtube } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import { Entry, Vote, ContestStage, YearMetadata } from '@/lib/types';
@@ -60,6 +60,8 @@ function HomeContent() {
     artist: '',
     songTitle: '',
     videoUrl: '',
+    spotifyUrl: '',
+    bioUrl: '',
     thumbnailUrl: '',
     stage: 'Final' as ContestStage
   });
@@ -178,7 +180,18 @@ function HomeContent() {
 
   const openEditDialog = (entry: Entry) => {
     setCurrentEntryForEdit(entry);
-    setEditFormData({ country: entry.country, flagUrl: entry.flagUrl || '', year: entry.year, artist: entry.artist, songTitle: entry.songTitle, videoUrl: entry.videoUrl, thumbnailUrl: entry.thumbnailUrl || '', stage: entry.stage });
+    setEditFormData({ 
+      country: entry.country, 
+      flagUrl: entry.flagUrl || '', 
+      year: entry.year, 
+      artist: entry.artist, 
+      songTitle: entry.songTitle, 
+      videoUrl: entry.videoUrl || '', 
+      spotifyUrl: entry.spotifyUrl || '',
+      bioUrl: entry.bioUrl || '',
+      thumbnailUrl: entry.thumbnailUrl || '', 
+      stage: entry.stage 
+    });
     setIsEditDialogOpen(true);
   };
 
@@ -378,7 +391,18 @@ function HomeContent() {
                   <SelectContent>{stages.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2"><Label>Video URL</Label><Input value={editFormData.videoUrl} onChange={(e) => setEditFormData({ ...editFormData, videoUrl: e.target.value })} className="rounded-xl h-11" /></div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2"><Youtube className="h-4 w-4 text-red-500" /> Video URL</Label>
+                <Input value={editFormData.videoUrl} onChange={(e) => setEditFormData({ ...editFormData, videoUrl: e.target.value })} className="rounded-xl h-11" />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2"><Music className="h-4 w-4 text-green-500" /> Spotify URL</Label>
+                <Input value={editFormData.spotifyUrl} onChange={(e) => setEditFormData({ ...editFormData, spotifyUrl: e.target.value })} className="rounded-xl h-11" />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2"><User className="h-4 w-4" /> Artist Bio URL (infegreece.com)</Label>
+                <Input value={editFormData.bioUrl} onChange={(e) => setEditFormData({ ...editFormData, bioUrl: e.target.value })} className="rounded-xl h-11" />
+              </div>
             </div>
             <DialogFooter><Button onClick={handleSaveEdit} className="w-full h-12 rounded-xl font-bold">Αποθήκευση</Button></DialogFooter>
           </DialogContent>

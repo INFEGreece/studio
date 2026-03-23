@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Suspense, useState, useMemo, useEffect } from 'react';
@@ -6,7 +7,7 @@ import { EntryCard } from '@/components/entries/EntryCard';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import { collection, query, where, doc, collectionGroup } from 'firebase/firestore';
 import { Entry, Vote, ContestStage } from '@/lib/types';
-import { Loader2, History, ArrowLeft, Trophy, Pencil, Trash2, Image as ImageIcon, Star, TrendingUp, Music } from 'lucide-react';
+import { Loader2, History, ArrowLeft, Trophy, Pencil, Trash2, Image as ImageIcon, Star, TrendingUp, Music, User, Youtube } from 'lucide-react';
 import { getFlagUrl } from '@/lib/utils';
 import { getEventLogo } from '@/lib/logos';
 import { Button } from '@/components/ui/button';
@@ -60,6 +61,8 @@ function CountryContent({ name }: { name: string }) {
     artist: '',
     songTitle: '',
     videoUrl: '',
+    spotifyUrl: '',
+    bioUrl: '',
     thumbnailUrl: '',
     stage: 'Final' as ContestStage
   });
@@ -150,7 +153,9 @@ function CountryContent({ name }: { name: string }) {
       year: entry.year,
       artist: entry.artist,
       songTitle: entry.songTitle,
-      videoUrl: entry.videoUrl,
+      videoUrl: entry.videoUrl || '',
+      spotifyUrl: entry.spotifyUrl || '',
+      bioUrl: entry.bioUrl || '',
       thumbnailUrl: entry.thumbnailUrl || '',
       stage: entry.stage
     });
@@ -333,8 +338,24 @@ function CountryContent({ name }: { name: string }) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="videoUrl">Video URL (YouTube)</Label>
+              <Label htmlFor="videoUrl" className="flex items-center gap-2">
+                <Youtube className="h-4 w-4 text-red-500" /> Video URL (YouTube)
+              </Label>
               <Input id="videoUrl" placeholder="https://www.youtube.com/watch?v=..." value={formData.videoUrl} onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })} className="rounded-xl h-11" />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="spotifyUrl" className="flex items-center gap-2">
+                <Music className="h-4 w-4 text-green-500" /> Spotify URL
+              </Label>
+              <Input id="spotifyUrl" placeholder="https://open.spotify.com/track/..." value={formData.spotifyUrl} onChange={(e) => setFormData({ ...formData, spotifyUrl: e.target.value })} className="rounded-xl h-11" />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bioUrl" className="flex items-center gap-2">
+                <User className="h-4 w-4" /> Artist Bio URL (infegreece.com)
+              </Label>
+              <Input id="bioUrl" placeholder="https://infegreece.com/bio-slug" value={formData.bioUrl} onChange={(e) => setFormData({ ...formData, bioUrl: e.target.value })} className="rounded-xl h-11" />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
