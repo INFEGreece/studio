@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Music, BarChart3, Settings, User as UserIcon, LogIn, LogOut, Calendar, Star, History } from 'lucide-react';
+import { Music, BarChart3, Settings, User as UserIcon, LogIn, LogOut, Calendar, Star, History, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -22,7 +22,7 @@ import { useUser, useAuth, useDoc, useFirestore, useMemoFirebase } from '@/fireb
 import { signOut } from 'firebase/auth';
 import { doc } from 'firebase/firestore';
 import { AuthDialog } from '@/components/auth/AuthDialog';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DECADES } from '@/lib/data';
 
 export function Navbar() {
@@ -35,11 +35,15 @@ export function Navbar() {
   const { data: adminData } = useDoc(adminDocRef);
   const isAdmin = !!adminData;
 
-  const infeEvents = [
-    { name: "Eurodromio", icon: <Music className="h-4 w-4" /> },
-    { name: "Be.So.", icon: <Star className="h-4 w-4" /> },
-    { name: "Mu.Si.Ka.", icon: <Music className="h-4 w-4" /> }
-  ];
+  const configRef = useMemoFirebase(() => doc(db, 'settings', 'menu_config'), [db]);
+  const { data: menuConfig } = useDoc<any>(configRef);
+  const [highLevelStages, setHighLevelStages] = useState<string[]>(['Eurodromio', 'Be.So.', 'Mu.Si.Ka.']);
+
+  useEffect(() => {
+    if (menuConfig && menuConfig.highLevelStages) {
+      setHighLevelStages(menuConfig.highLevelStages);
+    }
+  }, [menuConfig]);
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
@@ -60,19 +64,22 @@ export function Navbar() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-12 px-5 rounded-full flex items-center gap-2 text-sm font-bold hover:bg-primary/10 hover:text-primary transition-all">
-                <Star className="h-4 w-4 text-primary" /> INFE Events
+                <Sparkles className="h-4 w-4 text-primary" /> INFE Events
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56 rounded-2xl p-2" align="start">
               <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground p-3">Higher Level Events</DropdownMenuLabel>
-              {infeEvents.map(event => (
-                <DropdownMenuItem key={event.name} asChild className="rounded-xl h-11 cursor-pointer">
-                  <Link href={`/?year=2026&stage=${event.name}`} className="flex items-center gap-3">
-                    {event.icon}
-                    <span className="font-bold">{event.name}</span>
+              {highLevelStages.map(event => (
+                <DropdownMenuItem key={event} asChild className="rounded-xl h-11 cursor-pointer">
+                  <Link href={`/?year=2026&stage=${event}`} className="flex items-center gap-3">
+                    <Star className="h-4 w-4 text-primary" />
+                    <span className="font-bold">{event}</span>
                   </Link>
                 </DropdownMenuItem>
               ))}
+              {highLevelStages.length === 0 && (
+                <div className="p-3 text-xs text-muted-foreground italic">Δεν υπάρχουν ενεργά events.</div>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 

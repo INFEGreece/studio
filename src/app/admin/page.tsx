@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, Loader2, ListPlus, ShieldAlert, BookOpen, RotateCcw, AlertTriangle, Lock, Unlock, ImageIcon, User } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, ListPlus, ShieldAlert, BookOpen, RotateCcw, AlertTriangle, Lock, Unlock, ImageIcon, User, Layers, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc, query, collectionGroup, getDocs } from 'firebase/firestore';
@@ -47,8 +47,8 @@ export default function AdminPage() {
   
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [isYearInfoOpen, setIsYearInfoOpen] = useState(false);
+  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [currentId, setCurrentId] = useState<string | null>(null);
@@ -65,6 +65,19 @@ export default function AdminPage() {
   const [yearDescription, setYearDescription] = useState("");
   const [yearLogoUrl, setYearLogoUrl] = useState("");
   const [isVotingOpen, setIsVotingOpen] = useState(true);
+
+  // Categories management
+  const configRef = useMemoFirebase(() => doc(db, 'settings', 'menu_config'), [db]);
+  const { data: menuConfig } = useDoc<any>(configRef);
+  const [highLevelStages, setHighLevelStages] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (menuConfig && menuConfig.highLevelStages) {
+      setHighLevelStages(menuConfig.highLevelStages);
+    } else {
+      setHighLevelStages(['Eurodromio', 'Be.So.', 'Mu.Si.Ka.']);
+    }
+  }, [menuConfig]);
 
   const [formData, setFormData] = useState({
     country: '',
@@ -110,6 +123,12 @@ export default function AdminPage() {
     setIsYearInfoOpen(false);
   };
 
+  const handleSaveCategories = () => {
+    setDocumentNonBlocking(configRef, { highLevelStages }, { merge: true });
+    toast({ title: "Οι κατηγορίες μενού ενημερώθηκαν!" });
+    setIsCategoriesOpen(false);
+  };
+
   const handleResetAllVotes = async () => {
     if (!isAdmin) return;
     if (!confirm("ΠΡΟΣΟΧΗ: Αυτή η ενέργεια θα διαγράψει ΟΡΙΣΤΙΚΑ ΟΛΕΣ τις ψήφους. Είστε σίγουροι;")) return;
@@ -140,7 +159,7 @@ export default function AdminPage() {
     </div>
   );
 
-  const stages: ContestStage[] = ['Final', 'Semi-Final 1', 'Semi-Final 2', 'Prequalification', 'Eurodromio', 'Be.So.', 'Mu.Si.Ka.'];
+  const allPossibleStages = ['Final', 'Semi-Final 1', 'Semi-Final 2', 'Prequalification', 'Eurodromio', 'Be.So.', 'Mu.Si.Ka.'];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -152,6 +171,9 @@ export default function AdminPage() {
             <p className="text-muted-foreground">Συμμετοχές, Πληροφορίες & Έλεγχος Ψηφοφορίας.</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" className="h-12 rounded-xl" onClick={() => setIsCategoriesOpen(true)}>
+              <Layers className="h-5 w-5 mr-2" /> Κατηγορίες Μενού
+            </Button>
             <Button variant="outline" className="h-12 rounded-xl" onClick={() => setIsYearInfoOpen(true)}>
               <BookOpen className="h-5 w-5 mr-2" /> Πληροφορίες & Voting
             </Button>
@@ -197,6 +219,34 @@ export default function AdminPage() {
             </Table>
           </div>
         </div>
+
+        {/* Categories Config Dialog */}
+        <Dialog open={isCategoriesOpen} onOpenChange={setIsCategoriesOpen}>
+          <DialogContent className="sm:max-w-[500px] rounded-[2rem] p-8">
+            <DialogHeader><DialogTitle className="text-2xl font-headline font-bold">Κατηγοριοποίηση Events</DialogTitle></DialogHeader>
+            <div className="space-y-6 py-4">
+               <p className="text-sm text-muted-foreground">Επιλέξτε ποιες φάσεις/events θα εμφανίζονται στην ενότητα "Higher Level Events" του μενού.</p>
+               <div className="space-y-3">
+                  {allPossibleStages.map(stage => (
+                    <div key={stage} className="flex items-center justify-between p-3 bg-muted/30 rounded-xl border">
+                      <div className="flex items-center gap-3">
+                        <Star className={`h-4 w-4 ${highLevelStages.includes(stage) ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <span className="font-bold">{stage}</span>
+                      </div>
+                      <Switch 
+                        checked={highLevelStages.includes(stage)} 
+                        onCheckedChange={(checked) => {
+                          if (checked) setHighLevelStages([...highLevelStages, stage]);
+                          else setHighLevelStages(highLevelStages.filter(s => s !== stage));
+                        }} 
+                      />
+                    </div>
+                  ))}
+               </div>
+            </div>
+            <DialogFooter><Button onClick={handleSaveCategories} className="w-full h-12 rounded-xl font-bold">Αποθήκευση Μενού</Button></DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Year Info Dialog */}
         <Dialog open={isYearInfoOpen} onOpenChange={setIsYearInfoOpen}>
@@ -253,7 +303,7 @@ export default function AdminPage() {
               <div className="space-y-2"><Label>Φάση</Label>
                 <Select value={formData.stage} onValueChange={(v) => setFormData({ ...formData, stage: v as ContestStage })}>
                   <SelectTrigger className="rounded-xl h-11"><SelectValue /></SelectTrigger>
-                  <SelectContent>{stages.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                  <SelectContent>{allPossibleStages.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
