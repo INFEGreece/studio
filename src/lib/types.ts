@@ -11,6 +11,7 @@ export interface Entry {
   videoUrl: string;
   stage: ContestStage;
   thumbnailUrl?: string;
+  bioUrl?: string; // Link to infegreece.com bio
   totalPoints?: number;
   voteCount?: number;
 }

@@ -6,7 +6,7 @@ import { Entry } from '@/lib/types';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Mic2, MapPin, Play, AlertCircle, Image as ImageIcon } from 'lucide-react';
+import { Mic2, MapPin, Play, AlertCircle, Image as ImageIcon, ExternalLink, User } from 'lucide-react';
 import { VoteDialog } from '@/components/voting/VoteDialog';
 import { getFlagUrl } from '@/lib/utils';
 import { getEventLogo } from '@/lib/logos';
@@ -67,7 +67,6 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRe
               </Button>
             </div>
             
-            {/* Event Logo Overlay */}
             {!logoError && (
               <div className="absolute top-2 left-2 h-10 w-16 md:h-12 md:w-20 z-10 drop-shadow-lg">
                 <img 
@@ -133,7 +132,14 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRe
         </div>
       </CardHeader>
 
-      <CardContent className="p-4 md:p-6 pt-0">
+      <CardContent className="p-4 md:p-6 pt-0 space-y-4">
+        {entry.bioUrl && (
+          <Button variant="outline" size="sm" className="w-full h-9 rounded-xl text-[10px] font-bold uppercase tracking-widest border-primary/30 text-primary hover:bg-primary hover:text-white transition-all" asChild>
+            <a href={entry.bioUrl} target="_blank" rel="noopener noreferrer">
+              <User className="h-3 w-3 mr-2" /> Artist Bio (infegreece.com) <ExternalLink className="h-3 w-3 ml-2" />
+            </a>
+          </Button>
+        )}
         <VoteDialog 
           entry={entry} 
           onVote={onVote} 

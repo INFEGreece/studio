@@ -9,13 +9,30 @@ import { YEAR_INFO } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Music, Loader2, Layers, Info, CheckCircle2, Sparkles, Lock, Trophy, ArrowLeft } from 'lucide-react';
+import { Music, Loader2, Layers, Info, CheckCircle2, Sparkles, Lock, Trophy, ArrowLeft, Pencil, Trash2 } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import { Entry, Vote, ContestStage, YearMetadata } from '@/lib/types';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { getEventLogo } from '@/lib/logos';
+import { getFlagUrl } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface YearViewProps {
   year: string;
@@ -31,6 +48,21 @@ export function YearView({ year }: YearViewProps) {
   const [userCountry, setUserCountry] = useState<string | null>(null);
   const [logoError, setLogoError] = useState(false);
 
+  // Admin Edit State
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [currentEntryForEdit, setCurrentEntryForEdit] = useState<Entry | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    country: '',
+    flagUrl: '',
+    year: 2026,
+    artist: '',
+    songTitle: '',
+    videoUrl: '',
+    thumbnailUrl: '',
+    bioUrl: '',
+    stage: 'Final' as ContestStage
+  });
+
   useEffect(() => {
     fetch('https://ipapi.co/json/')
       .then(res => res.json())
@@ -39,6 +71,13 @@ export function YearView({ year }: YearViewProps) {
       })
       .catch(() => {});
   }, []);
+
+  const adminDocRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return doc(db, 'roles_admin', user.uid);
+  }, [db, user]);
+  const { data: adminData } = useDoc(adminDocRef);
+  const isAdmin = !!adminData;
 
   const entriesRef = useMemoFirebase(() => {
     return query(collection(db, 'eurovision_entries'), where('year', '==', selectedYear));
@@ -59,8 +98,6 @@ export function YearView({ year }: YearViewProps) {
 
   const yearDescription = dynamicYearMeta?.description || YEAR_INFO[selectedYear] || `Αρχείο συμμετοχών για το έτος ${selectedYear}.`;
   const isVotingOpen = dynamicYearMeta?.isVotingOpen ?? true;
-  
-  // Prioritize Custom Logo URL from DB, then fallback to automatic file path
   const yearLogoUrl = dynamicYearMeta?.logoUrl || getEventLogo(selectedYear, 'Final');
   
   const populatedStages = useMemo(() => {
@@ -75,11 +112,14 @@ export function YearView({ year }: YearViewProps) {
       return;
     }
     if (!isVotingOpen) {
-      toast({ title: "Η ψηφοφορία είναι κλειστή", description: "Δεν μπορείτε να υποβάλετε ψήφους για αυτό το έτος.", variant: "destructive" });
+      toast({ title: "Η ψηφοφορία είναι κλειστή", variant: "destructive" });
       return;
     }
-    if (selectedYear === 2026 && entry.country === userCountry) {
-      toast({ title: "Περιορισμός Χώρας", variant: "destructive" });
+
+    // IP Restriction skip for INFE Greece Events
+    const isInfeEvent = ["Eurodromio", "Be.So.", "Mu.Si.Ka."].includes(entry.stage);
+    if (!isInfeEvent && selectedYear === 2026 && entry.country === userCountry) {
+      toast({ title: "Περιορισμός Χώρας", description: "Δεν μπορείτε να ψηφίσετε τη χώρα σας σε ESC events.", variant: "destructive" });
       return;
     }
     
@@ -95,6 +135,22 @@ export function YearView({ year }: YearViewProps) {
       feedback 
     }, { merge: true });
   };
+
+  const openEditDialog = (entry: Entry) => {
+    setCurrentEntryForEdit(entry);
+    setEditFormData({ ...entry, bioUrl: entry.bioUrl || '', flagUrl: entry.flagUrl || '', thumbnailUrl: entry.thumbnailUrl || '' });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (!currentEntryForEdit) return;
+    const entryRef = doc(db, 'eurovision_entries', currentEntryForEdit.id);
+    setDocumentNonBlocking(entryRef, { ...editFormData, id: currentEntryForEdit.id, flagUrl: editFormData.flagUrl || getFlagUrl(editFormData.country) }, { merge: true });
+    setIsEditDialogOpen(false);
+    toast({ title: "Ενημερώθηκε!" });
+  };
+
+  const stages: ContestStage[] = ['Final', 'Semi-Final 1', 'Semi-Final 2', 'Prequalification', 'Eurodromio', 'Be.So.', 'Mu.Si.Ka.'];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -112,7 +168,7 @@ export function YearView({ year }: YearViewProps) {
               {!logoError ? (
                 <img 
                   src={yearLogoUrl} 
-                  alt={`Eurovision ${selectedYear} Logo`} 
+                  alt={`Logo`} 
                   className="w-full h-full object-contain drop-shadow-2xl"
                   onError={() => setLogoError(true)} 
                 />
@@ -168,7 +224,7 @@ export function YearView({ year }: YearViewProps) {
             <Tabs value={selectedStage} onValueChange={setSelectedStage} className="w-full">
               <TabsList className="flex flex-wrap h-auto bg-muted/30 p-2 rounded-2xl gap-2">
                 <TabsTrigger value="All" className="h-10 md:h-12 rounded-xl px-6">Όλα</TabsTrigger>
-                {['Final', 'Semi-Final 1', 'Semi-Final 2', 'Prequalification', 'Eurodromio', 'Be.So.', 'Mu.Si.Ka.'].filter(s => populatedStages.has(s)).map(s => (
+                {stages.filter(s => populatedStages.has(s)).map(s => (
                   <TabsTrigger key={s} value={s} className="h-10 md:h-12 rounded-xl px-6">{s}</TabsTrigger>
                 ))}
               </TabsList>
@@ -186,19 +242,52 @@ export function YearView({ year }: YearViewProps) {
                 .filter(e => selectedStage === "All" || e.stage === selectedStage)
                 .sort((a, b) => a.country.localeCompare(b.country))
                 .map((entry) => (
-                  <EntryCard 
-                    key={entry.id} 
-                    entry={entry} 
-                    onVote={(score, feedback) => handleVote(entry, score, feedback)}
-                    hasVoted={!!userVotesMap[entry.id]}
-                    userScore={userVotesMap[entry.id]}
-                    usedPoints={usedPoints}
-                    isRestricted={(selectedYear === 2026 && entry.country === userCountry) || !isVotingOpen}
-                  />
+                  <div key={entry.id} className="relative group">
+                    <EntryCard 
+                      entry={entry} 
+                      onVote={(score, feedback) => handleVote(entry, score, feedback)}
+                      hasVoted={!!userVotesMap[entry.id]}
+                      userScore={userVotesMap[entry.id]}
+                      usedPoints={usedPoints}
+                      isRestricted={(selectedYear === 2026 && entry.country === userCountry && !["Eurodromio", "Be.So.", "Mu.Si.Ka."].includes(entry.stage)) || !isVotingOpen}
+                    />
+                    {isAdmin && (
+                      <div className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                        <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full shadow-lg bg-white/90" onClick={() => openEditDialog(entry)}><Pencil className="h-4 w-4 text-primary" /></Button>
+                        <Button size="icon" variant="destructive" className="h-8 w-8 rounded-full shadow-lg bg-destructive/90" onClick={() => { if(confirm("Διαγραφή;")) deleteDocumentNonBlocking(doc(db, 'eurovision_entries', entry.id)); }}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    )}
+                  </div>
                 ))}
             </div>
           )}
         </section>
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[600px] rounded-[2rem] overflow-y-auto max-h-[90vh] p-8">
+            <DialogHeader><DialogTitle>Επεξεργασία Συμμετοχής</DialogTitle></DialogHeader>
+            <div className="grid gap-6 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>Χώρα</Label><Input value={editFormData.country} onChange={(e) => setEditFormData({ ...editFormData, country: e.target.value })} className="rounded-xl h-11" /></div>
+                <div className="space-y-2"><Label>Έτος</Label><Input type="number" value={editFormData.year} onChange={(e) => setEditFormData({ ...editFormData, year: parseInt(e.target.value) })} className="rounded-xl h-11" /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>Καλλιτέχνης</Label><Input value={editFormData.artist} onChange={(e) => setEditFormData({ ...editFormData, artist: e.target.value })} className="rounded-xl h-11" /></div>
+                <div className="space-y-2"><Label>Τίτλος</Label><Input value={editFormData.songTitle} onChange={(e) => setEditFormData({ ...editFormData, songTitle: e.target.value })} className="rounded-xl h-11" /></div>
+              </div>
+              <div className="space-y-2"><Label>Video URL</Label><Input value={editFormData.videoUrl} onChange={(e) => setEditFormData({ ...editFormData, videoUrl: e.target.value })} className="rounded-xl h-11" /></div>
+              <div className="space-y-2"><Label>Artist Bio URL</Label><Input value={editFormData.bioUrl} onChange={(e) => setEditFormData({ ...editFormData, bioUrl: e.target.value })} className="rounded-xl h-11" /></div>
+              <div className="space-y-2"><Label>Φάση</Label>
+                <Select value={editFormData.stage} onValueChange={(v) => setEditFormData({ ...editFormData, stage: v as ContestStage })}>
+                  <SelectTrigger className="rounded-xl h-11"><SelectValue /></SelectTrigger>
+                  <SelectContent>{stages.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter><Button onClick={handleSaveEdit} className="w-full h-12 rounded-xl font-bold">Αποθήκευση</Button></DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, Loader2, ListPlus, ShieldAlert, BookOpen, RotateCcw, AlertTriangle, Lock, Unlock, ImageIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, ListPlus, ShieldAlert, BookOpen, RotateCcw, AlertTriangle, Lock, Unlock, ImageIcon, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc, query, collectionGroup, getDocs } from 'firebase/firestore';
@@ -74,6 +74,7 @@ export default function AdminPage() {
     songTitle: '',
     videoUrl: '',
     thumbnailUrl: '',
+    bioUrl: '',
     stage: 'Final' as ContestStage
   });
 
@@ -154,7 +155,7 @@ export default function AdminPage() {
             <Button variant="outline" className="h-12 rounded-xl" onClick={() => setIsYearInfoOpen(true)}>
               <BookOpen className="h-5 w-5 mr-2" /> Πληροφορίες & Voting
             </Button>
-            <Button className="h-12 rounded-xl" onClick={() => { setIsEditing(false); setFormData({ country: '', flagUrl: '', year: 2026, artist: '', songTitle: '', videoUrl: '', thumbnailUrl: '', stage: 'Final' }); setIsDialogOpen(true); }}>
+            <Button className="h-12 rounded-xl" onClick={() => { setIsEditing(false); setFormData({ country: '', flagUrl: '', year: 2026, artist: '', songTitle: '', videoUrl: '', thumbnailUrl: '', bioUrl: '', stage: 'Final' }); setIsDialogOpen(true); }}>
               <Plus className="h-5 w-5 mr-2" /> Νέα Συμμετοχή
             </Button>
           </div>
@@ -187,7 +188,7 @@ export default function AdminPage() {
                     <TableCell>{entry.songTitle}</TableCell>
                     <TableCell><Badge variant="outline">{entry.year}</Badge></TableCell>
                     <TableCell className="text-right">
-                      <Button variant="outline" size="sm" className="mr-2" onClick={() => { setIsEditing(true); setCurrentId(entry.id); setFormData(entry); setIsDialogOpen(true); }}><Pencil className="h-4 w-4 mr-2"/> Επεξεργασία</Button>
+                      <Button variant="outline" size="sm" className="mr-2" onClick={() => { setIsEditing(true); setCurrentId(entry.id); setFormData({ ...entry, bioUrl: entry.bioUrl || '' }); setIsDialogOpen(true); }}><Pencil className="h-4 w-4 mr-2"/> Επεξεργασία</Button>
                       <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { if(confirm("Διαγραφή;")) deleteDocumentNonBlocking(doc(db, 'eurovision_entries', entry.id)); }}>Διαγραφή</Button>
                     </TableCell>
                   </TableRow>
@@ -197,20 +198,21 @@ export default function AdminPage() {
           </div>
         </div>
 
+        {/* Year Info Dialog */}
         <Dialog open={isYearInfoOpen} onOpenChange={setIsYearInfoOpen}>
           <DialogContent className="sm:max-w-[600px] rounded-[2rem] p-8">
-            <DialogHeader><DialogTitle className="text-2xl font-headline font-bold">Πληροφορίες & Logo Έτους</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle className="text-2xl font-headline font-bold">Πληροφορίες & Voting Control</DialogTitle></DialogHeader>
             <div className="space-y-6 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Έτος</Label>
+                  <Label>Επιλογή Έτους</Label>
                   <Select value={selectedYearMeta} onValueChange={setSelectedYearMeta}>
                     <SelectTrigger className="h-12 rounded-xl"><SelectValue /></SelectTrigger>
                     <SelectContent>{allYears.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="flex flex-col justify-center space-y-2">
-                  <Label>Ψηφοφορία Ενεργή;</Label>
+                  <Label>Κατάσταση Voting</Label>
                   <div className="flex items-center gap-3 bg-muted/30 p-2 rounded-xl h-12">
                     <Switch checked={isVotingOpen} onCheckedChange={setIsVotingOpen} />
                     {isVotingOpen ? <Unlock className="h-4 w-4 text-green-500" /> : <Lock className="h-4 w-4 text-destructive" />}
@@ -220,9 +222,8 @@ export default function AdminPage() {
               </div>
               
               <div className="space-y-2">
-                <Label className="flex items-center gap-2"><ImageIcon className="h-4 w-4"/> Logo URL (Custom)</Label>
+                <Label className="flex items-center gap-2"><ImageIcon className="h-4 w-4"/> Logo URL Override</Label>
                 <Input value={yearLogoUrl} onChange={(e) => setYearLogoUrl(e.target.value)} placeholder="https://example.com/logo.png" className="h-12 rounded-xl"/>
-                <p className="text-[10px] text-muted-foreground">Αν μείνει κενό, θα αναζητηθεί αυτόματα στον φάκελο /assets/logos/</p>
               </div>
 
               <div className="space-y-2">
@@ -234,8 +235,9 @@ export default function AdminPage() {
           </DialogContent>
         </Dialog>
 
+        {/* Entry Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-[600px] rounded-[2rem] p-8">
+          <DialogContent className="sm:max-w-[600px] rounded-[2rem] p-8 overflow-y-auto max-h-[90vh]">
             <DialogHeader><DialogTitle>{isEditing ? "Επεξεργασία" : "Νέα Συμμετοχή"}</DialogTitle></DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
@@ -247,6 +249,7 @@ export default function AdminPage() {
                 <div className="space-y-2"><Label>Τίτλος</Label><Input value={formData.songTitle} onChange={(e) => setFormData({ ...formData, songTitle: e.target.value })} className="rounded-xl h-11" /></div>
               </div>
               <div className="space-y-2"><Label>Video URL</Label><Input value={formData.videoUrl} onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })} className="rounded-xl h-11" /></div>
+              <div className="space-y-2"><Label className="flex items-center gap-2"><User className="h-4 w-4" /> Artist Bio URL (infegreece.com)</Label><Input value={formData.bioUrl} onChange={(e) => setFormData({ ...formData, bioUrl: e.target.value })} placeholder="https://infegreece.com/bio-slug" className="rounded-xl h-11" /></div>
               <div className="space-y-2"><Label>Φάση</Label>
                 <Select value={formData.stage} onValueChange={(v) => setFormData({ ...formData, stage: v as ContestStage })}>
                   <SelectTrigger className="rounded-xl h-11"><SelectValue /></SelectTrigger>
