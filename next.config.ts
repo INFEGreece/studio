@@ -1,7 +1,8 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  output: 'export',
+  // Αφαιρέθηκε το output: 'export' για να επιτραπούν οι Server Actions (Genkit AI)
   trailingSlash: true,
   images: {
     unoptimized: true,

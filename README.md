@@ -1,35 +1,36 @@
-# INFE Greece Eurovision Poll 2026 - Plesk Guide
 
-This application is optimized for **Static Export**, which is the best way to host on your **Plesk** server for free.
+# INFE Greece Eurovision Poll 2026 - Plesk Node.js Guide
 
-## 🚀 WHERE TO PUSH TO GITHUB
-1. Look at the bottom-left or bottom-right of your **Firebase Studio** editor.
-2. Click the button that says **"Push"** or **"Sync"**.
-3. This sends your code to your GitHub repository automatically.
+Αυτή η εφαρμογή χρησιμοποιεί **Genkit AI** και **Server Actions**, οπότε πρέπει να φιλοξενηθεί ως **Node.js Application** στον Plesk server σας (και όχι ως απλό στατικό site).
 
-## 📦 HOW TO GET YOUR FILES (GitHub Actions)
-Once you have pushed your code:
-1. Open your repository on **GitHub.com**.
-2. Click the **"Actions"** tab at the top.
-3. Click on the latest run (usually called "Build Static Site").
-4. Scroll down to the **"Artifacts"** section at the bottom.
-5. Click **"out-folder"** to download the zip file.
-6. **Upload to Plesk**: Extract that zip and upload all the files inside directly into your `httpdocs` folder.
+## 🚀 ΡΥΘΜΙΣΗ ΣΤΟ PLESK (Node.js)
+1. Στο Plesk, πηγαίνετε στο **Node.js**.
+2. **Node.js Version**: Επιλέξτε την τελευταία (π.χ. 20.x ή 22.x).
+3. **Document Root**: `/public` (ή το φάκελο που περιέχει το build σας).
+4. **Application Mode**: `production`.
+5. **Application Startup File**: `node_modules/next/dist/bin/next`.
+6. **Custom Environment Variables**: Προσθέστε το `GEMINI_API_KEY` σας για να λειτουργεί το AI.
+
+## 📦 ΕΓΚΑΤΑΣΤΑΣΗ & BUILD
+1. Ανεβάστε τα αρχεία σας (ή κάντε Git Deploy).
+2. Πατήστε **"NPM Install"** στο Plesk panel.
+3. Πατήστε **"Run Script"** και επιλέξτε το `build`.
+4. Πατήστε **"Restart App"**.
 
 ## 🔐 GOOGLE SIGN-IN SETUP
 1. Go to the [Firebase Console](https://console.firebase.google.com/).
 2. Go to **Authentication** > **Sign-in method**.
 3. Enable **Google**.
 4. **CRITICAL**: Go to **Authentication** > **Settings** > **Authorized Domains**.
-5. Click **"Add Domain"** and enter your subdomain (e.g., `infepoll.infegreece.com`). **Google login will fail without this.**
+5. Click **"Add Domain"** and enter your subdomain (e.g., `infepoll.infegreece.com`).
 
-## 👑 HOW TO BECOME AN ADMIN
+## 👑 ADMIN ACCESS
 1. Log in to your website.
-2. Go to the **Management** (Admin) page. It will show you your **User UID** (e.g., `abc123xyz...`).
-3. **Copy your UID**.
-4. In Firebase Console, go to **Firestore Database**.
-5. Create a collection called `roles_admin`.
-6. Add a document where the **Document ID** is exactly your **UID**. Leave it empty. You are now an Admin!
+2. Go to the **Management** page.
+3. Copy your UID.
+4. In Firebase Firestore, create a collection `roles_admin` and add a document with your UID as the ID.
 
-## 🚨 PLESK CLEANUP
-Before uploading, delete `default.php`, `index.php`, or any existing `index.html` that Plesk created automatically. These "default" files will block your app from showing if not deleted.
+## 📁 LOGOS & ASSETS
+- Ανεβάστε τα logos σας στο: `public/assets/logos/`
+- ESC Logos: `YYYY.jpg` (π.χ. `2024.jpg`)
+- INFE Events: `ED24.png`, `BE24.png`, `MU24.png`
