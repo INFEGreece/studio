@@ -158,13 +158,31 @@ function HomeContent() {
       toast({ title: "Η ψηφοφορία είναι κλειστή", variant: "destructive" });
       return;
     }
-    if (selectedYear === 2026 && entry.country === userCountry) {
+    
+    // IP Restriction check
+    if (selectedYear === 2026 && entry.country === userCountry && score !== 0) {
       toast({ title: "Περιορισμός Ψηφοφορίας", description: "Δεν μπορείτε να ψηφίσετε τη χώρα σας.", variant: "destructive" });
       return;
     }
+
     const voteId = `${selectedYear}-${entry.id}`;
     const voteRef = doc(db, 'users', user.uid, 'votes', voteId);
-    setDocumentNonBlocking(voteRef, { id: voteId, userId: user.uid, eurovisionEntryId: entry.id, year: selectedYear, points: score, votedAt: new Date().toISOString(), feedback: feedback }, { merge: true });
+
+    if (score === 0) {
+      deleteDocumentNonBlocking(voteRef);
+      toast({ title: "Η ψήφος αφαιρέθηκε", description: `Αφαιρέσατε τους πόντους από την συμμετοχή ${entry.country}.` });
+    } else {
+      setDocumentNonBlocking(voteRef, { 
+        id: voteId, 
+        userId: user.uid, 
+        eurovisionEntryId: entry.id, 
+        year: selectedYear, 
+        points: score, 
+        votedAt: new Date().toISOString(), 
+        feedback: feedback 
+      }, { merge: true });
+      toast({ title: "Η ψήφος καταχωρήθηκε", description: `Δώσατε ${score} πόντους στην συμμετοχή ${entry.country}!` });
+    }
   };
 
   const handleResetVotes = () => {

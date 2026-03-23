@@ -32,9 +32,6 @@ import {
 } from "@/components/ui/select";
 import { Badge } from '@/components/ui/badge';
 
-/**
- * Inner component to handle data fetching and interaction
- */
 function CountryContent({ name }: { name: string }) {
   const countryName = decodeURIComponent(name);
   const db = useFirestore();
@@ -126,16 +123,22 @@ function CountryContent({ name }: { name: string }) {
     }
     const voteId = `${entry.year}-${entry.id}`;
     const voteRef = doc(db, 'users', user.uid, 'votes', voteId);
-    setDocumentNonBlocking(voteRef, {
-      id: voteId,
-      userId: user.uid,
-      eurovisionEntryId: entry.id,
-      year: entry.year,
-      points: score,
-      votedAt: new Date().toISOString(),
-      feedback: feedback
-    }, { merge: true });
-    toast({ title: "Η ψήφος καταχωρήθηκε", description: `Δώσατε ${score} πόντους στη συμμετοχή του ${entry.year}!` });
+
+    if (score === 0) {
+      deleteDocumentNonBlocking(voteRef);
+      toast({ title: "Η ψήφος αφαιρέθηκε", description: `Αφαιρέσατε τους πόντους από την συμμετοχή του ${entry.year}.` });
+    } else {
+      setDocumentNonBlocking(voteRef, {
+        id: voteId,
+        userId: user.uid,
+        eurovisionEntryId: entry.id,
+        year: entry.year,
+        points: score,
+        votedAt: new Date().toISOString(),
+        feedback: feedback
+      }, { merge: true });
+      toast({ title: "Η ψήφος καταχωρήθηκε", description: `Δώσατε ${score} πόντους στη συμμετοχή του ${entry.year}!` });
+    }
   };
 
   const handleDeleteEntry = (entryId: string) => {
@@ -185,7 +188,6 @@ function CountryContent({ name }: { name: string }) {
   const flagUrl = sortedEntries[0]?.flagUrl || getFlagUrl(countryName);
   const stages: ContestStage[] = ['Final', 'Semi-Final 1', 'Semi-Final 2', 'Prequalification', 'Eurodromio', 'Be.So.', 'Mu.Si.Ka.'];
   
-  // Get logo for the most recent year
   const latestEntry = sortedEntries[0];
   const eventLogo = latestEntry ? getEventLogo(latestEntry.year, latestEntry.stage) : null;
 

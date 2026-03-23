@@ -117,24 +117,30 @@ export function YearView({ year }: YearViewProps) {
       return;
     }
 
-    // IP Restriction skip for INFE Greece Events
     const isInfeEvent = ["Eurodromio", "Be.So.", "Mu.Si.Ka."].includes(entry.stage);
-    if (!isInfeEvent && selectedYear === 2026 && entry.country === userCountry) {
+    if (!isInfeEvent && selectedYear === 2026 && entry.country === userCountry && score !== 0) {
       toast({ title: "Περιορισμός Χώρας", description: "Δεν μπορείτε να ψηφίσετε τη χώρα σας σε ESC events.", variant: "destructive" });
       return;
     }
     
     const voteId = `${selectedYear}-${entry.id}`;
     const voteRef = doc(db, 'users', user.uid, 'votes', voteId);
-    setDocumentNonBlocking(voteRef, { 
-      id: voteId, 
-      userId: user.uid, 
-      eurovisionEntryId: entry.id, 
-      year: selectedYear, 
-      points: score, 
-      votedAt: new Date().toISOString(), 
-      feedback 
-    }, { merge: true });
+
+    if (score === 0) {
+      deleteDocumentNonBlocking(voteRef);
+      toast({ title: "Η ψήφος αφαιρέθηκε", description: `Αφαιρέσατε τους πόντους από την συμμετοχή ${entry.country}.` });
+    } else {
+      setDocumentNonBlocking(voteRef, { 
+        id: voteId, 
+        userId: user.uid, 
+        eurovisionEntryId: entry.id, 
+        year: selectedYear, 
+        points: score, 
+        votedAt: new Date().toISOString(), 
+        feedback 
+      }, { merge: true });
+      toast({ title: "Η ψήφος καταχωρήθηκε", description: `Δώσατε ${score} πόντους στην συμμετοχή ${entry.country}!` });
+    }
   };
 
   const openEditDialog = (entry: Entry) => {

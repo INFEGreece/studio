@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Entry } from '@/lib/types';
 import {
   Dialog,
@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from '@/components/ui/button';
-import { Star, CheckCircle2, Trophy, ShieldAlert, Lock, AlertTriangle } from 'lucide-react';
+import { Star, CheckCircle2, Trophy, ShieldAlert, Lock, AlertTriangle, RotateCcw } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -40,13 +40,20 @@ export function VoteDialog({ entry, onVote, hasVoted, userScore, usedPoints = ne
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
 
+  // Synchronize internal state when the dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      setScore(userScore || 0);
+      setFeedback(""); 
+    }
+  }, [isOpen, userScore]);
+
   const handleSubmit = () => {
-    if (score === 0) return;
     onVote?.(score, feedback);
     setIsOpen(false);
   };
 
-  const points = [1, 2, 3, 4, 5, 6, 7, 8, 10, 12];
+  const points = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12];
 
   if (disabled) {
     return (
@@ -84,23 +91,50 @@ export function VoteDialog({ entry, onVote, hasVoted, userScore, usedPoints = ne
 
         <div className="grid gap-6 py-6">
           <div className="space-y-3">
-            <label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Βαθμοί</label>
-            <Select value={score > 0 ? score.toString() : ""} onValueChange={(v) => setScore(parseInt(v))}>
-              <SelectTrigger className="h-14 rounded-2xl border-2 text-lg font-bold"><SelectValue placeholder="Πόντοι" /></SelectTrigger>
+            <label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Επιλέξτε Βαθμολογία</label>
+            <Select value={score.toString()} onValueChange={(v) => setScore(parseInt(v))}>
+              <SelectTrigger className="h-14 rounded-2xl border-2 text-lg font-bold">
+                <SelectValue placeholder="Πόντοι" />
+              </SelectTrigger>
               <SelectContent>
                 {points.map((p) => (
-                  <SelectItem key={p} value={p.toString()} disabled={usedPoints.has(p) && p !== userScore}>
-                    {p} Πόντοι {usedPoints.has(p) && p !== userScore && "(Χρησιμοποιήθηκε)"}
+                  <SelectItem 
+                    key={p} 
+                    value={p.toString()} 
+                    disabled={p !== 0 && usedPoints.has(p) && p !== userScore}
+                  >
+                    <div className="flex items-center gap-2">
+                      {p === 0 ? <RotateCcw className="h-4 w-4 text-muted-foreground" /> : <Trophy className="h-4 w-4 text-primary" />}
+                      <span>
+                        {p === 0 ? "0 Πόντοι (Αφαίρεση Ψήφου)" : `${p} Πόντοι`}
+                        {p !== 0 && usedPoints.has(p) && p !== userScore && " (Χρησιμοποιήθηκε)"}
+                      </span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {score === 0 && hasVoted && (
+              <p className="text-[10px] text-destructive font-bold uppercase tracking-widest flex items-center gap-1 ml-1">
+                <AlertTriangle className="h-3 w-3" /> Προσοχή: Η ψήφος σας θα διαγραφεί.
+              </p>
+            )}
           </div>
-          <Textarea placeholder="Σχόλια..." value={feedback} onChange={(e) => setFeedback(e.target.value)} className="min-h-[100px] rounded-2xl" />
+          <Textarea 
+            placeholder="Προσθέστε ένα σχόλιο για την εμφάνιση (προαιρετικά)..." 
+            value={feedback} 
+            onChange={(e) => setFeedback(e.target.value)} 
+            className="min-h-[100px] rounded-2xl" 
+          />
         </div>
 
         <DialogFooter>
-          <Button onClick={handleSubmit} disabled={score === 0} className="w-full h-14 text-xl font-bold rounded-2xl">Υποβολή</Button>
+          <Button 
+            onClick={handleSubmit} 
+            className={`w-full h-14 text-xl font-bold rounded-2xl ${score === 0 ? 'bg-destructive hover:bg-destructive/90' : ''}`}
+          >
+            {score === 0 ? "Αφαίρεση Ψήφου" : "Υποβολή Βαθμολογίας"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
