@@ -36,12 +36,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 
 function HomeContent() {
   const searchParams = useSearchParams();
@@ -344,36 +338,15 @@ function HomeContent() {
               </div>
             </div>
 
-            {/* Help Section */}
-            <div className="bg-card border rounded-[2.5rem] p-8 md:p-12 shadow-sm space-y-8">
-              <h3 className="text-2xl font-headline font-bold flex items-center gap-3">
-                <HelpCircle className="h-6 w-6 text-primary" />
-                Οδηγίες Ψηφοφορίας & Συχνές Ερωτήσεις
-              </h3>
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="how-to-vote" className="border-b-0">
-                  <AccordionTrigger className="text-lg font-bold hover:no-underline hover:text-primary">Πώς μπορώ να ψηφίσω;</AccordionTrigger>
-                  <AccordionContent className="text-base text-muted-foreground space-y-4 pt-2">
-                    <p>1. Συνδεθείτε στο λογαριασμό σας (ή μέσω Google) από το κουμπί <strong>Sign In</strong> στην κορυφή.</p>
-                    <p>2. Περιηγηθείτε στις συμμετοχές του έτους που σας ενδιαφέρει.</p>
-                    <p>3. Πατήστε <strong>"Ψηφίστε Τώρα"</strong> στην κάρτα του τραγουδιού.</p>
-                    <p>4. Επιλέξτε τη βαθμολογία σας (1-8, 10 ή 12 πόντους). Κάθε βαθμολογία μπορεί να δοθεί μόνο μία φορά ανά έτος!</p>
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="change-vote" className="border-b-0">
-                  <AccordionTrigger className="text-lg font-bold hover:no-underline hover:text-primary">Μπορώ να αλλάξω την ψήφο μου;</AccordionTrigger>
-                  <AccordionContent className="text-base text-muted-foreground pt-2">
-                    Ναι! Εάν θέλετε να "ελευθερώσετε" κάποιους πόντους για να τους δώσετε αλλού, επιλέξτε ξανά τη χώρα που είχατε ψηφίσει και επιλέξτε <strong>"0 Πόντοι (Αφαίρεση Ψήφου)"</strong>. Η προηγούμενη βαθμολογία σας θα διαγραφεί και θα μπορείτε να τη χρησιμοποιήσετε σε άλλη συμμετοχή.
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="share-top-10" className="border-b-0">
-                  <AccordionTrigger className="text-lg font-bold hover:no-underline hover:text-primary">Πώς μοιράζομαι το Top 10 μου;</AccordionTrigger>
-                  <AccordionContent className="text-base text-muted-foreground pt-2">
-                    Όταν συμπληρώσετε τη δεκάδα σας, θα εμφανιστεί η επιλογή <strong>"Κοινοποίηση Top 10"</strong>. Από εκεί μπορείτε να κατεβάσετε μια αυτόματη εικόνα (PNG) με το Top 10 σας, έτοιμη για τα Social Media!
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </div>
+            {user && userVotes && userVotes.length >= 10 && (
+              <div className="flex justify-center py-6">
+                <ShareResultsDialog 
+                  year={selectedYear} 
+                  userVotes={userVotes} 
+                  entries={allYearEntries || []} 
+                />
+              </div>
+            )}
 
             <div className="p-6 md:p-10 rounded-[2rem] bg-card border shadow-2xl space-y-8">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -452,8 +425,8 @@ function HomeContent() {
                 <Input value={editFormData.videoUrl} onChange={(e) => setEditFormData({ ...editFormData, videoUrl: e.target.value })} className="rounded-xl h-11" />
               </div>
               <div className="space-y-2">
-                <Label className="flex items-center gap-2"><Music className="h-4 w-4 text-green-500" /> Spotify URL</Label>
-                <Input value={editFormData.spotifyUrl} onChange={(e) => setEditFormData({ ...editFormData, spotifyUrl: e.target.value })} className="rounded-xl h-11" />
+                <Label className="flex items-center gap-2"><ImageIcon className="h-4 w-4" /> Thumbnail / Image URL</Label>
+                <Input value={editFormData.thumbnailUrl} onChange={(e) => setEditFormData({ ...editFormData, thumbnailUrl: e.target.value })} className="rounded-xl h-11" />
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-2"><User className="h-4 w-4" /> Artist Bio URL (infegreece.com)</Label>

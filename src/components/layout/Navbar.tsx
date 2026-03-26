@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Music, BarChart3, Settings, User as UserIcon, LogIn, LogOut, Calendar, Star, History, Sparkles } from 'lucide-react';
+import { Music, BarChart3, Settings, User as UserIcon, LogIn, LogOut, Calendar, Star, History, Sparkles, HelpCircle, CheckCircle2, RotateCcw, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -17,6 +17,14 @@ import {
   DropdownMenuSubContent,
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUser, useAuth, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -61,6 +69,57 @@ export function Navbar() {
         </div>
 
         <div className="hidden lg:flex items-center gap-1">
+          {/* Voting Guide Dialog */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="ghost" className="h-12 px-5 rounded-full flex items-center gap-2 text-sm font-bold hover:bg-primary/10 hover:text-primary transition-all">
+                <HelpCircle className="h-4 w-4 text-primary" /> Οδηγός Ψηφοφορίας
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[550px] rounded-[2.5rem] p-8 max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-headline font-bold flex items-center gap-3">
+                  <HelpCircle className="h-6 w-6 text-primary" />
+                  Οδηγός & FAQ
+                </DialogTitle>
+                <DialogDescription>
+                  Μάθετε πώς να συμμετάσχετε στο μεγαλύτερο Eurovision Poll της Ελλάδας.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-8 py-6">
+                <div className="space-y-3">
+                  <h4 className="font-bold flex items-center gap-2 text-primary">
+                    <CheckCircle2 className="h-4 w-4" /> Πώς μπορώ να ψηφίσω;
+                  </h4>
+                  <div className="text-sm text-muted-foreground space-y-2 pl-6 border-l-2 border-primary/20">
+                    <p>1. Συνδεθείτε στο λογαριασμό σας (ή μέσω Google) από το κουμπί <strong>Sign In</strong>.</p>
+                    <p>2. Περιηγηθείτε στις συμμετοχές του έτους που σας ενδιαφέρει.</p>
+                    <p>3. Πατήστε <strong>"Ψηφίστε Τώρα"</strong> στην κάρτα του τραγουδιού.</p>
+                    <p>4. Επιλέξτε τη βαθμολογία σας (1-8, 10 ή 12 πόντους). Κάθε βαθμολογία δίνεται μόνο μία φορά ανά έτος.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="font-bold flex items-center gap-2 text-primary">
+                    <RotateCcw className="h-4 w-4" /> Μπορώ να αλλάξω την ψήφο μου;
+                  </h4>
+                  <div className="text-sm text-muted-foreground pl-6 border-l-2 border-primary/20">
+                    <p>Ναι! Εάν θέλετε να "ελευθερώσετε" πόντους, επιλέξτε ξανά τη χώρα που είχατε ψηφίσει και επιλέξτε <strong>"0 Πόντοι (Αφαίρεση Ψήφου)"</strong>. Η προηγούμενη βαθμολογία σας θα διαγραφεί και θα μπορείτε να τη χρησιμοποιήσετε σε άλλη συμμετοχή.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="font-bold flex items-center gap-2 text-primary">
+                    <Share2 className="h-4 w-4" /> Πώς μοιράζομαι το Top 10 μου;
+                  </h4>
+                  <div className="text-sm text-muted-foreground pl-6 border-l-2 border-primary/20">
+                    <p>Όταν συμπληρώσετε τη δεκάδα σας, θα εμφανιστεί η επιλογή <strong>"Κοινοποίηση Top 10"</strong> στην αρχική σελίδα. Από εκεί μπορείτε να κατεβάσετε μια εικόνα (PNG) με το Top 10 σας, έτοιμη για τα Social Media!</p>
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-12 px-5 rounded-full flex items-center gap-2 text-sm font-bold hover:bg-primary/10 hover:text-primary transition-all">
