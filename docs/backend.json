@@ -37,11 +37,6 @@
           "description": "The URL for the embedded performance video.",
           "format": "uri"
         },
-        "spotifyUrl": {
-          "type": "string",
-          "description": "The URL for the song on Spotify.",
-          "format": "uri"
-        },
         "thumbnailUrl": {
           "type": "string",
           "description": "An optional URL for a custom artist or performance photo.",

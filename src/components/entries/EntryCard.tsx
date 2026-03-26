@@ -24,19 +24,6 @@ function getEmbedUrl(url: string) {
     }
   }
 
-  // Spotify Detection
-  if (url.includes('spotify.com')) {
-    if (url.includes('/embed/')) return url;
-    const trackMatch = url.match(/track\/([^&?/\s]+)/);
-    if (trackMatch && trackMatch[1]) {
-      return `https://open.spotify.com/embed/track/${trackMatch[1]}?utm_source=generator&theme=0`;
-    }
-    const albumMatch = url.match(/album\/([^&?/\s]+)/);
-    if (albumMatch && albumMatch[1]) {
-      return `https://open.spotify.com/embed/album/${albumMatch[1]}?utm_source=generator&theme=0`;
-    }
-  }
-
   return url;
 }
 
@@ -45,9 +32,7 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRe
   const [logoError, setLogoError] = useState(false);
   
   const hasVideo = !!entry.videoUrl && entry.videoUrl.length > 5;
-  const hasSpotify = !!entry.spotifyUrl && entry.spotifyUrl.length > 5;
-  
-  const embedUrl = hasVideo ? getEmbedUrl(entry.videoUrl) : (hasSpotify ? getEmbedUrl(entry.spotifyUrl!) : '');
+  const embedUrl = hasVideo ? getEmbedUrl(entry.videoUrl) : '';
   const flagUrl = entry.flagUrl || getFlagUrl(entry.country);
   const eventLogo = getEventLogo(entry.year, entry.stage);
 
@@ -70,14 +55,14 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRe
               className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${isRestricted ? 'opacity-80' : ''}`}
             />
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              {(hasVideo || hasSpotify) && (
+              {hasVideo && (
                 <Button 
                   onClick={() => setShowPlayer(true)} 
                   variant="secondary" 
                   size="icon" 
-                  className={`h-14 w-14 md:h-16 md:w-16 rounded-full text-white ${hasVideo ? 'bg-primary/90' : 'bg-green-500/90'}`}
+                  className="h-14 w-14 md:h-16 md:w-16 rounded-full text-white bg-primary/90"
                 >
-                  {hasVideo ? <Play className="h-6 w-6 md:h-8 md:w-8 fill-current" /> : <Music className="h-6 w-6 md:h-8 md:w-8" />}
+                  <Play className="h-6 w-6 md:h-8 md:w-8 fill-current" />
                 </Button>
               )}
             </div>
@@ -121,17 +106,6 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRe
                   <Mic2 className="h-3 w-3 md:h-3.5 md:w-3.5 text-primary/70 shrink-0" />
                   <span className="truncate">{entry.artist}</span>
                 </p>
-                {entry.bioUrl && (
-                  <a 
-                    href={entry.bioUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="flex items-center gap-1 text-[10px] font-bold text-primary hover:text-accent transition-colors shrink-0"
-                    title="Artist Bio"
-                  >
-                    <User className="h-3 w-3" /> Bio
-                  </a>
-                )}
               </div>
             </div>
           </div>
@@ -152,30 +126,18 @@ export function EntryCard({ entry, onVote, hasVoted, userScore, usedPoints, isRe
       </CardHeader>
 
       <CardContent className="p-4 md:p-6 pt-0 space-y-4">
-        <div className="flex gap-2">
-          {entry.bioUrl && (
-            <Button 
-              variant="secondary" 
-              size="sm" 
-              className="flex-1 h-10 rounded-xl text-[10px] font-bold uppercase tracking-widest bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white transition-all" 
-              asChild
-            >
-              <a href={entry.bioUrl} target="_blank" rel="noopener noreferrer">
-                <User className="h-3.5 w-3.5 mr-2" /> Βιογραφικό <ExternalLink className="h-2.5 w-2.5 ml-1" />
-              </a>
-            </Button>
-          )}
-          {hasSpotify && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex-1 h-10 rounded-xl text-[10px] font-bold uppercase tracking-widest border-green-500/30 text-green-500 hover:bg-green-500 hover:text-white transition-all" 
-              onClick={() => setShowPlayer(true)}
-            >
-              <Music className="h-3.5 w-3.5 mr-2" /> Spotify <Music className="h-2.5 w-2.5 ml-1" />
-            </Button>
-          )}
-        </div>
+        {entry.bioUrl && (
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            className="w-full h-10 rounded-xl text-[10px] font-bold uppercase tracking-widest bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white transition-all" 
+            asChild
+          >
+            <a href={entry.bioUrl} target="_blank" rel="noopener noreferrer">
+              <User className="h-3.5 w-3.5 mr-2" /> Βιογραφικό <ExternalLink className="h-2.5 w-2.5 ml-1" />
+            </a>
+          </Button>
+        )}
         <VoteDialog 
           entry={entry} 
           onVote={onVote} 

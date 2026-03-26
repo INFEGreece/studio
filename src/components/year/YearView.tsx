@@ -9,7 +9,7 @@ import { YEAR_INFO } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Music, Loader2, Layers, Info, CheckCircle2, Sparkles, Lock, Trophy, ArrowLeft, Pencil, Trash2, Youtube, User } from 'lucide-react';
+import { Music, Loader2, Layers, Info, CheckCircle2, Sparkles, Lock, Trophy, ArrowLeft, Pencil, Trash2, Youtube, User, ImageIcon } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import { Entry, Vote, ContestStage, YearMetadata } from '@/lib/types';
@@ -58,9 +58,8 @@ export function YearView({ year }: YearViewProps) {
     artist: '',
     songTitle: '',
     videoUrl: '',
-    spotifyUrl: '',
-    bioUrl: '',
     thumbnailUrl: '',
+    bioUrl: '',
     stage: 'Final' as ContestStage
   });
 
@@ -152,9 +151,8 @@ export function YearView({ year }: YearViewProps) {
       artist: entry.artist, 
       songTitle: entry.songTitle, 
       videoUrl: entry.videoUrl || '', 
-      spotifyUrl: entry.spotifyUrl || '',
-      bioUrl: entry.bioUrl || '', 
       thumbnailUrl: entry.thumbnailUrl || '', 
+      bioUrl: entry.bioUrl || '', 
       stage: entry.stage 
     });
     setIsEditDialogOpen(true);
@@ -305,8 +303,8 @@ export function YearView({ year }: YearViewProps) {
                 <Input value={editFormData.videoUrl} onChange={(e) => setEditFormData({ ...editFormData, videoUrl: e.target.value })} className="rounded-xl h-11" />
               </div>
               <div className="space-y-2">
-                <Label className="flex items-center gap-2"><Music className="h-4 w-4 text-green-500" /> Spotify URL</Label>
-                <Input value={editFormData.spotifyUrl} onChange={(e) => setEditFormData({ ...editFormData, spotifyUrl: e.target.value })} className="rounded-xl h-11" />
+                <Label className="flex items-center gap-2"><ImageIcon className="h-4 w-4" /> Thumbnail / Image URL</Label>
+                <Input value={editFormData.thumbnailUrl} onChange={(e) => setEditFormData({ ...editFormData, thumbnailUrl: e.target.value })} className="rounded-xl h-11" />
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-2"><User className="h-4 w-4" /> Artist Bio URL (infegreece.com)</Label>

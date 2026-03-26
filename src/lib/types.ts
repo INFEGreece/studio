@@ -9,7 +9,6 @@ export interface Entry {
   songTitle: string;
   year: number;
   videoUrl: string;
-  spotifyUrl?: string; // Optional Spotify link
   stage: ContestStage;
   thumbnailUrl?: string;
   bioUrl?: string; // Link to infegreece.com bio

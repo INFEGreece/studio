@@ -30,7 +30,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, Loader2, ShieldAlert, BookOpen, RotateCcw, AlertTriangle, Lock, Unlock, ImageIcon, User, Layers, Star, Music, Youtube } from 'lucide-react';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Plus, Pencil, Trash2, Search, Loader2, ShieldAlert, BookOpen, RotateCcw, AlertTriangle, Lock, Unlock, ImageIcon, User, Layers, Star, Music, Youtube, Calendar, CheckCircle2, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc, query, collectionGroup, getDocs } from 'firebase/firestore';
@@ -47,7 +53,7 @@ export default function AdminPage() {
   
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isYearInfoOpen, setIsYearInfoOpen] = useState(false);
+  const [isYearEditOpen, setIsYearEditOpen] = useState(false);
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
@@ -61,7 +67,12 @@ export default function AdminPage() {
   const { data: adminData, isLoading: isAdminLoading } = useDoc(adminDocRef);
   const isAdmin = !!adminData;
 
-  const [selectedYearMeta, setSelectedYearMeta] = useState("2026");
+  // Year Metadata Collection
+  const yearMetaRef = useMemoFirebase(() => collection(db, 'year_metadata'), [db]);
+  const { data: allYearMeta } = useCollection<YearMetadata>(yearMetaRef);
+
+  // For Year Edit Dialog
+  const [selectedYearMeta, setSelectedYearMeta] = useState<YearMetadata | null>(null);
   const [yearDescription, setYearDescription] = useState("");
   const [yearLogoUrl, setYearLogoUrl] = useState("");
   const [isVotingOpen, setIsVotingOpen] = useState(true);
@@ -85,7 +96,6 @@ export default function AdminPage() {
     artist: '',
     songTitle: '',
     videoUrl: '',
-    spotifyUrl: '',
     thumbnailUrl: '',
     bioUrl: '',
     stage: 'Final' as ContestStage
@@ -94,33 +104,34 @@ export default function AdminPage() {
   const entriesRef = useMemoFirebase(() => collection(db, 'eurovision_entries'), [db]);
   const { data: entries } = useCollection<Entry>(entriesRef);
 
-  const yearMetaRef = useMemoFirebase(() => doc(db, 'year_metadata', selectedYearMeta), [db, selectedYearMeta]);
-  const { data: currentYearMeta } = useDoc<YearMetadata>(yearMetaRef);
-
-  useEffect(() => {
-    if (currentYearMeta) {
-      setYearDescription(currentYearMeta.description || "");
-      setIsVotingOpen(currentYearMeta.isVotingOpen ?? true);
-      setYearLogoUrl(currentYearMeta.logoUrl || "");
-    } else {
-      setYearDescription("");
-      setIsVotingOpen(true);
-      setYearLogoUrl("");
-    }
-  }, [currentYearMeta, selectedYearMeta]);
-
   const allYears = DECADES.flatMap(d => d.years).sort((a, b) => b - a);
 
+  const openYearEdit = (year: number) => {
+    const meta = (allYearMeta || []).find(m => m.id === year.toString());
+    setSelectedYearMeta(meta || { id: year.toString(), description: "", isVotingOpen: true, logoUrl: "" });
+    setYearDescription(meta?.description || "");
+    setIsVotingOpen(meta?.isVotingOpen ?? true);
+    setYearLogoUrl(meta?.logoUrl || "");
+    setIsYearEditOpen(true);
+  };
+
   const handleSaveYearInfo = () => {
-    const docRef = doc(db, 'year_metadata', selectedYearMeta);
+    if (!selectedYearMeta) return;
+    const docRef = doc(db, 'year_metadata', selectedYearMeta.id);
     setDocumentNonBlocking(docRef, {
-      id: selectedYearMeta,
+      id: selectedYearMeta.id,
       description: yearDescription,
       isVotingOpen: isVotingOpen,
       logoUrl: yearLogoUrl
     }, { merge: true });
-    toast({ title: `Πληροφορίες ${selectedYearMeta} Αποθηκεύτηκαν` });
-    setIsYearInfoOpen(false);
+    toast({ title: `Πληροφορίες ${selectedYearMeta.id} Αποθηκεύτηκαν` });
+    setIsYearEditOpen(false);
+  };
+
+  const toggleYearVoting = (yearId: string, currentStatus: boolean) => {
+    const docRef = doc(db, 'year_metadata', yearId);
+    setDocumentNonBlocking(docRef, { isVotingOpen: !currentStatus }, { merge: true });
+    toast({ title: `Η ψηφοφορία για το ${yearId} ${!currentStatus ? 'άνοιξε' : 'έκλεισε'}` });
   };
 
   const handleSaveCategories = () => {
@@ -169,58 +180,116 @@ export default function AdminPage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
           <div>
             <h1 className="text-3xl font-headline font-bold text-primary">Διαχείριση</h1>
-            <p className="text-muted-foreground">Συμμετοχές, Πληροφορίες & Έλεγχος Ψηφοφορίας.</p>
+            <p className="text-muted-foreground">Συμμετοχές, Έτη & Έλεγχος Ψηφοφορίας.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" className="h-12 rounded-xl" onClick={() => setIsCategoriesOpen(true)}>
               <Layers className="h-5 w-5 mr-2" /> Κατηγορίες Μενού
             </Button>
-            <Button variant="outline" className="h-12 rounded-xl" onClick={() => setIsYearInfoOpen(true)}>
-              <BookOpen className="h-5 w-5 mr-2" /> Πληροφορίες & Voting
-            </Button>
-            <Button className="h-12 rounded-xl" onClick={() => { setIsEditing(false); setFormData({ country: '', flagUrl: '', year: 2026, artist: '', songTitle: '', videoUrl: '', spotifyUrl: '', thumbnailUrl: '', bioUrl: '', stage: 'Final' }); setIsDialogOpen(true); }}>
+            <Button className="h-12 rounded-xl" onClick={() => { setIsEditing(false); setFormData({ country: '', flagUrl: '', year: 2026, artist: '', songTitle: '', videoUrl: '', thumbnailUrl: '', bioUrl: '', stage: 'Final' }); setIsDialogOpen(true); }}>
               <Plus className="h-5 w-5 mr-2" /> Νέα Συμμετοχή
             </Button>
           </div>
         </div>
 
-        <div className="mb-12 p-6 rounded-2xl bg-destructive/5 border-2 border-dashed border-destructive/20 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <AlertTriangle className="h-8 w-8 text-destructive" />
-            <div><h2 className="text-lg font-bold text-destructive">Μηδενισμός Ψήφων</h2><p className="text-sm text-muted-foreground">Διαγραφή όλων των ψήφων παγκοσμίως.</p></div>
-          </div>
-          <Button variant="destructive" className="h-12 rounded-xl font-bold" onClick={handleResetAllVotes} disabled={isResetting}>
-            {isResetting ? <Loader2 className="h-5 w-5 animate-spin" /> : <RotateCcw className="h-5 w-5 mr-2" />} Ολικός Μηδενισμός
-          </Button>
-        </div>
+        <Tabs defaultValue="entries" className="w-full space-y-8">
+          <TabsList className="bg-muted/30 p-1 rounded-2xl h-14">
+            <TabsTrigger value="entries" className="rounded-xl px-8 h-12 font-bold flex items-center gap-2">
+              <Music className="h-4 w-4" /> Συμμετοχές
+            </TabsTrigger>
+            <TabsTrigger value="years" className="rounded-xl px-8 h-12 font-bold flex items-center gap-2">
+              <Calendar className="h-4 w-4" /> Έλεγχος Ετών
+            </TabsTrigger>
+            <TabsTrigger value="danger" className="rounded-xl px-8 h-12 font-bold flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-4 w-4" /> Συντήρηση
+            </TabsTrigger>
+          </TabsList>
 
-        <div className="bg-card border rounded-2xl overflow-hidden shadow-sm">
-          <div className="p-6 border-b bg-muted/20">
-            <div className="relative max-w-md">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input className="pl-12 h-12 rounded-xl" placeholder="Αναζήτηση χώρας..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <TabsContent value="entries" className="space-y-6">
+            <div className="bg-card border rounded-2xl overflow-hidden shadow-sm">
+              <div className="p-6 border-b bg-muted/20">
+                <div className="relative max-w-md">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input className="pl-12 h-12 rounded-xl" placeholder="Αναζήτηση χώρας..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader><TableRow><TableHead>Χώρα</TableHead><TableHead>Τίτλος</TableHead><TableHead>Έτος</TableHead><TableHead className="text-right">Ενέργειες</TableHead></TableRow></TableHeader>
+                  <TableBody>
+                    {(entries || []).filter(e => e.country.toLowerCase().includes(searchTerm.toLowerCase())).map((entry) => (
+                      <TableRow key={entry.id}>
+                        <TableCell className="font-bold">{entry.country}</TableCell>
+                        <TableCell>{entry.songTitle}</TableCell>
+                        <TableCell><Badge variant="outline">{entry.year}</Badge></TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="outline" size="sm" className="mr-2" onClick={() => { setIsEditing(true); setCurrentId(entry.id); setFormData({ ...entry, bioUrl: entry.bioUrl || '', videoUrl: entry.videoUrl || '', thumbnailUrl: entry.thumbnailUrl || '' }); setIsDialogOpen(true); }}><Pencil className="h-4 w-4 mr-2"/> Επεξεργασία</Button>
+                          <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { if(confirm("Διαγραφή;")) deleteDocumentNonBlocking(doc(db, 'eurovision_entries', entry.id)); }}>Διαγραφή</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
-          </div>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader><TableRow><TableHead>Χώρα</TableHead><TableHead>Τίτλος</TableHead><TableHead>Έτος</TableHead><TableHead className="text-right">Ενέργειες</TableHead></TableRow></TableHeader>
-              <TableBody>
-                {(entries || []).filter(e => e.country.toLowerCase().includes(searchTerm.toLowerCase())).map((entry) => (
-                  <TableRow key={entry.id}>
-                    <TableCell className="font-bold">{entry.country}</TableCell>
-                    <TableCell>{entry.songTitle}</TableCell>
-                    <TableCell><Badge variant="outline">{entry.year}</Badge></TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="outline" size="sm" className="mr-2" onClick={() => { setIsEditing(true); setCurrentId(entry.id); setFormData({ ...entry, bioUrl: entry.bioUrl || '', spotifyUrl: entry.spotifyUrl || '', videoUrl: entry.videoUrl || '', thumbnailUrl: entry.thumbnailUrl || '' }); setIsDialogOpen(true); }}><Pencil className="h-4 w-4 mr-2"/> Επεξεργασία</Button>
-                      <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { if(confirm("Διαγραφή;")) deleteDocumentNonBlocking(doc(db, 'eurovision_entries', entry.id)); }}>Διαγραφή</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
+          </TabsContent>
 
+          <TabsContent value="years" className="space-y-6">
+            <div className="bg-card border rounded-2xl overflow-hidden shadow-sm">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Έτος</TableHead>
+                    <TableHead>Ψηφοφορία</TableHead>
+                    <TableHead>Περιγραφή / Logo</TableHead>
+                    <TableHead className="text-right">Ενέργειες</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {allYears.map(year => {
+                    const meta = (allYearMeta || []).find(m => m.id === year.toString());
+                    const isOpen = meta?.isVotingOpen ?? true;
+                    return (
+                      <TableRow key={year}>
+                        <TableCell className="font-black text-lg">{year}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Switch checked={isOpen} onCheckedChange={() => toggleYearVoting(year.toString(), isOpen)} />
+                            {isOpen ? <Badge className="bg-green-500"><Unlock className="h-3 w-3 mr-1"/> Ανοιχτή</Badge> : <Badge variant="destructive"><Lock className="h-3 w-3 mr-1"/> Κλειστή</Badge>}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {meta?.description ? <Badge variant="secondary">Ναι</Badge> : <Badge variant="outline">Όχι</Badge>}
+                          {meta?.logoUrl ? <Badge variant="secondary" className="ml-2">Custom Logo</Badge> : null}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="outline" size="sm" onClick={() => openYearEdit(year)}>
+                            <Pencil className="h-4 w-4 mr-2" /> Επεξεργασία
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="danger" className="space-y-6">
+            <div className="p-8 rounded-[2rem] bg-destructive/5 border-2 border-dashed border-destructive/20 flex flex-col items-center text-center space-y-6">
+              <AlertTriangle className="h-16 w-16 text-destructive" />
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold text-destructive">Ολικός Μηδενισμός Ψήφων</h2>
+                <p className="text-muted-foreground max-w-md">Αυτή η ενέργεια θα διαγράψει ΟΡΙΣΤΙΚΑ όλες τις ψήφους από όλα τα έτη και όλους τους χρήστες. Δεν υπάρχει επιστροφή.</p>
+              </div>
+              <Button variant="destructive" size="lg" className="h-14 px-10 rounded-2xl font-black shadow-xl shadow-destructive/20" onClick={handleResetAllVotes} disabled={isResetting}>
+                {isResetting ? <Loader2 className="h-6 w-6 animate-spin" /> : <RotateCcw className="h-6 w-6 mr-3" />} ΕΚΤΕΛΕΣΗ ΜΗΔΕΝΙΣΜΟΥ
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        {/* Categories Dialog */}
         <Dialog open={isCategoriesOpen} onOpenChange={setIsCategoriesOpen}>
           <DialogContent className="sm:max-w-[500px] rounded-[2rem] p-8">
             <DialogHeader><DialogTitle className="text-2xl font-headline font-bold">Κατηγοριοποίηση Events</DialogTitle></DialogHeader>
@@ -248,31 +317,23 @@ export default function AdminPage() {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={isYearInfoOpen} onOpenChange={setIsYearInfoOpen}>
+        {/* Year Edit Dialog */}
+        <Dialog open={isYearEditOpen} onOpenChange={setIsYearEditOpen}>
           <DialogContent className="sm:max-w-[600px] rounded-[2rem] p-8">
-            <DialogHeader><DialogTitle className="text-2xl font-headline font-bold">Πληροφορίες & Voting Control</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle className="text-2xl font-headline font-bold">Επεξεργασία Έτους {selectedYearMeta?.id}</DialogTitle></DialogHeader>
             <div className="space-y-6 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Επιλογή Έτους</Label>
-                  <Select value={selectedYearMeta} onValueChange={setSelectedYearMeta}>
-                    <SelectTrigger className="h-12 rounded-xl"><SelectValue /></SelectTrigger>
-                    <SelectContent>{allYears.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}</SelectContent>
-                  </Select>
+              <div className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl border">
+                <div className="space-y-0.5">
+                  <Label className="text-base">Κατάσταση Ψηφοφορίας</Label>
+                  <p className="text-sm text-muted-foreground">Ενεργοποίηση ή απενεργοποίηση για όλους.</p>
                 </div>
-                <div className="flex flex-col justify-center space-y-2">
-                  <Label>Κατάσταση Voting</Label>
-                  <div className="flex items-center gap-3 bg-muted/30 p-2 rounded-xl h-12">
-                    <Switch checked={isVotingOpen} onCheckedChange={setIsVotingOpen} />
-                    {isVotingOpen ? <Unlock className="h-4 w-4 text-green-500" /> : <Lock className="h-4 w-4 text-destructive" />}
-                    <span className="text-sm font-bold">{isVotingOpen ? "Ανοιχτή" : "Κλειστή"}</span>
-                  </div>
-                </div>
+                <Switch checked={isVotingOpen} onCheckedChange={setIsVotingOpen} />
               </div>
               
               <div className="space-y-2">
                 <Label className="flex items-center gap-2"><ImageIcon className="h-4 w-4"/> Logo URL Override</Label>
                 <Input value={yearLogoUrl} onChange={(e) => setYearLogoUrl(e.target.value)} placeholder="https://example.com/logo.png" className="h-12 rounded-xl"/>
+                <p className="text-[10px] text-muted-foreground">Αφήστε το κενό για να χρησιμοποιηθεί το αυτόματο logo του φακέλου /assets/logos/.</p>
               </div>
 
               <div className="space-y-2">
@@ -284,6 +345,7 @@ export default function AdminPage() {
           </DialogContent>
         </Dialog>
 
+        {/* Entry Edit Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-[600px] rounded-[2rem] p-8 overflow-y-auto max-h-[90vh]">
             <DialogHeader><DialogTitle>{isEditing ? "Επεξεργασία" : "Νέα Συμμετοχή"}</DialogTitle></DialogHeader>
@@ -298,7 +360,7 @@ export default function AdminPage() {
               </div>
               
               <div className="space-y-2"><Label className="flex items-center gap-2"><Youtube className="h-4 w-4 text-red-500" /> Video URL</Label><Input value={formData.videoUrl} onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })} placeholder="https://www.youtube.com/..." className="rounded-xl h-11" /></div>
-              <div className="space-y-2"><Label className="flex items-center gap-2"><Music className="h-4 w-4 text-green-500" /> Spotify URL</Label><Input value={formData.spotifyUrl} onChange={(e) => setFormData({ ...formData, spotifyUrl: e.target.value })} placeholder="https://open.spotify.com/..." className="rounded-xl h-11" /></div>
+              <div className="space-y-2"><Label className="flex items-center gap-2"><ImageIcon className="h-4 w-4" /> Thumbnail / Image URL</Label><Input value={formData.thumbnailUrl} onChange={(e) => setFormData({ ...formData, thumbnailUrl: e.target.value })} placeholder="https://example.com/image.jpg" className="rounded-xl h-11" /></div>
               <div className="space-y-2"><Label className="flex items-center gap-2"><User className="h-4 w-4" /> Artist Bio URL (infegreece.com)</Label><Input value={formData.bioUrl} onChange={(e) => setFormData({ ...formData, bioUrl: e.target.value })} placeholder="https://infegreece.com/bio-slug" className="rounded-xl h-11" /></div>
               
               <div className="space-y-2"><Label>Φάση</Label>
