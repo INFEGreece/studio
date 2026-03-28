@@ -36,11 +36,11 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, Search, Loader2, ShieldAlert, BookOpen, RotateCcw, AlertTriangle, Lock, Unlock, ImageIcon, User, Layers, Star, Music, Youtube, Calendar, CheckCircle2, XCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, ShieldAlert, RotateCcw, AlertTriangle, Lock, Unlock, ImageIcon, User, Layers, Star, Music, Youtube, Calendar, Download, FileSpreadsheet } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc, query, collectionGroup, getDocs } from 'firebase/firestore';
-import { Entry, ContestStage, YearMetadata } from '@/lib/types';
+import { Entry, ContestStage, YearMetadata, Vote } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { getFlagUrl } from '@/lib/utils';
 import { DECADES } from '@/lib/data';
@@ -57,6 +57,7 @@ export default function AdminPage() {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [currentId, setCurrentId] = useState<string | null>(null);
   
   const adminDocRef = useMemoFirebase(() => {
@@ -67,11 +68,9 @@ export default function AdminPage() {
   const { data: adminData, isLoading: isAdminLoading } = useDoc(adminDocRef);
   const isAdmin = !!adminData;
 
-  // Year Metadata Collection
   const yearMetaRef = useMemoFirebase(() => collection(db, 'year_metadata'), [db]);
   const { data: allYearMeta } = useCollection<YearMetadata>(yearMetaRef);
 
-  // For Year Edit Dialog
   const [selectedYearMeta, setSelectedYearMeta] = useState<YearMetadata | null>(null);
   const [yearDescription, setYearDescription] = useState("");
   const [yearLogoUrl, setYearLogoUrl] = useState("");
@@ -155,6 +154,67 @@ export default function AdminPage() {
     }
   };
 
+  const downloadCSV = (content: string, filename: string) => {
+    const blob = new Blob(["\uFEFF" + content], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportEntriesCSV = () => {
+    if (!entries) return;
+    const headers = ["ID", "Year", "Country", "Artist", "Song Title", "Stage", "Video URL", "Bio URL"];
+    const rows = entries.map(e => [
+      e.id,
+      e.year,
+      `"${e.country}"`,
+      `"${e.artist}"`,
+      `"${e.songTitle}"`,
+      e.stage,
+      e.videoUrl,
+      e.bioUrl || ""
+    ]);
+    const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    downloadCSV(csvContent, "eurovision_entries.csv");
+    toast({ title: "Εξαγωγή Συμμετοχών Επιτυχής" });
+  };
+
+  const exportVotesCSV = async () => {
+    setIsExporting(true);
+    try {
+      const snapshot = await getDocs(query(collectionGroup(db, 'votes')));
+      const votesData = snapshot.docs.map(doc => doc.data() as Vote);
+      
+      const headers = ["Vote ID", "User ID", "Year", "Entry ID", "Country", "Points", "Date", "Feedback"];
+      const rows = votesData.map(v => {
+        const entry = (entries || []).find(e => e.id === v.eurovisionEntryId);
+        return [
+          v.id,
+          v.userId,
+          v.year,
+          v.eurovisionEntryId,
+          entry ? `"${entry.country}"` : "Unknown",
+          v.points,
+          v.votedAt,
+          v.feedback ? `"${v.feedback.replace(/"/g, '""')}"` : ""
+        ];
+      });
+
+      const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+      downloadCSV(csvContent, "eurovision_votes.csv");
+      toast({ title: "Εξαγωγή Ψήφων Επιτυχής" });
+    } catch (error: any) {
+      toast({ title: "Σφάλμα Εξαγωγής", description: error.message, variant: "destructive" });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (isUserLoading || isAdminLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
 
   if (!user || !isAdmin) return (
@@ -193,15 +253,15 @@ export default function AdminPage() {
         </div>
 
         <Tabs defaultValue="entries" className="w-full space-y-8">
-          <TabsList className="bg-muted/30 p-1 rounded-2xl h-14">
-            <TabsTrigger value="entries" className="rounded-xl px-8 h-12 font-bold flex items-center gap-2">
+          <TabsList className="bg-muted/30 p-1 rounded-2xl h-14 flex flex-wrap">
+            <TabsTrigger value="entries" className="rounded-xl px-6 h-12 font-bold flex items-center gap-2">
               <Music className="h-4 w-4" /> Συμμετοχές
             </TabsTrigger>
-            <TabsTrigger value="years" className="rounded-xl px-8 h-12 font-bold flex items-center gap-2">
-              <Calendar className="h-4 w-4" /> Έλεγχος Ετών
+            <TabsTrigger value="years" className="rounded-xl px-6 h-12 font-bold flex items-center gap-2">
+              <Calendar className="h-4 w-4" /> Έτη
             </TabsTrigger>
-            <TabsTrigger value="danger" className="rounded-xl px-8 h-12 font-bold flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-4 w-4" /> Συντήρηση
+            <TabsTrigger value="tools" className="rounded-xl px-6 h-12 font-bold flex items-center gap-2">
+              <FileSpreadsheet className="h-4 w-4" /> Εργαλεία & CSV
             </TabsTrigger>
           </TabsList>
 
@@ -223,8 +283,8 @@ export default function AdminPage() {
                         <TableCell>{entry.songTitle}</TableCell>
                         <TableCell><Badge variant="outline">{entry.year}</Badge></TableCell>
                         <TableCell className="text-right">
-                          <Button variant="outline" size="sm" className="mr-2" onClick={() => { setIsEditing(true); setCurrentId(entry.id); setFormData({ ...entry, bioUrl: entry.bioUrl || '', videoUrl: entry.videoUrl || '', thumbnailUrl: entry.thumbnailUrl || '' }); setIsDialogOpen(true); }}><Pencil className="h-4 w-4 mr-2"/> Επεξεργασία</Button>
-                          <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { if(confirm("Διαγραφή;")) deleteDocumentNonBlocking(doc(db, 'eurovision_entries', entry.id)); }}>Διαγραφή</Button>
+                          <Button variant="outline" size="sm" className="mr-2" onClick={() => { setIsEditing(true); setCurrentId(entry.id); setFormData({ ...entry, bioUrl: entry.bioUrl || '', videoUrl: entry.videoUrl || '', thumbnailUrl: entry.thumbnailUrl || '' }); setIsDialogOpen(true); }}><Pencil className="h-4 w-4 mr-2"/> Edit</Button>
+                          <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { if(confirm("Διαγραφή;")) deleteDocumentNonBlocking(doc(db, 'eurovision_entries', entry.id)); }}>Delete</Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -275,16 +335,41 @@ export default function AdminPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="danger" className="space-y-6">
-            <div className="p-8 rounded-[2rem] bg-destructive/5 border-2 border-dashed border-destructive/20 flex flex-col items-center text-center space-y-6">
-              <AlertTriangle className="h-16 w-16 text-destructive" />
-              <div className="space-y-2">
-                <h2 className="text-2xl font-bold text-destructive">Ολικός Μηδενισμός Ψήφων</h2>
-                <p className="text-muted-foreground max-w-md">Αυτή η ενέργεια θα διαγράψει ΟΡΙΣΤΙΚΑ όλες τις ψήφους από όλα τα έτη και όλους τους χρήστες. Δεν υπάρχει επιστροφή.</p>
+          <TabsContent value="tools" className="space-y-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Export Section */}
+              <div className="bg-card border rounded-[2rem] p-8 space-y-6 shadow-sm">
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-bold flex items-center gap-3">
+                    <Download className="h-6 w-6 text-primary" /> Εξαγωγή Δεδομένων
+                  </h2>
+                  <p className="text-sm text-muted-foreground">Κατεβάστε τα δεδομένα σας σε μορφή CSV για επεξεργασία στο Excel.</p>
+                </div>
+                <div className="flex flex-col gap-3">
+                  <Button variant="outline" className="h-14 rounded-xl justify-start px-6 font-bold" onClick={exportEntriesCSV}>
+                    <Music className="h-5 w-5 mr-3 text-primary" /> Εξαγωγή Συμμετοχών (.csv)
+                  </Button>
+                  <Button variant="outline" className="h-14 rounded-xl justify-start px-6 font-bold" onClick={exportVotesCSV} disabled={isExporting}>
+                    {isExporting ? <Loader2 className="h-5 w-5 animate-spin mr-3" /> : <Star className="h-5 w-5 mr-3 text-primary" />}
+                    Εξαγωγή Όλων των Ψήφων (.csv)
+                  </Button>
+                </div>
               </div>
-              <Button variant="destructive" size="lg" className="h-14 px-10 rounded-2xl font-black shadow-xl shadow-destructive/20" onClick={handleResetAllVotes} disabled={isResetting}>
-                {isResetting ? <Loader2 className="h-6 w-6 animate-spin" /> : <RotateCcw className="h-6 w-6 mr-3" />} ΕΚΤΕΛΕΣΗ ΜΗΔΕΝΙΣΜΟΥ
-              </Button>
+
+              {/* Reset Section */}
+              <div className="bg-destructive/5 border-2 border-dashed border-destructive/20 rounded-[2rem] p-8 space-y-6">
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-bold text-destructive flex items-center gap-3">
+                    <AlertTriangle className="h-6 w-6" /> Επικίνδυνη Ζώνη
+                  </h2>
+                  <p className="text-sm text-muted-foreground">Ενέργειες που δεν αντιστρέφονται. Προσοχή!</p>
+                </div>
+                <div className="pt-4">
+                  <Button variant="destructive" className="w-full h-14 rounded-xl font-black shadow-xl shadow-destructive/10" onClick={handleResetAllVotes} disabled={isResetting}>
+                    {isResetting ? <Loader2 className="h-6 w-6 animate-spin" /> : <RotateCcw className="h-6 w-6 mr-3" />} ΟΛΙΚΟΣ ΜΗΔΕΝΙΣΜΟΣ ΨΗΦΩΝ
+                  </Button>
+                </div>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
