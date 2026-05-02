@@ -42,7 +42,7 @@ import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc, setDocum
 import { collection, doc, query, collectionGroup, getDocs } from 'firebase/firestore';
 import { Entry, ContestStage, YearMetadata, Vote } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
-import { getFlagUrl } from '@/lib/utils';
+import { getFlagUrl, cn } from '@/lib/utils';
 import { DECADES } from '@/lib/data';
 import Link from 'next/link';
 
@@ -259,7 +259,18 @@ export default function AdminPage() {
     </div>
   );
 
-  const slugify = (text: string) => text.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
+  const slugify = (text: string) => {
+    if (!text) return "";
+    return text
+      .toString()
+      .toLowerCase()
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // Remove accents
+      .replace(/[^\u0370-\u03FF\u1F00-\u1FFF\w\s-]/g, "") // Keep Greek and Alpha
+      .replace(/[\s_-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -274,7 +285,12 @@ export default function AdminPage() {
             <Button variant="outline" className="h-12 rounded-xl" onClick={() => setIsCategoriesOpen(true)}>
               <Layers className="h-5 w-5 mr-2" /> Κατηγορίες Μενού
             </Button>
-            <Button className="h-12 rounded-xl" onClick={() => { setIsEditing(false); setFormData({ country: '', flagUrl: '', year: 2026, artist: '', songTitle: '', videoUrl: '', thumbnailUrl: '', bioUrl: '', stage: 'Final' }); setIsDialogOpen(true); }}>
+            <Button className="h-12 rounded-xl" onClick={() => { 
+              setIsEditing(false); 
+              setCurrentId(null);
+              setFormData({ country: '', flagUrl: '', year: 2026, artist: '', songTitle: '', videoUrl: '', thumbnailUrl: '', bioUrl: '', stage: 'Final' }); 
+              setIsDialogOpen(true); 
+            }}>
               <Plus className="h-5 w-5 mr-2" /> Νέα Συμμετοχή
             </Button>
           </div>
@@ -546,7 +562,8 @@ export default function AdminPage() {
             </div>
             <DialogFooter><Button onClick={() => {
               // unique ID includes songTitle slug to allow multiple entries per country (Karaoke support)
-              const id = currentId || `${formData.year}-${slugify(formData.stage)}-${slugify(formData.country)}-${slugify(formData.songTitle)}`;
+              const timestamp = isEditing ? "" : `-${Date.now().toString().slice(-4)}`;
+              const id = currentId || `${formData.year}-${slugify(formData.stage)}-${slugify(formData.country)}-${slugify(formData.songTitle)}${timestamp}`;
               setDocumentNonBlocking(doc(db, 'eurovision_entries', id), { ...formData, id, flagUrl: getFlagUrl(formData.country) }, { merge: true });
               setIsDialogOpen(false);
             }} className="w-full h-12 rounded-xl font-bold">Αποθήκευση</Button></DialogFooter>

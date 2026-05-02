@@ -234,7 +234,18 @@ function HomeContent() {
     setIsEditDialogOpen(true);
   };
 
-  const slugify = (text: string) => text.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
+  const slugify = (text: string) => {
+    if (!text) return "";
+    return text
+      .toString()
+      .toLowerCase()
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // Remove accents
+      .replace(/[^\u0370-\u03FF\u1F00-\u1FFF\w\s-]/g, "") // Keep Greek and Alpha
+      .replace(/[\s_-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  };
 
   const handleSaveEdit = () => {
     if (!currentEntryForEdit) return;
