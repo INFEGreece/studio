@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -36,7 +35,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, Search, Loader2, ShieldAlert, RotateCcw, AlertTriangle, Lock, Unlock, ImageIcon, User, Layers, Star, Music, Youtube, Calendar, Download, FileSpreadsheet } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, ShieldAlert, RotateCcw, AlertTriangle, Lock, Unlock, ImageIcon, User, Layers, Star, Music, Youtube, Calendar, Download, FileSpreadsheet, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc, query, collectionGroup, getDocs } from 'firebase/firestore';
@@ -75,6 +74,7 @@ export default function AdminPage() {
   const [yearDescription, setYearDescription] = useState("");
   const [yearLogoUrl, setYearLogoUrl] = useState("");
   const [isVotingOpen, setIsVotingOpen] = useState(true);
+  const [isScoreboardVisible, setIsScoreboardVisible] = useState(true);
 
   const configRef = useMemoFirebase(() => doc(db, 'settings', 'menu_config'), [db]);
   const { data: menuConfig } = useDoc<any>(configRef);
@@ -107,9 +107,10 @@ export default function AdminPage() {
 
   const openYearEdit = (year: number) => {
     const meta = (allYearMeta || []).find(m => m.id === year.toString());
-    setSelectedYearMeta(meta || { id: year.toString(), description: "", isVotingOpen: true, logoUrl: "" });
+    setSelectedYearMeta(meta || { id: year.toString(), description: "", isVotingOpen: true, isScoreboardVisible: true, logoUrl: "" });
     setYearDescription(meta?.description || "");
     setIsVotingOpen(meta?.isVotingOpen ?? true);
+    setIsScoreboardVisible(meta?.isScoreboardVisible ?? true);
     setYearLogoUrl(meta?.logoUrl || "");
     setIsYearEditOpen(true);
   };
@@ -121,6 +122,7 @@ export default function AdminPage() {
       id: selectedYearMeta.id,
       description: yearDescription,
       isVotingOpen: isVotingOpen,
+      isScoreboardVisible: isScoreboardVisible,
       logoUrl: yearLogoUrl
     }, { merge: true });
     toast({ title: `Πληροφορίες ${selectedYearMeta.id} Αποθηκεύτηκαν` });
@@ -131,6 +133,12 @@ export default function AdminPage() {
     const docRef = doc(db, 'year_metadata', yearId);
     setDocumentNonBlocking(docRef, { isVotingOpen: !currentStatus }, { merge: true });
     toast({ title: `Η ψηφοφορία για το ${yearId} ${!currentStatus ? 'άνοιξε' : 'έκλεισε'}` });
+  };
+
+  const toggleScoreboardVisibility = (yearId: string, currentStatus: boolean) => {
+    const docRef = doc(db, 'year_metadata', yearId);
+    setDocumentNonBlocking(docRef, { isScoreboardVisible: !currentStatus }, { merge: true });
+    toast({ title: `Το Scoreboard για το ${yearId} είναι πλέον ${!currentStatus ? 'ορατό' : 'κρυφό'}` });
   };
 
   const handleSaveCategories = () => {
@@ -301,7 +309,8 @@ export default function AdminPage() {
                   <TableRow>
                     <TableHead>Έτος</TableHead>
                     <TableHead>Ψηφοφορία</TableHead>
-                    <TableHead>Περιγραφή / Logo</TableHead>
+                    <TableHead>Scoreboard</TableHead>
+                    <TableHead>Logo</TableHead>
                     <TableHead className="text-right">Ενέργειες</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -309,6 +318,7 @@ export default function AdminPage() {
                   {allYears.map(year => {
                     const meta = (allYearMeta || []).find(m => m.id === year.toString());
                     const isOpen = meta?.isVotingOpen ?? true;
+                    const isSBVisible = meta?.isScoreboardVisible ?? true;
                     return (
                       <TableRow key={year}>
                         <TableCell className="font-black text-lg">{year}</TableCell>
@@ -319,8 +329,13 @@ export default function AdminPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {meta?.description ? <Badge variant="secondary">Ναι</Badge> : <Badge variant="outline">Όχι</Badge>}
-                          {meta?.logoUrl ? <Badge variant="secondary" className="ml-2">Custom Logo</Badge> : null}
+                           <div className="flex items-center gap-2">
+                            <Switch checked={isSBVisible} onCheckedChange={() => toggleScoreboardVisibility(year.toString(), isSBVisible)} />
+                            {isSBVisible ? <Badge variant="secondary"><Eye className="h-3 w-3 mr-1"/> Visible</Badge> : <Badge variant="outline"><EyeOff className="h-3 w-3 mr-1"/> Hidden</Badge>}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {meta?.logoUrl ? <Badge variant="secondary">Custom</Badge> : <Badge variant="outline">Default</Badge>}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button variant="outline" size="sm" onClick={() => openYearEdit(year)}>
@@ -407,18 +422,26 @@ export default function AdminPage() {
           <DialogContent className="sm:max-w-[600px] rounded-[2rem] p-8">
             <DialogHeader><DialogTitle className="text-2xl font-headline font-bold">Επεξεργασία Έτους {selectedYearMeta?.id}</DialogTitle></DialogHeader>
             <div className="space-y-6 py-4">
-              <div className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl border">
-                <div className="space-y-0.5">
-                  <Label className="text-base">Κατάσταση Ψηφοφορίας</Label>
-                  <p className="text-sm text-muted-foreground">Ενεργοποίηση ή απενεργοποίηση για όλους.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl border">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm">Ψηφοφορία</Label>
+                    <p className="text-[10px] text-muted-foreground">Ανοιχτή/Κλειστή.</p>
+                  </div>
+                  <Switch checked={isVotingOpen} onCheckedChange={setIsVotingOpen} />
                 </div>
-                <Switch checked={isVotingOpen} onCheckedChange={setIsVotingOpen} />
+                <div className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl border">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm">Scoreboard</Label>
+                    <p className="text-[10px] text-muted-foreground">Ορατό στους Voters.</p>
+                  </div>
+                  <Switch checked={isScoreboardVisible} onCheckedChange={setIsScoreboardVisible} />
+                </div>
               </div>
               
               <div className="space-y-2">
                 <Label className="flex items-center gap-2"><ImageIcon className="h-4 w-4"/> Logo URL Override</Label>
                 <Input value={yearLogoUrl} onChange={(e) => setYearLogoUrl(e.target.value)} placeholder="https://example.com/logo.png" className="h-12 rounded-xl"/>
-                <p className="text-[10px] text-muted-foreground">Αφήστε το κενό για να χρησιμοποιηθεί το αυτόματο logo του φακέλου /assets/logos/.</p>
               </div>
 
               <div className="space-y-2">
