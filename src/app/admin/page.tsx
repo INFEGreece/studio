@@ -272,6 +272,10 @@ export default function AdminPage() {
       .replace(/^-+|-+$/g, "");
   };
 
+  const generateRandomId = () => {
+    return Math.random().toString(36).substring(2, 8);
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -288,7 +292,21 @@ export default function AdminPage() {
             <Button className="h-12 rounded-xl" onClick={() => { 
               setIsEditing(false); 
               setCurrentId(null);
-              setFormData({ country: '', flagUrl: '', year: 2026, artist: '', songTitle: '', videoUrl: '', thumbnailUrl: '', bioUrl: '', stage: 'Final' }); 
+              // Use current filterYear for new entry if it's a valid year
+              const defaultYear = filterYear !== "All" ? parseInt(filterYear) : 2026;
+              const defaultStage = filterStage !== "All" ? filterStage as ContestStage : 'Final';
+              
+              setFormData({ 
+                country: '', 
+                flagUrl: '', 
+                year: defaultYear, 
+                artist: '', 
+                songTitle: '', 
+                videoUrl: '', 
+                thumbnailUrl: '', 
+                bioUrl: '', 
+                stage: defaultStage
+              }); 
               setIsDialogOpen(true); 
             }}>
               <Plus className="h-5 w-5 mr-2" /> Νέα Συμμετοχή
@@ -561,11 +579,11 @@ export default function AdminPage() {
               </div>
             </div>
             <DialogFooter><Button onClick={() => {
-              // unique ID includes songTitle slug to allow multiple entries per country (Karaoke support)
-              const timestamp = isEditing ? "" : `-${Date.now().toString().slice(-4)}`;
-              const id = currentId || `${formData.year}-${slugify(formData.stage)}-${slugify(formData.country)}-${slugify(formData.songTitle)}${timestamp}`;
+              // unique ID includes random suffix to prevent collisions
+              const id = currentId || `${formData.year}-${slugify(formData.stage)}-${slugify(formData.country)}-${slugify(formData.songTitle)}-${generateRandomId()}`;
               setDocumentNonBlocking(doc(db, 'eurovision_entries', id), { ...formData, id, flagUrl: getFlagUrl(formData.country) }, { merge: true });
               setIsDialogOpen(false);
+              toast({ title: isEditing ? "Ενημερώθηκε!" : "Αποθηκεύτηκε!" });
             }} className="w-full h-12 rounded-xl font-bold">Αποθήκευση</Button></DialogFooter>
           </DialogContent>
         </Dialog>
