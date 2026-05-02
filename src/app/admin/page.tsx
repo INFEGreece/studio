@@ -36,7 +36,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, Search, Loader2, ShieldAlert, RotateCcw, AlertTriangle, Lock, Unlock, ImageIcon, User, Layers, Star, Music, Youtube, Calendar, Download, FileSpreadsheet, Eye, EyeOff, Filter } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, ShieldAlert, RotateCcw, AlertTriangle, Lock, Unlock, ImageIcon, User, Layers, Star, Music, Youtube, Calendar, Download, FileSpreadsheet, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc, query, collectionGroup, getDocs } from 'firebase/firestore';
@@ -545,6 +545,7 @@ export default function AdminPage() {
               </div>
             </div>
             <DialogFooter><Button onClick={() => {
+              // unique ID includes songTitle slug to allow multiple entries per country (Karaoke support)
               const id = currentId || `${formData.year}-${slugify(formData.stage)}-${slugify(formData.country)}-${slugify(formData.songTitle)}`;
               setDocumentNonBlocking(doc(db, 'eurovision_entries', id), { ...formData, id, flagUrl: getFlagUrl(formData.country) }, { merge: true });
               setIsDialogOpen(false);
