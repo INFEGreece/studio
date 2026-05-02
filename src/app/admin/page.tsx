@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -257,6 +258,8 @@ export default function AdminPage() {
       </main>
     </div>
   );
+
+  const slugify = (text: string) => text.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -542,7 +545,7 @@ export default function AdminPage() {
               </div>
             </div>
             <DialogFooter><Button onClick={() => {
-              const id = currentId || `${formData.year}-${formData.stage.toLowerCase()}-${formData.country.toLowerCase().replace(/\s+/g, '-')}`;
+              const id = currentId || `${formData.year}-${slugify(formData.stage)}-${slugify(formData.country)}-${slugify(formData.songTitle)}`;
               setDocumentNonBlocking(doc(db, 'eurovision_entries', id), { ...formData, id, flagUrl: getFlagUrl(formData.country) }, { merge: true });
               setIsDialogOpen(false);
             }} className="w-full h-12 rounded-xl font-bold">Αποθήκευση</Button></DialogFooter>

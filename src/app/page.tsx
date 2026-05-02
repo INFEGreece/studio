@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
@@ -127,7 +128,6 @@ function HomeContent() {
     const infeEvents = ["Eurodromio", "Be.So.", "Mu.Si.Ka."];
 
     if (selectedStage === "All") {
-      // In "All", we only show official Eurovision stages
       const escStages = ['Final', 'Semi-Final 1', 'Semi-Final 2', 'Prequalification'];
       return allYearEntries
         .filter(e => escStages.includes(e.stage))
@@ -136,7 +136,6 @@ function HomeContent() {
     
     const entries = allYearEntries.filter(e => e.stage === selectedStage);
 
-    // If it's an INFE Event, sort by Title. Otherwise by Country.
     if (infeEvents.includes(selectedStage)) {
       return entries.sort((a, b) => a.songTitle.localeCompare(b.songTitle));
     }
@@ -234,6 +233,8 @@ function HomeContent() {
     });
     setIsEditDialogOpen(true);
   };
+
+  const slugify = (text: string) => text.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
 
   const handleSaveEdit = () => {
     if (!currentEntryForEdit) return;
