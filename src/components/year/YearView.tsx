@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
@@ -33,7 +32,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/select";
+} from "@/components/ui/select";
 
 interface YearViewProps {
   year: string;
@@ -266,7 +265,13 @@ export function YearView({ year }: YearViewProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 md:gap-12">
               {(allYearEntries || [])
                 .filter(e => selectedStage === "All" || e.stage === selectedStage)
-                .sort((a, b) => a.country.localeCompare(b.country))
+                .sort((a, b) => {
+                  const isInfeEvent = ["Eurodromio", "Be.So.", "Mu.Si.Ka."].includes(selectedStage);
+                  if (isInfeEvent) {
+                    return a.songTitle.localeCompare(b.songTitle);
+                  }
+                  return a.country.localeCompare(b.country);
+                })
                 .map((entry) => (
                   <div key={entry.id} className="relative group">
                     <EntryCard 

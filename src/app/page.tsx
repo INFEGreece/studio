@@ -124,6 +124,8 @@ function HomeContent() {
   const filteredEntries = useMemo(() => {
     if (!allYearEntries) return [];
     
+    const infeEvents = ["Eurodromio", "Be.So.", "Mu.Si.Ka."];
+
     if (selectedStage === "All") {
       // In "All", we only show official Eurovision stages
       const escStages = ['Final', 'Semi-Final 1', 'Semi-Final 2', 'Prequalification'];
@@ -132,9 +134,14 @@ function HomeContent() {
         .sort((a, b) => a.country.localeCompare(b.country));
     }
     
-    return allYearEntries
-      .filter(e => e.stage === selectedStage)
-      .sort((a, b) => a.country.localeCompare(b.country));
+    const entries = allYearEntries.filter(e => e.stage === selectedStage);
+
+    // If it's an INFE Event, sort by Title. Otherwise by Country.
+    if (infeEvents.includes(selectedStage)) {
+      return entries.sort((a, b) => a.songTitle.localeCompare(b.songTitle));
+    }
+    
+    return entries.sort((a, b) => a.country.localeCompare(b.country));
   }, [allYearEntries, selectedStage]);
 
   const userVotesRef = useMemoFirebase(() => {
@@ -341,7 +348,7 @@ function HomeContent() {
                 <div className="absolute top-8 right-8"><Sparkles className="h-10 w-10 text-primary/20" /></div>
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.3em] text-primary/70"><Info className="h-4 w-4" /> Πληροφορίες Έτους</div>
-                  <h4 className="text-2xl md:text-4xl font-headline font-bold leading-tight">Μια ματιά στο {selectedYear}</h4>
+                  <h4 className="text-2xl md:text-4xl font-headline font-bold leading-tight">Ματιά στο {selectedYear}</h4>
                   <p className="text-lg md:text-xl text-muted-foreground leading-relaxed italic whitespace-pre-wrap">"{yearDescription}"</p>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6 pt-4">
