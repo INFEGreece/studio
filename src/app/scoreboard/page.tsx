@@ -27,11 +27,12 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
-import { Trophy, TrendingUp, Users, Loader2, ListOrdered, Calendar, AlertCircle, Info } from 'lucide-react';
+import { Trophy, TrendingUp, Users, Loader2, ListOrdered, Calendar, AlertCircle, Info, Layers } from 'lucide-react';
 import { getFlagUrl, cn } from '@/lib/utils';
 import { getEventLogo } from '@/lib/logos';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 function ScoreboardContent() {
   const searchParams = useSearchParams();
@@ -39,28 +40,39 @@ function ScoreboardContent() {
   const db = useFirestore();
   
   const [selectedYear, setSelectedYear] = useState<number>(2026);
+  const [selectedStage, setSelectedStage] = useState<string>("All");
   const [mounted, setMounted] = useState(false);
   const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     const urlYear = searchParams?.get('year');
+    const urlStage = searchParams?.get('stage');
+    
     if (urlYear) {
       const parsed = parseInt(urlYear);
       if (!isNaN(parsed)) {
         setSelectedYear(parsed);
       }
     }
+    
+    if (urlStage) {
+      setSelectedStage(urlStage);
+    }
   }, [searchParams]);
 
   useEffect(() => {
-    // Reset logo error state when year changes to try loading new logo
     setLogoError(false);
   }, [selectedYear]);
 
   const updateYear = (year: number) => {
     setSelectedYear(year);
-    router.push(`/scoreboard/?year=${year}`, { scroll: false });
+    router.push(`/scoreboard/?year=${year}&stage=${selectedStage}`, { scroll: false });
+  };
+
+  const updateStage = (stage: string) => {
+    setSelectedStage(stage);
+    router.push(`/scoreboard/?year=${selectedYear}&stage=${stage}`, { scroll: false });
   };
 
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
@@ -77,10 +89,21 @@ function ScoreboardContent() {
 
   const { data: allVotes, isLoading: isVotesLoading, error: votesError } = useCollection<Vote>(votesQuery);
 
+  const populatedStages = useMemo(() => {
+    const stages = new Set<string>();
+    if (entries) {
+      entries.forEach(e => stages.add(e.stage));
+    }
+    return Array.from(stages).sort();
+  }, [entries]);
+
   const scoreboardData = useMemo(() => {
     if (!entries || entries.length === 0) return [];
     
-    const validEntryIds = new Set(entries.map(e => e.id));
+    // Filter entries by stage if not "All"
+    const filteredEntries = entries.filter(e => selectedStage === "All" || e.stage === selectedStage);
+    const validEntryIds = new Set(filteredEntries.map(e => e.id));
+    
     const aggregation: Record<string, { totalPoints: number; voteCount: number }> = {};
     
     (allVotes || []).forEach(vote => {
@@ -96,7 +119,7 @@ function ScoreboardContent() {
       }
     });
 
-    return entries
+    return filteredEntries
       .map(e => ({
         id: e.id,
         name: e.country,
@@ -108,7 +131,7 @@ function ScoreboardContent() {
         stage: e.stage
       }))
       .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
-  }, [entries, allVotes, selectedYear]);
+  }, [entries, allVotes, selectedYear, selectedStage]);
 
   const top3 = scoreboardData.slice(0, 3);
   const isLoading = isEntriesLoading || isVotesLoading;
@@ -236,6 +259,22 @@ function ScoreboardContent() {
                 ))}
               </div>
             </div>
+
+            {populatedStages.length > 0 && (
+              <div className="space-y-4 pt-4 border-t border-border/50">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary ml-2 flex items-center gap-2">
+                  <Layers className="h-3 w-3" /> Φίλτρο Φάσης
+                </span>
+                <Tabs value={selectedStage} onValueChange={updateStage} className="w-full">
+                  <TabsList className="flex flex-wrap h-auto bg-muted/30 p-1.5 rounded-xl gap-1.5">
+                    <TabsTrigger value="All" className="h-9 px-4 rounded-lg text-xs font-bold">Όλα</TabsTrigger>
+                    {populatedStages.map(stage => (
+                      <TabsTrigger key={stage} value={stage} className="h-9 px-4 rounded-lg text-xs font-bold">{stage}</TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+              </div>
+            )}
           </div>
         </header>
 
@@ -247,7 +286,7 @@ function ScoreboardContent() {
         ) : scoreboardData.length === 0 ? (
           <div className="text-center py-20 md:py-32 bg-muted/20 rounded-[2rem] border-4 border-dashed">
             <Users className="h-16 w-16 mx-auto text-muted-foreground/30 mb-6" />
-            <p className="text-2xl font-headline font-bold text-muted-foreground">Δεν υπάρχουν δεδομένα για το {selectedYear}</p>
+            <p className="text-2xl font-headline font-bold text-muted-foreground">Δεν υπάρχουν δεδομένα για το {selectedYear} ({selectedStage})</p>
             <p className="text-sm text-muted-foreground mt-2">Μόλις ξεκινήσει η ψηφοφορία, τα αποτελέσματα θα εμφανιστούν εδώ.</p>
           </div>
         ) : (
@@ -275,6 +314,7 @@ function ScoreboardContent() {
                             <h3 className="font-extrabold text-lg md:text-xl truncate group-hover/link:text-primary transition-colors underline-offset-4 group-hover/link:underline">{item.name}</h3>
                           </Link>
                           <p className="text-xs text-muted-foreground truncate font-medium mt-1">{item.artist} — {item.title}</p>
+                          <Badge variant="outline" className="mt-2 text-[8px] uppercase tracking-widest">{item.stage}</Badge>
                         </div>
                         <div className="text-right shrink-0">
                           <span className="text-2xl md:text-3xl font-black text-primary">{item.score}</span>
@@ -314,6 +354,7 @@ function ScoreboardContent() {
                                   <p className="font-black text-primary text-sm mb-1">{data.name}</p>
                                   <p className="text-xs font-bold">{data.score} Πόντοι</p>
                                   <p className="text-[10px] text-muted-foreground mt-1">{data.votes} Ψήφοι</p>
+                                  <p className="text-[9px] uppercase tracking-tighter mt-1">{data.stage}</p>
                                 </div>
                               );
                             }
@@ -337,7 +378,7 @@ function ScoreboardContent() {
                 <div className="p-6 md:p-8 border-b bg-muted/20 flex items-center justify-between">
                   <h2 className="text-xl md:text-2xl font-headline font-bold flex items-center gap-3">
                     <ListOrdered className="h-6 w-6 text-primary" />
-                    Πλήρης Κατάταξη
+                    Πλήρης Κατάταξη ({selectedStage})
                   </h2>
                   <Badge className="bg-primary/10 text-primary border-primary/20 px-3">{scoreboardData.length} Χώρες</Badge>
                 </div>

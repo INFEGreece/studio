@@ -44,8 +44,10 @@ function HomeContent() {
   const { toast } = useToast();
   
   const urlYear = searchParams?.get('year');
+  const urlStage = searchParams?.get('stage');
+  
   const [selectedYear, setSelectedYear] = useState<number>(urlYear ? parseInt(urlYear) : 2026);
-  const [selectedStage, setSelectedStage] = useState<string>("All");
+  const [selectedStage, setSelectedStage] = useState<string>(urlStage || "All");
   const [currentYear, setCurrentYear] = useState<number>(new Date().getFullYear());
   const [userCountry, setUserCountry] = useState<string | null>(null);
   const [logoError, setLogoError] = useState(false);
@@ -60,7 +62,6 @@ function HomeContent() {
     artist: '',
     songTitle: '',
     videoUrl: '',
-    spotifyUrl: '',
     bioUrl: '',
     thumbnailUrl: '',
     stage: 'Final' as ContestStage
@@ -82,13 +83,22 @@ function HomeContent() {
 
   useEffect(() => {
     const y = searchParams?.get('year');
+    const s = searchParams?.get('stage');
+    
     if (y) {
       const parsed = parseInt(y);
       if (!isNaN(parsed) && parsed !== selectedYear) {
         setSelectedYear(parsed);
       }
     }
-  }, [searchParams, selectedYear]);
+    
+    if (s && s !== selectedStage) {
+      setSelectedStage(s);
+    } else if (!s && urlStage) {
+      // Sync if param disappears but was initialized
+      setSelectedStage("All");
+    }
+  }, [searchParams, selectedYear, selectedStage, urlStage]);
 
   const adminDocRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -206,7 +216,6 @@ function HomeContent() {
       artist: entry.artist, 
       songTitle: entry.songTitle, 
       videoUrl: entry.videoUrl || '', 
-      spotifyUrl: entry.spotifyUrl || '',
       bioUrl: entry.bioUrl || '',
       thumbnailUrl: entry.thumbnailUrl || '', 
       stage: entry.stage 

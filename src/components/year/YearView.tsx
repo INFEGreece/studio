@@ -17,6 +17,7 @@ import { setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/no
 import { useToast } from '@/hooks/use-toast';
 import { getEventLogo } from '@/lib/logos';
 import { getFlagUrl } from '@/lib/utils';
+import { useSearchParams } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -32,7 +33,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/select";
 
 interface YearViewProps {
   year: string;
@@ -40,11 +41,13 @@ interface YearViewProps {
 
 export function YearView({ year }: YearViewProps) {
   const selectedYear = parseInt(year);
+  const searchParams = useSearchParams();
   const db = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
   
-  const [selectedStage, setSelectedStage] = useState<string>("All");
+  const urlStage = searchParams?.get('stage');
+  const [selectedStage, setSelectedStage] = useState<string>(urlStage || "All");
   const [userCountry, setUserCountry] = useState<string | null>(null);
   const [logoError, setLogoError] = useState(false);
 
@@ -71,6 +74,13 @@ export function YearView({ year }: YearViewProps) {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    const s = searchParams?.get('stage');
+    if (s && s !== selectedStage) {
+      setSelectedStage(s);
+    }
+  }, [searchParams, selectedStage]);
 
   const adminDocRef = useMemoFirebase(() => {
     if (!user) return null;
