@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,7 +35,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2, Search, Loader2, ShieldAlert, RotateCcw, AlertTriangle, Lock, Unlock, ImageIcon, User, Layers, Star, Music, Youtube, Calendar, Download, FileSpreadsheet, Eye, EyeOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Loader2, ShieldAlert, RotateCcw, AlertTriangle, Lock, Unlock, ImageIcon, User, Layers, Star, Music, Youtube, Calendar, Download, FileSpreadsheet, Eye, EyeOff, Filter } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc, query, collectionGroup, getDocs } from 'firebase/firestore';
@@ -51,6 +51,9 @@ export default function AdminPage() {
   const { toast } = useToast();
   
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterYear, setFilterYear] = useState<string>("All");
+  const [filterStage, setFilterStage] = useState<string>("All");
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isYearEditOpen, setIsYearEditOpen] = useState(false);
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
@@ -103,7 +106,23 @@ export default function AdminPage() {
   const entriesRef = useMemoFirebase(() => collection(db, 'eurovision_entries'), [db]);
   const { data: entries } = useCollection<Entry>(entriesRef);
 
-  const allYears = DECADES.flatMap(d => d.years).sort((a, b) => b - a);
+  const allPossibleStages = ['Final', 'Semi-Final 1', 'Semi-Final 2', 'Prequalification', 'Eurodromio', 'Be.So.', 'Mu.Si.Ka.'];
+  const allYears = useMemo(() => DECADES.flatMap(d => d.years).sort((a, b) => b - a), []);
+
+  const filteredEntries = useMemo(() => {
+    if (!entries) return [];
+    return entries.filter(e => {
+      const matchesSearch = 
+        e.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.songTitle.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesYear = filterYear === "All" || e.year.toString() === filterYear;
+      const matchesStage = filterStage === "All" || e.stage === filterStage;
+      
+      return matchesSearch && matchesYear && matchesStage;
+    }).sort((a, b) => b.year - a.year || a.country.localeCompare(b.country));
+  }, [entries, searchTerm, filterYear, filterStage]);
 
   const openYearEdit = (year: number) => {
     const meta = (allYearMeta || []).find(m => m.id === year.toString());
@@ -239,8 +258,6 @@ export default function AdminPage() {
     </div>
   );
 
-  const allPossibleStages = ['Final', 'Semi-Final 1', 'Semi-Final 2', 'Prequalification', 'Eurodromio', 'Be.So.', 'Mu.Si.Ka.'];
-
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -275,27 +292,75 @@ export default function AdminPage() {
 
           <TabsContent value="entries" className="space-y-6">
             <div className="bg-card border rounded-2xl overflow-hidden shadow-sm">
-              <div className="p-6 border-b bg-muted/20">
-                <div className="relative max-w-md">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input className="pl-12 h-12 rounded-xl" placeholder="Αναζήτηση χώρας..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <div className="p-6 border-b bg-muted/20 space-y-4">
+                <div className="flex flex-col md:flex-row gap-4 items-end">
+                  <div className="flex-1 space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Αναζήτηση</Label>
+                    <div className="relative">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <Input className="pl-12 h-12 rounded-xl" placeholder="Χώρα, Καλλιτέχνης ή Τίτλος..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                    </div>
+                  </div>
+                  
+                  <div className="w-full md:w-48 space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Έτος</Label>
+                    <Select value={filterYear} onValueChange={setFilterYear}>
+                      <SelectTrigger className="h-12 rounded-xl"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">Όλα τα Έτη</SelectItem>
+                        {allYears.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="w-full md:w-56 space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Φάση / Event</Label>
+                    <Select value={filterStage} onValueChange={setFilterStage}>
+                      <SelectTrigger className="h-12 rounded-xl"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">Όλες οι Φάσεις</SelectItem>
+                        {allPossibleStages.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <Button variant="ghost" size="icon" className="h-12 w-12 rounded-xl shrink-0" onClick={() => { setSearchTerm(""); setFilterYear("All"); setFilterStage("All"); }}>
+                    <RotateCcw className="h-5 w-5" />
+                  </Button>
                 </div>
               </div>
               <div className="overflow-x-auto">
                 <Table>
-                  <TableHeader><TableRow><TableHead>Χώρα</TableHead><TableHead>Τίτλος</TableHead><TableHead>Έτος</TableHead><TableHead className="text-right">Ενέργειες</TableHead></TableRow></TableHeader>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Συμμετοχή</TableHead>
+                      <TableHead>Έτος</TableHead>
+                      <TableHead>Φάση</TableHead>
+                      <TableHead className="text-right">Ενέργειες</TableHead>
+                    </TableRow>
+                  </TableHeader>
                   <TableBody>
-                    {(entries || []).filter(e => e.country.toLowerCase().includes(searchTerm.toLowerCase())).map((entry) => (
+                    {filteredEntries.map((entry) => (
                       <TableRow key={entry.id}>
-                        <TableCell className="font-bold">{entry.country}</TableCell>
-                        <TableCell>{entry.songTitle}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-base">{entry.country}</span>
+                            <span className="text-xs text-muted-foreground">{entry.artist} — {entry.songTitle}</span>
+                          </div>
+                        </TableCell>
                         <TableCell><Badge variant="outline">{entry.year}</Badge></TableCell>
+                        <TableCell><Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">{entry.stage}</Badge></TableCell>
                         <TableCell className="text-right">
                           <Button variant="outline" size="sm" className="mr-2" onClick={() => { setIsEditing(true); setCurrentId(entry.id); setFormData({ ...entry, bioUrl: entry.bioUrl || '', videoUrl: entry.videoUrl || '', thumbnailUrl: entry.thumbnailUrl || '' }); setIsDialogOpen(true); }}><Pencil className="h-4 w-4 mr-2"/> Edit</Button>
                           <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { if(confirm("Διαγραφή;")) deleteDocumentNonBlocking(doc(db, 'eurovision_entries', entry.id)); }}>Delete</Button>
                         </TableCell>
                       </TableRow>
                     ))}
+                    {filteredEntries.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={4} className="h-32 text-center text-muted-foreground italic">Δεν βρέθηκαν συμμετοχές με αυτά τα κριτήρια.</TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </div>
@@ -352,7 +417,6 @@ export default function AdminPage() {
 
           <TabsContent value="tools" className="space-y-12">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Export Section */}
               <div className="bg-card border rounded-[2rem] p-8 space-y-6 shadow-sm">
                 <div className="space-y-2">
                   <h2 className="text-2xl font-bold flex items-center gap-3">
@@ -371,7 +435,6 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* Reset Section */}
               <div className="bg-destructive/5 border-2 border-dashed border-destructive/20 rounded-[2rem] p-8 space-y-6">
                 <div className="space-y-2">
                   <h2 className="text-2xl font-bold text-destructive flex items-center gap-3">
