@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
@@ -95,7 +94,6 @@ function HomeContent() {
     if (s && s !== selectedStage) {
       setSelectedStage(s);
     } else if (!s && urlStage) {
-      // Sync if param disappears but was initialized
       setSelectedStage("All");
     }
   }, [searchParams, selectedYear, selectedStage, urlStage]);
@@ -125,8 +123,17 @@ function HomeContent() {
 
   const filteredEntries = useMemo(() => {
     if (!allYearEntries) return [];
+    
+    if (selectedStage === "All") {
+      // In "All", we only show official Eurovision stages
+      const escStages = ['Final', 'Semi-Final 1', 'Semi-Final 2', 'Prequalification'];
+      return allYearEntries
+        .filter(e => escStages.includes(e.stage))
+        .sort((a, b) => a.country.localeCompare(b.country));
+    }
+    
     return allYearEntries
-      .filter(e => selectedStage === "All" || e.stage === selectedStage)
+      .filter(e => e.stage === selectedStage)
       .sort((a, b) => a.country.localeCompare(b.country));
   }, [allYearEntries, selectedStage]);
 
@@ -154,7 +161,6 @@ function HomeContent() {
 
   const currentDecadeLabel = DECADES.find(d => d.years.includes(selectedYear))?.label || "Archive";
   
-  // Custom Logo URL priority
   const yearLogoUrl = dynamicYearMeta?.logoUrl || getEventLogo(selectedYear, 'Final');
   
   const yearDescription = dynamicYearMeta?.description || YEAR_INFO[selectedYear] || `Εξερευνήστε τις συμμετοχές του διαγωνισμού για το έτος ${selectedYear}.`;
@@ -169,7 +175,6 @@ function HomeContent() {
       return;
     }
     
-    // IP Restriction check
     const isSpecialEvent = ["Eurodromio", "Be.So.", "Mu.Si.Ka."].includes(entry.stage);
     if (!isSpecialEvent && selectedYear === 2026 && entry.country === userCountry && score !== 0) {
       toast({ title: "Περιορισμός Ψηφοφορίας", description: "Δεν μπορείτε να ψηφίσετε τη χώρα σας.", variant: "destructive" });
@@ -242,7 +247,7 @@ function HomeContent() {
   const stages: ContestStage[] = ['Final', 'Semi-Final 1', 'Semi-Final 2', 'Prequalification', 'Eurodromio', 'Be.So.', 'Mu.Si.Ka.'];
 
   const mainStages = [
-    { value: "All", label: "Όλα" },
+    { value: "All", label: "Όλα (ESC)" },
     { value: "Final", label: "Τελικός" },
     { value: "Semi-Final 1", label: "Ημιτ. 1" },
     { value: "Semi-Final 2", label: "Ημιτ. 2" },

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo, useEffect, Suspense } from 'react';
@@ -100,10 +99,18 @@ function ScoreboardContent() {
   const scoreboardData = useMemo(() => {
     if (!entries || entries.length === 0) return [];
     
-    // Filter entries by stage if not "All"
-    const filteredEntries = entries.filter(e => selectedStage === "All" || e.stage === selectedStage);
-    const validEntryIds = new Set(filteredEntries.map(e => e.id));
+    // Logic for "All" vs Specific Event
+    let filteredEntries: Entry[] = [];
+    if (selectedStage === "All") {
+      // In "All", we only calculate official Eurovision stages
+      const escStages = ['Final', 'Semi-Final 1', 'Semi-Final 2', 'Prequalification'];
+      filteredEntries = entries.filter(e => escStages.includes(e.stage));
+    } else {
+      // In a specific event, we show only that event's entries (independent)
+      filteredEntries = entries.filter(e => e.stage === selectedStage);
+    }
     
+    const validEntryIds = new Set(filteredEntries.map(e => e.id));
     const aggregation: Record<string, { totalPoints: number; voteCount: number }> = {};
     
     (allVotes || []).forEach(vote => {
@@ -267,7 +274,7 @@ function ScoreboardContent() {
                 </span>
                 <Tabs value={selectedStage} onValueChange={updateStage} className="w-full">
                   <TabsList className="flex flex-wrap h-auto bg-muted/30 p-1.5 rounded-xl gap-1.5">
-                    <TabsTrigger value="All" className="h-9 px-4 rounded-lg text-xs font-bold">Όλα</TabsTrigger>
+                    <TabsTrigger value="All" className="h-9 px-4 rounded-lg text-xs font-bold">Όλα (ESC)</TabsTrigger>
                     {populatedStages.map(stage => (
                       <TabsTrigger key={stage} value={stage} className="h-9 px-4 rounded-lg text-xs font-bold">{stage}</TabsTrigger>
                     ))}
